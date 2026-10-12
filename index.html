@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Calculadora RENACYT</title>
 <meta name="description" content="Calcula tu puntaje y nivel RENACYT según el Reglamento RP 090-2021-CONCYTEC-P, planifica tu ascenso y guarda el historial de tu avance.">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
+<script>try{if(localStorage.getItem("renacyt_calc_v1_theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
 <meta name="theme-color" content="#0b4639">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta property="og:type" content="website">
@@ -21,17 +22,11 @@
   --ok:#17794a; --ok-soft:#dff3e8; --warn:#9a5b06; --warn-soft:#fdf0d5; --bad:#b3261e; --bad-soft:#fbe4e1;
   --shadow:0 1px 2px rgba(20,40,32,.06),0 6px 20px rgba(20,40,32,.06);
   --r:14px;
+  color-scheme:light;
 }
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0e1513; --surface:#16211e; --surface-2:#1c2a26; --ink:#e7f0ec; --muted:#9bb1a8; --line:#2b3d37;
-    --brand:#52c7a4; --brand-2:#7fdcc0; --on-brand:#06241b; --soft:#1d332c; --hdr:#0a2a22;
-    --gold:#e6b04a; --gold-soft:#33290f;
-    --ok:#5fd495; --ok-soft:#14301f; --warn:#f0b455; --warn-soft:#33260c; --bad:#ff8f86; --bad-soft:#3a1714;
-    --shadow:0 1px 2px rgba(0,0,0,.4);
-  }
-}
+/* El tema inicial es siempre el claro; el oscuro solo se activa cuando la persona lo elige con el botón. */
 :root[data-theme="dark"]{
+  color-scheme:dark;
   --bg:#0e1513; --surface:#16211e; --surface-2:#1c2a26; --ink:#e7f0ec; --muted:#9bb1a8; --line:#2b3d37;
   --brand:#52c7a4; --brand-2:#7fdcc0; --on-brand:#06241b; --soft:#1d332c; --hdr:#0a2a22;
   --gold:#e6b04a; --gold-soft:#33290f;
@@ -334,7 +329,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <p>Puntaje, nivel, plan de ascenso e historial · Reglamento RP 090-2021-CONCYTEC-P</p>
       </div>
     </div>
-    <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema">◐</button>
+    <button class="theme-btn" id="themeBtn" type="button" aria-pressed="false" aria-label="Cambiar a tema oscuro" title="Cambiar a tema oscuro">☾</button>
     <nav class="tabs" role="tablist" aria-label="Secciones">
       <button class="tab" role="tab" data-view="calc" aria-selected="true">Calculadora</button>
       <button class="tab" role="tab" data-view="cti" aria-selected="false">Importar CTI Vitae</button>
@@ -1338,11 +1333,19 @@ document.addEventListener("change", e => {
   else if(e.target.id === "ctiProj"){ CTI.projectSel = e.target.checked; ctiRefreshSummary(); }
 });
 
+// Tema: inicia siempre en claro. La elección de la persona (claro u oscuro) se recuerda en este navegador.
+function applyThemeUi(){
+  const dark = document.documentElement.dataset.theme === "dark", b = $("#themeBtn");
+  b.textContent = dark ? "☀" : "☾";
+  b.setAttribute("aria-pressed", String(dark));
+  const t = dark ? "Cambiar a tema claro" : "Cambiar a tema oscuro";
+  b.setAttribute("aria-label", t); b.title = t;
+}
 $("#themeBtn").addEventListener("click", () => {
-  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  const next = cur==="dark" ? "light" : "dark";
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
   try{ localStorage.setItem("renacyt_calc_v1_theme", next); }catch{}
+  applyThemeUi();
 });
 
 /* ================= Configuración, autor y comunidad ================= */
@@ -2035,7 +2038,8 @@ function initFeedback(){
 
 /* ================= Inicio ================= */
 (function init(){
-  try{ const th = localStorage.getItem("renacyt_calc_v1_theme"); if(th) document.documentElement.dataset.theme = th; }catch{}
+  try{ const th = localStorage.getItem("renacyt_calc_v1_theme"); document.documentElement.dataset.theme = th === "dark" ? "dark" : "light"; }catch{ document.documentElement.dataset.theme = "light"; }
+  applyThemeUi();
   buildDegrees(); buildCats(); buildSim(); buildRef(); buildInst(); renderAuthor(); initFeedback();
   S = sanitizeState(store.get(K_STATE));
   const h = store.get(K_HIST); HIST = Array.isArray(h) ? h.filter(x => x && x.state && typeof x.ts==="number") : [];
