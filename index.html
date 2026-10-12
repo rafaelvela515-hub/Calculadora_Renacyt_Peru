@@ -317,6 +317,23 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 .stars input:checked + label,.stars input:checked + label ~ label,.stars label:hover,.stars label:hover ~ label{color:var(--gold)}
 .stars input:focus-visible + label{outline:3px solid color-mix(in srgb,var(--brand) 55%,transparent)}
 [hidden]{display:none !important}
+/* Guía «¿Cómo funciona?» */
+.how details{border:0;padding:0;margin:0;background:none}
+.how summary{padding:0;min-height:0;list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer}
+.how summary::-webkit-details-marker{display:none}
+.how summary h2{font-size:20px;color:var(--brand)}
+.how summary::after{content:"Ocultar";margin-left:auto;font-size:13px;font-weight:600;color:var(--muted);padding:6px 10px;border-radius:8px;background:var(--surface-2)}
+.how details:not([open]) summary::after{content:"Mostrar"}
+.howtext{margin:12px 0 0;color:var(--ink);font-size:15px;line-height:1.6}
+.howsteps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+@media (min-width:1000px){.howsteps{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:560px){.howsteps{grid-template-columns:minmax(0,1fr)}}
+.howstep{background:var(--surface-2);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.howstep h3{font-size:15px}
+.howstep p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.5;flex:1}
+.linkbtn{appearance:none;border:0;background:none;padding:6px 0 0;min-height:36px;text-align:left;color:var(--brand);font-weight:700;font-size:13.5px;cursor:pointer}
+.linkbtn:hover{text-decoration:underline}
+.brand p b{color:#fff;opacity:1}
 .seg{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 12px}
 .seg label{position:relative;display:flex;align-items:center;padding:10px 16px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;background:var(--surface);min-height:44px;font-size:14.5px;font-weight:600}
 .seg input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
@@ -332,7 +349,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
       <div class="mark" aria-hidden="true">RN</div>
       <div>
         <h1>Calculadora RENACYT</h1>
-        <p>Puntaje, nivel, plan de ascenso e historial · Reglamento RP 090-2021-CONCYTEC-P</p>
+        <p>Calcula tu puntaje, descubre tu nivel y recibe <b>estrategias personalizadas</b> para subir de nivel. Guarda el <b>historial de tus avances</b>.</p>
       </div>
     </div>
     <button class="theme-btn" id="themeBtn" type="button" aria-pressed="false" aria-label="Cambiar a tema oscuro" title="Cambiar a tema oscuro">☾</button>
@@ -353,6 +370,18 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 
   <!-- ============ CALCULADORA ============ -->
   <section class="view on" id="view-calc">
+    <section class="card how" aria-labelledby="howTitle">
+      <details id="howto" open>
+        <summary><h2 id="howTitle">¿Cómo funciona?</h2></summary>
+        <p class="howtext">Completa tu información en los pasos de abajo, o importa tu ficha de CTI Vitae. El puntaje se calcula automáticamente con la <b>Tabla N.° 1 del Anexo N.° 1</b> del Reglamento RENACYT (RP N.° 090-2021-CONCYTEC-P) y tu nivel se asigna con la <b>Tabla N.° 3</b>. Además, la plataforma verifica tu <b>condición de investigador activo</b>, te propone <b>estrategias para subir de nivel</b> y guarda un <b>historial de tus avances</b> para que veas cómo evoluciona tu perfil.</p>
+        <div class="howsteps">
+          <div class="howstep"><span class="step">1</span><h3>Registra tu perfil</h3><p>Indica tu grado, tu producción y tus asesorías, o impórtalas desde tu ficha.</p><button class="linkbtn" type="button" data-go="cti">Importar CTI Vitae →</button></div>
+          <div class="howstep"><span class="step">2</span><h3>Conoce tu nivel</h3><p>Mira tu puntaje, qué requisitos cumples y hasta cuándo conservas la condición de activo.</p></div>
+          <div class="howstep"><span class="step">3</span><h3>Sigue el plan</h3><p>Elige un nivel meta, revisa qué te falta y prueba escenarios en el simulador.</p><button class="linkbtn" type="button" data-go="plan">Plan de ascenso →</button></div>
+          <div class="howstep"><span class="step">4</span><h3>Guarda tu historial</h3><p>Registra capturas, compara tu avance en el tiempo y descarga tu informe en PDF.</p><button class="linkbtn" type="button" data-go="hist">Ver historial →</button></div>
+        </div>
+      </details>
+    </section>
     <div class="layout">
       <div>
         <div class="card">
@@ -2221,6 +2250,10 @@ function initFeedback(){
 (function init(){
   try{ const th = localStorage.getItem("renacyt_calc_v1_theme"); document.documentElement.dataset.theme = th === "dark" ? "dark" : "light"; }catch{ document.documentElement.dataset.theme = "light"; }
   applyThemeUi();
+  // la guía «¿Cómo funciona?» se puede ocultar y se recuerda la elección
+  const howto = $("#howto");
+  try{ if(localStorage.getItem("renacyt_calc_v1_howto") === "closed") howto.open = false; }catch{}
+  howto.addEventListener("toggle", () => { try{ localStorage.setItem("renacyt_calc_v1_howto", howto.open ? "open" : "closed"); }catch{} });
   buildDegrees(); buildCats(); buildSim(); buildRef(); buildInst(); renderAuthor(); initFeedback();
   S = sanitizeState(store.get(K_STATE));
   const h = store.get(K_HIST); HIST = Array.isArray(h) ? h.filter(x => x && x.state && typeof x.ts==="number") : [];
