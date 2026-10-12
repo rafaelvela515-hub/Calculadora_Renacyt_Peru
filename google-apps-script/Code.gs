@@ -40,6 +40,7 @@ function doPost(e) {
     if (p.action === 'delete') return json_(deleteByClient_(p.clientId));
     if (p.action === 'feedback') return json_(saveFeedback_(p));
     if (p.action === 'inst_add') return json_(instAddAction_(p));
+    if (p.action === 'visit') return json_(visitPing_());
     if (p.action !== 'submit') return json_({ ok: false, error: 'bad_action' });
 
     const rec = cleanRecord_(p);
@@ -81,6 +82,7 @@ function doGet(e) {
   const action = e && e.parameter ? e.parameter.action : '';
   if (action === 'cti') return ctiFetch_(e.parameter.id);
   if (action === 'institutions') return instList_();
+  if (action === 'visits') return visitsOut_();
   if (action === 'stats') {
     const cache = CacheService.getScriptCache();
     const hit = cache.get('stats');
@@ -247,6 +249,60 @@ function removeClientFromInstitutions_(cid) {
     else sh.getRange(i + 2, 5, 1, 2).setValues([[n, ids.filter(function (x) { return x !== cid; }).join(',')]]);
   }
   CacheService.getScriptCache().remove('instlist');
+}
+
+/* ---------------- Contador de accesos ---------------- */
+// Cuenta accesos SIN identificar a nadie: la página avisa como máximo una vez al día por navegador y aquí solo se suma 1
+// al total de ese día. No se recibe ni se guarda ningún identificador, IP ni dato personal.
+
+const VISIT_SHEET = 'Visitas';
+const VISIT_HEADERS = ['fecha', 'accesos'];     // fecha como número AAAAMMDD (así Sheets no la convierte en fecha)
+const VISIT_MAX_PER_MIN = 120;                  // tope global por minuto contra scripts que repiten el aviso
+
+function dayNum_() {
+  const d = new Date();
+  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+}
+
+function visitTotals_() {
+  const sh = getSheet_(VISIT_SHEET, VISIT_HEADERS);
+  const last = sh.getLastRow();
+  const rows = last >= 2 ? sh.getRange(2, 1, last - 1, 2).getValues() : [];
+  const today = dayNum_();
+  let total = 0, hoy = 0;
+  rows.forEach(function (r) { const n = Number(r[1]) || 0; total += n; if (Number(r[0]) === today) hoy = n; });
+  return { ok: true, total: total, today: hoy, days: rows.length };
+}
+
+function visitPing_() {
+  const cache = CacheService.getScriptCache();
+  const rk = 'visit_rate_' + Math.floor(Date.now() / 60000);
+  const used = Number(cache.get(rk) || 0);
+  if (used >= VISIT_MAX_PER_MIN) { const t = visitTotals_(); t.throttled = true; return t; }   // se muestra el contador pero no suma
+  cache.put(rk, String(used + 1), 120);
+
+  const sh = getSheet_(VISIT_SHEET, VISIT_HEADERS);
+  const last = sh.getLastRow();
+  const today = dayNum_();
+  let row = -1, n = 0;
+  if (last >= 2) {                                              // la fila de hoy, si existe, está entre las últimas
+    const start = Math.max(2, last - 2);
+    const rows = sh.getRange(start, 1, last - start + 1, 2).getValues();
+    for (let i = rows.length - 1; i >= 0; i--) if (Number(rows[i][0]) === today) { row = start + i; n = Number(rows[i][1]) || 0; break; }
+  }
+  if (row > 0) sh.getRange(row, 2, 1, 1).setValues([[n + 1]]);
+  else sh.appendRow([today, 1]);
+  cache.remove('visits');
+  return visitTotals_();
+}
+
+function visitsOut_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('visits');
+  if (hit) return ContentService.createTextOutput(hit).setMimeType(ContentService.MimeType.JSON);
+  const out = JSON.stringify(visitTotals_());
+  cache.put('visits', out, 300);
+  return ContentService.createTextOutput(out).setMimeType(ContentService.MimeType.JSON);
 }
 
 /* ---------------- Utilidades ---------------- */

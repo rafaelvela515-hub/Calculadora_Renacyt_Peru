@@ -41,6 +41,21 @@ También puedes pasarme la URL y la pongo yo.
 3. **Settings → Pages →** *Deploy from a branch* → rama `main`, carpeta `/ (root)` → Save.
 4. En un par de minutos queda en `https://TU-USUARIO.github.io/NOMBRE-DEL-REPOSITORIO/`. El de este proyecto: `https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/`.
 
+## Compartir e indexar (opcional pero recomendado)
+
+La página ya trae lo necesario para que **WhatsApp, X, Facebook, Telegram y LinkedIn** muestren una tarjeta con título, descripción e imagen (`og-image.png`), un botón **Compartir** en el encabezado, y datos para buscadores (etiqueta canónica, datos estructurados y `sitemap.xml`).
+
+Para que **Google** la encuentre antes (lo puedes hacer solo tú, con tu cuenta):
+
+1. Entra a <https://search.google.com/search-console> y agrega una propiedad de tipo **Prefijo de URL** con `https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/`.
+2. Verifica la propiedad con el método **Etiqueta HTML**: Google te da una etiqueta `<meta name="google-site-verification" content="…">`. Pásamela y la agrego a `index.html`.
+3. En *Sitemaps*, envía `sitemap.xml`.
+4. Opcional: repite en Bing Webmaster Tools (<https://www.bing.com/webmasters>).
+
+Para **refrescar la vista previa** cuando cambies el texto o la imagen: WhatsApp, X y Facebook guardan una copia por enlace. En Facebook usa el *Depurador de uso compartido* (<https://developers.facebook.com/tools/debug/>) y pulsa «Volver a extraer»; en WhatsApp basta con compartir el enlace añadiendo `?v=2` al final.
+
+**Instagram** no permite compartir enlaces desde una página web. El botón Compartir incluye «Copiar enlace» para pegarlo en historias, biografía o mensajes (en los mensajes, Instagram sí muestra la tarjeta).
+
 ## Prueba de humo (5 minutos, ya publicada)
 
 1. **Calculadora:** pulsa *Cargar ejemplo*; debe dar 22.5 pts, Nivel VII.

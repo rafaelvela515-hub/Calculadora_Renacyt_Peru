@@ -102,6 +102,20 @@ Si una persona no encuentra su institución en la lista, la escribe y puede puls
 
 **Importante:** esta función y la de procedencia/país vienen en el mismo `Code.gs` nuevo. Basta una sola actualización: pega el código y crea una **Nueva versión** de la implementación.
 
+## Contador de accesos
+
+El pie de la página muestra «Accesos a la plataforma: N · hoy: M». Se cuenta **sin identificar a nadie**:
+
+- La página avisa **como máximo una vez al día por navegador** y el aviso no lleva ningún dato (solo la orden de sumar 1). Para no repetirlo, el navegador guarda la fecha del último aviso.
+- El servidor no recibe ni guarda identificadores, IP ni datos personales. Solo suma 1 a la fila del día en la pestaña **`Visitas`** (columnas `fecha`, en formato AAAAMMDD, y `accesos`).
+- Un acceso equivale a **un navegador distinto por día**: la misma persona que vuelve mañana cuenta otra vez, y quien usa dos navegadores cuenta dos veces. Es una buena aproximación de «personas», no un conteo exacto.
+- Protección: tope global de 120 avisos por minuto contra programas que repitan la orden; con el tope, el contador se sigue mostrando pero no suma.
+- Si el servidor no tiene esta función, el contador simplemente no se muestra.
+- **Desactivarlo:** en `index.html`, `CONFIG.visitCounter: false`.
+- **Corregir o reiniciar la cuenta** (por ejemplo, quitar tus propias pruebas): edita la columna `accesos` en la pestaña `Visitas`. Las pruebas que hagas desde tu navegador cuentan como un acceso al día.
+
+**Cómo actualizar el script manteniendo la misma URL:** pega el nuevo `Code.gs`, guarda, y en **Implementar → Administrar implementaciones** pulsa el lápiz de tu implementación actual → *Versión:* **Nueva versión** → *Implementar*. Si en cambio eliges «Nueva implementación», Google genera una URL distinta y habrá que cambiarla en `index.html`.
+
 ## Si cambias `Code.gs` más adelante
 
 Debes crear una **nueva versión**: *Implementar → Administrar implementaciones → editar (lápiz) → Versión: Nueva versión → Implementar*. La URL no cambia.

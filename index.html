@@ -9,10 +9,26 @@
 <script>try{if(localStorage.getItem("renacyt_calc_v1_theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
 <meta name="theme-color" content="#0b4639">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<link rel="canonical" href="https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Rafael Segundo Vela-Paredes">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Calculadora RENACYT">
+<meta property="og:url" content="https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/">
 <meta property="og:locale" content="es_PE">
-<meta property="og:title" content="Calculadora RENACYT">
-<meta property="og:description" content="Calcula tu puntaje y nivel RENACYT, importa tu ficha CTI Vitae, planifica tu ascenso y descarga tu evaluación en PDF.">
+<meta property="og:title" content="Calculadora RENACYT: puntaje, nivel e historial de tu avance">
+<meta property="og:description" content="Calcula tu puntaje y nivel RENACYT, importa tu ficha de CTI Vitae, recibe estrategias para subir de nivel y guarda el historial de tus avances.">
+<meta property="og:image" content="https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Calculadora RENACYT: calcula tu puntaje, descubre tu nivel y recibe estrategias para subir de nivel">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Calculadora RENACYT: puntaje, nivel e historial de tu avance">
+<meta name="twitter:description" content="Calcula tu puntaje y nivel RENACYT, importa tu ficha de CTI Vitae, recibe estrategias para subir de nivel y guarda el historial de tus avances.">
+<meta name="twitter:image" content="https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/og-image.png">
+<meta name="twitter:image:alt" content="Calculadora RENACYT: calcula tu puntaje, descubre tu nivel y recibe estrategias para subir de nivel">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Calculadora RENACYT","url":"https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/","applicationCategory":"EducationalApplication","operatingSystem":"Web","inLanguage":"es-PE","description":"Calcula tu puntaje y nivel RENACYT, importa tu ficha de CTI Vitae, recibe estrategias para subir de nivel y guarda el historial de tus avances.","image":"https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/og-image.png","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"PEN"},"license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Rafael Segundo Vela-Paredes","sameAs":["https://orcid.org/0000-0001-7255-6209","https://www.scopus.com/authid/detail.uri?authorId=57200699171"]}}</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b4639'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-size='28' font-weight='700' text-anchor='middle' fill='white'%3ERN%3C/text%3E%3C/svg%3E">
 <style>
 :root{
@@ -317,6 +333,14 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 .stars input:checked + label,.stars input:checked + label ~ label,.stars label:hover,.stars label:hover ~ label{color:var(--gold)}
 .stars input:focus-visible + label{outline:3px solid color-mix(in srgb,var(--brand) 55%,transparent)}
 [hidden]{display:none !important}
+.hdr-btn{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:10px;min-height:40px;padding:0 14px;cursor:pointer;margin-bottom:12px;font-weight:600;font-size:14px}
+.hdr-btn:hover,.theme-btn:hover{background:rgba(255,255,255,.24)}
+#spDlg{max-width:min(480px,92vw);width:100%}
+.sp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:0 0 14px}
+.sp-item{display:flex;align-items:center;justify-content:center;min-height:46px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-weight:600;font-size:14.5px;text-decoration:none;cursor:pointer;padding:0 10px;text-align:center}
+.sp-item:hover{border-color:var(--brand);background:var(--soft);color:var(--brand)}
+.visitbox{display:inline-flex;gap:6px;align-items:center;margin:6px 0 4px;padding:6px 12px;border-radius:99px;background:var(--surface-2);color:var(--ink);font-size:13.5px}
+.footlinks{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 .insthint{margin-top:10px}
 .insthint .chip{align-items:flex-start}
 /* Guía «¿Cómo funciona?» */
@@ -354,6 +378,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <p>Calcula tu puntaje, descubre tu nivel y recibe <b>estrategias personalizadas</b> para subir de nivel. Guarda el <b>historial de tus avances</b>.</p>
       </div>
     </div>
+    <button class="hdr-btn" id="spBtn" type="button" aria-haspopup="dialog" title="Compartir la plataforma">Compartir</button>
     <button class="theme-btn" id="themeBtn" type="button" aria-pressed="false" aria-label="Cambiar a tema oscuro" title="Cambiar a tema oscuro">☾</button>
     <nav class="tabs" role="tablist" aria-label="Secciones">
       <button class="tab" role="tab" data-view="calc" aria-selected="true">Calculadora</button>
@@ -681,7 +706,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <details><summary>¿Qué tesis cuentan?</summary><p>Solo tesis sustentadas y aprobadas. Una resolución que te designa asesor no sirve como sustento. Puedes informar el enlace de RENATI (SUNEDU) o del repositorio institucional.</p></details>
         <details><summary>Alcanzo 200 puntos pero mi índice h es menor que 10</summary><p>No accedes a Investigador Distinguido. Esta calculadora te muestra Nivel I y te avisa que te falta el índice h. Además, el art. 8.4.7 del reglamento prevé la incorporación excepcional de Investigadores Distinguidos por invitación del CONCYTEC; confirma el procedimiento vigente con el CONCYTEC.</p></details>
                 <details><summary>¿Cómo se usa mi ficha de CTI Vitae?</summary><p>Al pegar tu enlace, un servicio consulta tu ficha pública (el navegador no puede hacerlo directamente) y la devuelve a tu pantalla; no se guarda. La interpretación ocurre en tu navegador y tú revisas cada producto antes de aplicarlo. Si prefieres no usar el enlace, puedes subir tu ficha guardada como HTML y no sale de tu equipo.</p></details>
-        <details><summary>¿Qué pasa con mis datos?</summary><p>Todo lo que ingresas se guarda solo en tu navegador (almacenamiento local). Únicamente si marcas el consentimiento en la pestaña Comunidad y pulsas “Enviar”, se envía un resumen anónimo: nivel, puntaje por criterio, grado, índice h, cantidades por tipo de producto y, si lo indicas, tu institución (nacional o extranjera, con su país). No se envían nombres, correos ni títulos de tus productos. Puedes retirar tus aportes en cualquier momento desde esa pestaña. Si propones una institución que no está en la lista, se envía únicamente su nombre, si es nacional o extranjera y el país; cuando otra persona la confirma o el administrador la aprueba, aparece en la lista para todos. Si envías una sugerencia, se guarda el texto, la pestaña desde la que escribes y, solo si lo indicas y lo consientes, tu correo; puedes retirarla desde el mismo botón de “Retirar”. Se aplican los principios de la Ley N° 29733 de Protección de Datos Personales del Perú.</p></details>
+        <details><summary>¿Qué pasa con mis datos?</summary><p>Todo lo que ingresas se guarda solo en tu navegador (almacenamiento local). Únicamente si marcas el consentimiento en la pestaña Comunidad y pulsas “Enviar”, se envía un resumen anónimo: nivel, puntaje por criterio, grado, índice h, cantidades por tipo de producto y, si lo indicas, tu institución (nacional o extranjera, con su país). No se envían nombres, correos ni títulos de tus productos. Puedes retirar tus aportes en cualquier momento desde esa pestaña. Contador de accesos: una vez al día por navegador se envía un aviso sin ningún identificador (solo suma 1 al total) y se guarda en tu navegador la fecha del último aviso para no repetirlo. Si propones una institución que no está en la lista, se envía únicamente su nombre, si es nacional o extranjera y el país; cuando otra persona la confirma o el administrador la aprueba, aparece en la lista para todos. Si envías una sugerencia, se guarda el texto, la pestaña desde la que escribes y, solo si lo indicas y lo consientes, tu correo; puedes retirarla desde el mismo botón de “Retirar”. Se aplican los principios de la Ley N° 29733 de Protección de Datos Personales del Perú.</p></details>
         <details><summary>¿Qué mide esta calculadora y qué no?</summary><p>Aplica las Tablas 1 y 3 del Anexo N° 1 sobre lo que tú declares. No verifica que tus revistas estén indizadas, que el cuartil sea el correcto para el año, ni que tus documentos de sustento sean aceptables. Esa verificación la hace el CONCYTEC.</p></details>
       </div>
     </div>
@@ -701,7 +726,8 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
     <div class="author" id="authorCard"></div>
     <p><b>Fuente normativa:</b> Reglamento de Calificación, Clasificación y Registro de los Investigadores del SINACYT, RP N° 090-2021-CONCYTEC-P, Anexo N° 1 (Tablas 1, 2 y 3).</p>
     <p>Herramienta educativa e independiente, sin vínculo con el CONCYTEC. Verifica siempre el reglamento vigente antes de postular.</p>
-    <p>Material educativo © 2026 · <a href="#feed">Enviar una sugerencia</a></p>
+    <p class="footlinks"><span>Material educativo © 2026</span> <a href="#feed">Enviar una sugerencia</a> <button class="linkbtn" type="button" data-action="open-share">Compartir esta plataforma</button></p>
+    <p id="visitBox" class="visitbox" hidden></p>
   </div>
 </footer>
 
@@ -717,6 +743,14 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
       <button class="btn" value="ok" type="submit" id="saveOk">Guardar</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="spDlg" aria-labelledby="spTitle">
+  <h3 id="spTitle">Compartir la plataforma</h3>
+  <p class="sub" style="margin:0 0 12px">Ayuda a otras personas investigadoras a conocer su nivel RENACYT. Se comparte solo el enlace de la plataforma, nunca tus datos.</p>
+  <div class="sp-grid" id="spGrid"></div>
+  <p class="sub" style="margin:0 0 14px"><b>Instagram</b> no permite compartir enlaces desde una página web: usa «Copiar enlace» y pégalo en tu historia, tu biografía o un mensaje.</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="spClose" type="button">Cerrar</button></div>
 </dialog>
 
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo" hidden>Deshacer</button></div>
@@ -1313,6 +1347,9 @@ document.addEventListener("click", e => {
   else if(act==="fb-unrate"){ document.querySelectorAll("#fbStars input").forEach(r => r.checked = false); fbSaveDraft(); fbRefresh(); }
   else if(act==="fb-copy"){ fbCopy(); }
   else if(act==="inst-propose"){ proposeInst(); }
+  else if(act==="open-share"){ $("#spDlg").showModal(); }
+  else if(act==="copy-link"){ copyLink(); }
+  else if(act==="native-share"){ nativeShare(); }
   else if(act==="cti-fetch"){ ctiFetch(); }
   else if(act==="cti-apply"){ ctiApply(); }
   else if(act==="cti-clear"){ CTI = null; renderCtiReview(); ctiMsg("", "sub"); }
@@ -1421,7 +1458,8 @@ const CONFIG = {
   // URL de la aplicación web de Google Apps Script (ver google-apps-script/INSTALACION.md).
   // Mientras esté vacía, el envío de aportes queda desactivado.
   endpoint: "https://script.google.com/macros/s/AKfycbyjnAcZgRLRVRLW-S6I4wMrbys7zSF9o7Ee3ZdS5v0AoEk8WEewGlSG8_fx7jF05a2V/exec",
-  appVersion: 1
+  appVersion: 1,
+  visitCounter: true          // contador de accesos anónimo (se puede desactivar con false)
 };
 const AUTHOR = {
   name: "Rafael Segundo Vela-Paredes",
@@ -2345,6 +2383,64 @@ function initFeedback(){
   $("#fbForm").addEventListener("change", () => { fbSaveDraft(); fbRefresh(); });
 }
 
+/* ================= Compartir y contador de accesos ================= */
+// Siempre se comparte la dirección oficial (no una copia de prueba ni una dirección con parámetros).
+const SITE_URL = "https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/";
+const SHARE_TITLE = "Calculadora RENACYT";
+const SHARE_TEXT = "Calculadora RENACYT: calcula tu puntaje y nivel, importa tu ficha de CTI Vitae, recibe estrategias para subir de nivel y guarda el historial de tus avances.";
+function buildShare(){
+  const u = encodeURIComponent(SITE_URL), t = encodeURIComponent(SHARE_TEXT);
+  const links = [
+    ["WhatsApp", `https://wa.me/?text=${encodeURIComponent(SHARE_TEXT + " " + SITE_URL)}`, true],
+    ["X", `https://x.com/intent/post?text=${t}&url=${u}`, true],
+    ["Facebook", `https://www.facebook.com/sharer/sharer.php?u=${u}`, true],
+    ["Telegram", `https://t.me/share/url?url=${u}&text=${t}`, true],
+    ["LinkedIn", `https://www.linkedin.com/sharing/share-offsite/?url=${u}`, true],
+    ["Correo", `mailto:?subject=${encodeURIComponent(SHARE_TITLE)}&body=${encodeURIComponent(SHARE_TEXT + "\n\n" + SITE_URL)}`, false]
+  ];
+  $("#spGrid").innerHTML = links.map(([n, h, blank]) => `<a class="sp-item" href="${h}"${blank ? ' target="_blank" rel="noopener noreferrer"' : ""}>${n}</a>`).join("")
+    + `<button class="sp-item" type="button" data-action="copy-link">Copiar enlace</button>`
+    + (navigator.share ? `<button class="sp-item" type="button" data-action="native-share">Más opciones…</button>` : "");
+}
+async function copyLink(){
+  try{ await navigator.clipboard.writeText(SITE_URL); toast("Enlace copiado"); return; }catch{}
+  try{                                                           // alternativa para navegadores sin permiso de portapapeles
+    const t = document.createElement("textarea"); t.value = SITE_URL; t.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(t);
+    t.select(); const ok = document.execCommand("copy"); t.remove(); if(ok){ toast("Enlace copiado"); return; }
+  }catch{}
+  toast("No se pudo copiar. Selecciona y copia: " + SITE_URL);
+}
+async function nativeShare(){
+  try{ await navigator.share({title:SHARE_TITLE, text:SHARE_TEXT, url:SITE_URL}); }catch{}   // si la persona cancela no pasa nada
+}
+$("#spBtn").addEventListener("click", () => $("#spDlg").showModal());
+$("#spClose").addEventListener("click", () => $("#spDlg").close());
+$("#spDlg").addEventListener("click", e => { if(e.target === e.currentTarget) e.currentTarget.close(); });    // clic fuera cierra
+
+/* Contador: como máximo UN aviso por navegador y día, sin identificador alguno (el servidor solo suma 1). */
+const K_VISIT = "renacyt_calc_v1_lastvisit";
+function showVisits(d){
+  if(!d || typeof d.total !== "number") return;                  // un servidor sin esta función no muestra nada
+  const b = $("#visitBox"); b.hidden = false;
+  b.innerHTML = `Accesos a la plataforma: <b>${d.total.toLocaleString("es-PE")}</b>${typeof d.today === "number" ? ` · hoy: <b>${d.today.toLocaleString("es-PE")}</b>` : ""}`;
+}
+async function trackVisit(){
+  if(!CONFIG.visitCounter || !endpointOK()) return;
+  const today = new Date().toISOString().slice(0, 10);
+  let canStore = true, seen = false;
+  try{ seen = localStorage.getItem(K_VISIT) === today; }catch{ canStore = false; }
+  try{
+    let d;
+    if(canStore && !seen){                                       // primer acceso del día en este navegador
+      d = await postJSON({action:"visit"});
+      if(d && d.ok){ try{ localStorage.setItem(K_VISIT, today); }catch{} }
+    } else {
+      d = await (await fetch(CONFIG.endpoint + "?action=visits")).json();
+    }
+    if(d && d.ok) showVisits(d);
+  }catch{}
+}
+
 /* ================= Inicio ================= */
 (function init(){
   try{ const th = localStorage.getItem("renacyt_calc_v1_theme"); document.documentElement.dataset.theme = th === "dark" ? "dark" : "light"; }catch{ document.documentElement.dataset.theme = "light"; }
@@ -2358,6 +2454,7 @@ function initFeedback(){
   const h = store.get(K_HIST); HIST = Array.isArray(h) ? h.filter(x => x && x.state && typeof x.ts==="number") : [];
   syncProfile(); refresh();
   loadCommunityInst();
+  buildShare(); trackVisit();
   const v = (location.hash||"").slice(1); if(VIEWS.includes(v)) showView(v);
   window.addEventListener("hashchange", () => { const w = location.hash.slice(1); if(VIEWS.includes(w)) showView(w); });
 })();
