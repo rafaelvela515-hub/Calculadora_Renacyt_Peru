@@ -68,7 +68,7 @@ nav.tabs::-webkit-scrollbar{display:none}
 .card .sub{color:var(--muted);font-size:14px;margin:6px 0 14px}
 .badge-cap{margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);background:var(--surface-2);padding:3px 9px;border-radius:99px;white-space:nowrap}
 
-label.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:0 0 5px}
+.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:0 0 5px}
 input[type=text],input[type=number],select{width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);}
 input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible,.degree:focus-within{outline:3px solid color-mix(in srgb,var(--brand) 55%,transparent);outline-offset:1px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -316,6 +316,12 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 .stars label{font-size:30px;line-height:1;color:var(--line);cursor:pointer;padding:2px 3px;border-radius:6px;min-width:36px;min-height:44px;display:grid;place-items:center}
 .stars input:checked + label,.stars input:checked + label ~ label,.stars label:hover,.stars label:hover ~ label{color:var(--gold)}
 .stars input:focus-visible + label{outline:3px solid color-mix(in srgb,var(--brand) 55%,transparent)}
+[hidden]{display:none !important}
+.seg{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 12px}
+.seg label{position:relative;display:flex;align-items:center;padding:10px 16px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;background:var(--surface);min-height:44px;font-size:14.5px;font-weight:600}
+.seg input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.seg label:has(input:checked){border-color:var(--brand);background:var(--soft);color:var(--brand)}
+.seg label:has(input:focus-visible){outline:3px solid color-mix(in srgb,var(--brand) 55%,transparent);outline-offset:1px}
 </style>
 </head>
 <body>
@@ -357,9 +363,17 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
             <div><label class="lbl" for="name">Tu nombre (opcional, para el historial e informe)</label><input type="text" id="name" maxlength="80" autocomplete="name" placeholder="Nombre y apellidos"></div>
             <div><label class="lbl" for="hidx">Índice h en Scopus</label><input type="number" id="hidx" min="0" max="300" inputmode="numeric" placeholder="0"></div>
           </div>
-          <div class="grid2" style="margin-bottom:14px">
-            <div><label class="lbl" for="inst">Institución donde laboras (opcional)</label><input type="text" id="inst" maxlength="80" list="instList" autocomplete="organization" placeholder="Escribe o elige de la lista"><datalist id="instList"></datalist></div>
-            <div><label class="lbl" for="area">Gran área de conocimiento (opcional)</label><select id="area"><option value="">Prefiero no indicarla</option><option value="ing">Ingeniería y Tecnología</option><option value="nat">Ciencias Naturales, Médicas y de la Salud, y Agropecuarias</option><option value="soc">Ciencias Sociales y Humanidades</option></select></div>
+          <div style="margin-bottom:14px">
+            <span class="lbl" id="originLbl">Institución donde laboras (opcional)</span>
+            <div class="seg" role="radiogroup" aria-labelledby="originLbl" id="origin">
+              <label><input type="radio" name="origin" value="" checked>No indicar</label>
+              <label><input type="radio" name="origin" value="nacional">Nacional (Perú)</label>
+              <label><input type="radio" name="origin" value="extranjera">Extranjera</label>
+            </div>
+            <div class="grid2" id="instFields" hidden>
+              <div><label class="lbl" for="inst">Nombre de la institución</label><input type="text" id="inst" maxlength="100" list="instList" autocomplete="organization" placeholder="Escribe o elige de la lista"><datalist id="instList"></datalist></div>
+              <div id="countryBox" hidden><label class="lbl" for="country">País de la institución</label><select id="country"></select></div>
+            </div>
           </div>
           <label class="lbl" id="degLbl">Máximo grado académico o título</label>
           <div class="degrees" role="radiogroup" aria-labelledby="degLbl" id="degrees"></div>
@@ -520,7 +534,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <h2>Tu privacidad</h2>
         <ul style="margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.7">
           <li>No pedimos nombre ni correo.</li>
-          <li>La institución y el área son opcionales.</li>
+          <li>La institución, si es nacional o extranjera y su país son opcionales.</li>
           <li>Ninguna institución se publica si tiene menos de 5 participantes.</li>
           <li>Puedes retirar todos tus aportes desde este navegador.</li>
           <li>Tus datos personales de la calculadora (productos, títulos, fechas) nunca salen de tu navegador.</li>
@@ -635,7 +649,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <details><summary>¿Qué tesis cuentan?</summary><p>Solo tesis sustentadas y aprobadas. Una resolución que te designa asesor no sirve como sustento. Puedes informar el enlace de RENATI (SUNEDU) o del repositorio institucional.</p></details>
         <details><summary>Alcanzo 200 puntos pero mi índice h es menor que 10</summary><p>No accedes a Investigador Distinguido. Esta calculadora te muestra Nivel I y te avisa que te falta el índice h. Además, el art. 8.4.7 del reglamento prevé la incorporación excepcional de Investigadores Distinguidos por invitación del CONCYTEC; confirma el procedimiento vigente con el CONCYTEC.</p></details>
                 <details><summary>¿Cómo se usa mi ficha de CTI Vitae?</summary><p>Al pegar tu enlace, un servicio consulta tu ficha pública (el navegador no puede hacerlo directamente) y la devuelve a tu pantalla; no se guarda. La interpretación ocurre en tu navegador y tú revisas cada producto antes de aplicarlo. Si prefieres no usar el enlace, puedes subir tu ficha guardada como HTML y no sale de tu equipo.</p></details>
-        <details><summary>¿Qué pasa con mis datos?</summary><p>Todo lo que ingresas se guarda solo en tu navegador (almacenamiento local). Únicamente si marcas el consentimiento en la pestaña Comunidad y pulsas “Enviar”, se envía un resumen anónimo: nivel, puntaje por criterio, grado, índice h, cantidades por tipo de producto y, si lo indicas, tu institución y área. No se envían nombres, correos ni títulos de tus productos. Puedes retirar tus aportes en cualquier momento desde esa pestaña. Si envías una sugerencia, se guarda el texto, la pestaña desde la que escribes y, solo si lo indicas y lo consientes, tu correo; puedes retirarla desde el mismo botón de “Retirar”. Se aplican los principios de la Ley N° 29733 de Protección de Datos Personales del Perú.</p></details>
+        <details><summary>¿Qué pasa con mis datos?</summary><p>Todo lo que ingresas se guarda solo en tu navegador (almacenamiento local). Únicamente si marcas el consentimiento en la pestaña Comunidad y pulsas “Enviar”, se envía un resumen anónimo: nivel, puntaje por criterio, grado, índice h, cantidades por tipo de producto y, si lo indicas, tu institución (nacional o extranjera, con su país). No se envían nombres, correos ni títulos de tus productos. Puedes retirar tus aportes en cualquier momento desde esa pestaña. Si envías una sugerencia, se guarda el texto, la pestaña desde la que escribes y, solo si lo indicas y lo consientes, tu correo; puedes retirarla desde el mismo botón de “Retirar”. Se aplican los principios de la Ley N° 29733 de Protección de Datos Personales del Perú.</p></details>
         <details><summary>¿Qué mide esta calculadora y qué no?</summary><p>Aplica las Tablas 1 y 3 del Anexo N° 1 sobre lo que tú declares. No verifica que tus revistas estén indizadas, que el cuartil sea el correcto para el año, ni que tus documentos de sustento sean aceptables. Esa verificación la hace el CONCYTEC.</p></details>
       </div>
     </div>
@@ -745,7 +759,7 @@ const ymIdx = (y, m) => y*12 + (m ? m-1 : 0);   // sin mes: se asume enero (crit
 const fullDate = ts => new Date(ts).toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"});
 
 /* ================= Estado ================= */
-const blankState = () => ({name:"", inst:"", cti:"", area:"", degree:"none", student:false, affil:false, h:0, counts:{}, recent:{}, project:false, last:null});
+const blankState = () => ({name:"", inst:"", instOrigin:"", country:"", cti:"", degree:"none", student:false, affil:false, h:0, counts:{}, recent:{}, project:false, last:null});
 let S = blankState();
 let HIST = [];
 let sim = {counts:{}, degree:null, h:null};
@@ -755,8 +769,10 @@ function sanitizeState(o){
   const s = blankState();
   if(!o || typeof o !== "object") return s;
   s.name = String(o.name||"").slice(0,80);
-  s.inst = String(o.inst||"").replace(/\s+/g," ").trim().slice(0,80);
-  s.area = ["ing","nat","soc"].includes(o.area) ? o.area : "";
+  s.instOrigin = ["nacional","extranjera"].includes(o.instOrigin) ? o.instOrigin : "";
+  // sin procedencia no se conserva la institución (el campo queda oculto): evita datos invisibles
+  s.inst = s.instOrigin ? String(o.inst||"").replace(/\s+/g," ").trim().slice(0,100) : "";
+  s.country = (s.instOrigin === "extranjera" && COUNTRIES.includes(o.country)) ? o.country : "";
   s.cti = /^\d{1,9}$/.test(String(o.cti || "")) ? String(o.cti) : "";
   s.degree = DEGREES[o.degree] ? o.degree : "none";
   s.student = !!o.student; s.affil = !!o.affil;
@@ -857,7 +873,9 @@ function buildDegrees(){
 }
 function syncProfile(){
   $("#name").value = S.name; $("#hidx").value = S.h || "";
-  $("#inst").value = S.inst; $("#area").value = S.area;
+  $("#inst").value = S.inst; $("#country").value = S.country;
+  $$("input[name=origin]").forEach(r => r.checked = (r.value === S.instOrigin));
+  renderInstUi();
   if(S.cti && !$("#ctiUrl").value) $("#ctiUrl").value = "https://ctivitae.concytec.gob.pe/appDirectorioCTI/VerDatosInvestigador.do?id_investigador=" + S.cti;
   $("#student").checked = S.student; $("#affil").checked = S.affil;
   $$("input[name=degree]").forEach(r => r.checked = (r.value === S.degree));
@@ -1158,7 +1176,7 @@ function buildReport(){
     `<tr><td>${esc(t.label)}</td><td class="r">${S.counts[k]}</td><td class="r">${REC_GRP.includes(t.grp) ? (S.recent[k]||0) : "—"}</td><td class="r">${fmt(t.pts)}</td></tr>`).join("");
   $("#printArea").innerHTML = `
     <h1>Informe de autoevaluación RENACYT</h1>
-    <small>${esc(S.name||"Sin nombre")}${S.inst?" · "+esc(S.inst):""} · generado el ${fullDate(Date.now())} · Reglamento RP 090-2021-CONCYTEC-P</small>
+    <small>${esc(S.name||"Sin nombre")}${S.inst?" · "+esc(instLabel()):""} · generado el ${fullDate(Date.now())} · Reglamento RP 090-2021-CONCYTEC-P</small>
     <h2 style="margin:14px 0 4px">${esc(levelName(c.level))} — ${fmt(c.total)} puntos</h2>
     <table><tr><th>Criterio</th><th class="r">Puntos</th></tr>
       <tr><td>Formación (${esc(DEGREES[S.degree].label)})</td><td class="r">${fmt(c.formation)}</td></tr>
@@ -1232,7 +1250,7 @@ document.addEventListener("click", e => {
   const act = a.dataset.action;
   if(act==="sample"){
     const y = now.getFullYear();
-    S = sanitizeState({name:S.name, inst:S.inst, area:S.area, degree:"master", h:4, student:false, affil:true, project:true,
+    S = sanitizeState({name:S.name, inst:S.inst, instOrigin:S.instOrigin, country:S.country, degree:"master", h:4, student:false, affil:true, project:true,
       counts:{art_q2:2, art_q3:1, art_oth:2, chapter:1, th_ms:2, th_ug:1}, recent:{art_q2:2, chapter:1}, last:{y:y-1, m:5}});
     syncProfile(); refresh(); toast("Ejemplo cargado: reemplázalo con tus datos");
   } else if(act==="clear"){
@@ -1288,8 +1306,24 @@ document.addEventListener("change", e => {
 });
 
 $("#name").addEventListener("input", e => { S.name = e.target.value.slice(0,80); persist(); });
-$("#inst").addEventListener("input", e => { S.inst = e.target.value.slice(0,80); persist(); renderShare(); });
-$("#area").addEventListener("change", e => { S.area = e.target.value; persist(); renderShare(); });
+$("#inst").addEventListener("input", e => {
+  S.inst = e.target.value.slice(0,100);
+  if(S.instOrigin === "extranjera"){                                   // al elegir una institución conocida se completa su país
+    const c = EXT_COUNTRY.get(S.inst);
+    if(c){ S.country = c; $("#country").value = c; }                   // la lista conoce su país: prevalece sobre uno elegido antes
+  }
+  persist(); renderShare();
+});
+$("#country").addEventListener("change", e => { S.country = e.target.value; persist(); renderShare(); });
+$("#origin").addEventListener("change", e => {
+  if(e.target.name !== "origin") return;
+  S.instOrigin = e.target.value;
+  if(!S.instOrigin){ S.inst = ""; S.country = ""; }
+  else if(S.instOrigin === "nacional"){ S.country = ""; if(EXT_COUNTRY.has(S.inst)) S.inst = ""; }
+  else if(INST_PE.includes(S.inst)) S.inst = "";                       // venía de la lista nacional
+  $("#inst").value = S.inst; $("#country").value = S.country;
+  renderInstUi(); persist(); renderShare();
+});
 $("#hidx").addEventListener("input", e => { S.h = Math.max(0, Math.min(300, parseInt(e.target.value,10)||0)); refresh(); });
 $("#student").addEventListener("change", e => { S.student = e.target.checked; refresh(); });
 $("#affil").addEventListener("change", e => { S.affil = e.target.checked; refresh(); });
@@ -1364,22 +1398,165 @@ const AUTHOR = {
   scopus: "57200699171"           // solo dígitos; vacío = no se muestra
 };
 const VIEWS = ["calc","cti","plan","hist","comm","feed","ref"];
-const AREAS = {ing:"Ingeniería y Tecnología", nat:"Ciencias Naturales, Médicas y Agropecuarias", soc:"Ciencias Sociales y Humanidades"};
-const INSTITUTIONS = [
-  "Universidad Nacional de la Amazonía Peruana","Universidad Nacional Agraria La Molina","Universidad Nacional Mayor de San Marcos",
-  "Pontificia Universidad Católica del Perú","Universidad Nacional de Ingeniería","Universidad Peruana Cayetano Heredia",
-  "Universidad Nacional Federico Villarreal","Universidad Nacional San Antonio Abad del Cusco","Universidad Nacional de Trujillo",
-  "Universidad Nacional de San Agustín de Arequipa","Universidad Nacional de Cajamarca","Universidad Nacional del Altiplano",
-  "Universidad Nacional de San Martín","Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas","Universidad Nacional Agraria de la Selva",
-  "Universidad Nacional del Centro del Perú","Universidad Nacional de Piura","Universidad Nacional Pedro Ruiz Gallo",
-  "Universidad Nacional de Ucayali","Universidad Científica del Perú","Universidad de Lima","Universidad del Pacífico",
-  "Universidad Peruana Unión","Universidad Señor de Sipán","Universidad San Ignacio de Loyola","Universidad Continental",
-  "Universidad Peruana de Ciencias Aplicadas","Universidad de San Martín de Porres","Universidad César Vallejo",
-  "Instituto Nacional de Innovación Agraria (INIA)","Instituto de Investigaciones de la Amazonía Peruana (IIAP)","Instituto Nacional de Salud (INS)"
+/* Países en español (sin Perú, que es la opción «Nacional»). */
+const COUNTRIES = [
+  "Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Antigua y Barbuda", "Arabia Saudita", "Argelia",
+  "Argentina", "Armenia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bangladés", "Barbados", "Baréin",
+  "Bélgica", "Belice", "Benín", "Bielorrusia", "Birmania (Myanmar)", "Bolivia", "Bosnia y Herzegovina", "Botsuana",
+  "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Bután", "Cabo Verde", "Camboya", "Camerún", "Canadá",
+  "Catar", "Chad", "Chile", "China", "Chipre", "Colombia", "Comoras", "Corea del Norte", "Corea del Sur",
+  "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador",
+  "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Esuatini",
+  "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Granada", "Grecia",
+  "Guatemala", "Guinea", "Guinea Ecuatorial", "Guinea-Bisáu", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría",
+  "India", "Indonesia", "Irak", "Irán", "Irlanda", "Islandia", "Islas Marshall", "Islas Salomón", "Israel", "Italia",
+  "Jamaica", "Japón", "Jordania", "Kazajistán", "Kenia", "Kirguistán", "Kiribati", "Kosovo", "Kuwait", "Laos",
+  "Lesoto", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macedonia del Norte",
+  "Madagascar", "Malasia", "Malaui", "Maldivas", "Malí", "Malta", "Marruecos", "Mauricio", "Mauritania", "México",
+  "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montenegro", "Mozambique", "Namibia", "Nauru", "Nepal",
+  "Nicaragua", "Níger", "Nigeria", "Noruega", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palaos",
+  "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Polonia", "Portugal", "Puerto Rico", "Reino Unido",
+  "República Centroafricana", "República Checa", "República del Congo", "República Democrática del Congo",
+  "República Dominicana", "Ruanda", "Rumania", "Rusia", "Samoa", "San Cristóbal y Nieves", "San Marino",
+  "San Vicente y las Granadinas", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia", "Seychelles",
+  "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Sudáfrica", "Sudán", "Sudán del Sur", "Suecia",
+  "Suiza", "Surinam", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Timor Oriental", "Togo", "Tonga",
+  "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán",
+  "Vanuatu", "Vaticano", "Venezuela", "Vietnam", "Yemen", "Yibuti", "Zambia", "Zimbabue"
 ];
+/* Instituciones nacionales: las más frecuentes del reporte de investigadores RENACYT (grafías unificadas). */
+const INST_PE = [
+  "Universidad Nacional Mayor de San Marcos (UNMSM)", "Universidad César Vallejo (UCV)",
+  "Universidad Nacional de Trujillo (UNT)", "Universidad Nacional de San Agustín de Arequipa (UNSA)",
+  "Universidad Nacional del Altiplano (UNA Puno)", "Pontificia Universidad Católica del Perú (PUCP)",
+  "Universidad Peruana Cayetano Heredia (UPCH)",
+  "Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas (UNTRM)", "Universidad Privada del Norte (UPN)",
+  "Universidad Nacional Agraria La Molina (UNALM)", "Universidad Científica del Sur (UCSUR)",
+  "Universidad Tecnológica del Perú (UTP)", "Universidad Peruana de Ciencias Aplicadas (UPC)",
+  "Instituto Nacional de Innovación Agraria (INIA)", "Universidad Nacional de Ingeniería (UNI)",
+  "Universidad Continental (UC)", "Universidad Nacional Federico Villarreal (UNFV)",
+  "Universidad Nacional del Centro del Perú (UNCP)", "Universidad Católica de Santa María (UCSM)",
+  "Universidad Nacional San Luis Gonzaga de Ica", "Universidad Privada Antenor Orrego (UPAO)",
+  "Universidad Nacional Pedro Ruiz Gallo (UNPRG)", "Universidad Nacional de Huancavelica",
+  "Universidad San Ignacio de Loyola (USIL)", "Universidad Nacional del Callao (UNAC)",
+  "Universidad Nacional Jorge Basadre Grohmann", "Universidad Nacional José Faustino Sánchez Carrión",
+  "Universidad Nacional de San Antonio Abad del Cusco (UNSAAC)", "Universidad Señor de Sipán (USS)",
+  "Instituto Nacional de Salud (INS)", "Universidad Nacional de la Amazonía Peruana (UNAP)",
+  "Universidad Nacional de San Cristóbal de Huamanga (UNSCH)", "Universidad de Lima (ULima)",
+  "Universidad Peruana Los Andes", "Universidad Ricardo Palma (URP)",
+  "Universidad Nacional de Educación Enrique Guzmán y Valle", "Universidad Nacional Hermilio Valdizán",
+  "Universidad de San Martín de Porres (USMP)", "Universidad Nacional de Piura (UNP)",
+  "Universidad Nacional de San Martín (UNSM)", "Universidad Privada San Juan Bautista",
+  "Universidad Privada Norbert Wiener (UPNW)", "Universidad Nacional de Juliaca", "Universidad del Pacífico (UP)",
+  "Universidad Nacional de Cajamarca (UNC)", "Universidad Nacional Daniel Alcides Carrión",
+  "Universidad de Ingeniería y Tecnología (UTEC)", "Universidad de Piura (UDEP)", "Universidad Nacional de Tumbes",
+  "Universidad Nacional de Moquegua", "Universidad Católica San Pablo", "Universidad Nacional José María Arguedas",
+  "Universidad Nacional Micaela Bastidas de Apurímac", "Universidad Nacional de Ucayali (UNU)",
+  "Instituto Nacional de Enfermedades Neoplásicas (INEN)", "Universidad Nacional Amazónica de Madre de Dios",
+  "Universidad Nacional de Frontera", "Universidad Nacional del Santa",
+  "Universidad Nacional Santiago Antúnez de Mayolo", "Universidad Peruana Unión (UPeU)",
+  "Instituto de Investigaciones de la Amazonía Peruana (IIAP)", "Universidad ESAN", "Universidad Privada de Tacna",
+  "Seguro Social de Salud (EsSalud)", "Universidad Nacional Agraria de la Selva (UNAS)",
+  "Universidad Católica Santo Toribio de Mogrovejo", "Instituto del Mar del Perú (IMARPE)",
+  "Universidad Andina Néstor Cáceres Velásquez", "Universidad Nacional Tecnológica de Lima Sur",
+  "Universidad Autónoma del Perú", "Universidad Nacional de Cañete", "Universidad Nacional de Jaén",
+  "Universidad Privada de Huancayo Franklin Roosevelt", "Universidad Nacional Intercultural de la Amazonía",
+  "Universidad Nacional Autónoma de Tayacaja Daniel Hernández Morillo",
+  "Universidad Nacional Autónoma Altoandina de Tarma", "Universidad Nacional Autónoma de Alto Amazonas",
+  "Universidad Nacional Autónoma de Chota", "Universidad Nacional de Barranca", "Escuela de Posgrado Newman",
+  "Instituto Geofísico del Perú (IGP)", "Universidad Andina del Cusco", "Universidad de Ciencias y Humanidades",
+  "Hospital Nacional Edgardo Rebagliati Martins (EsSalud)", "Universidad Autónoma de Ica",
+  "Centro Internacional de la Papa (CIP)", "Universidad Nacional Autónoma de Huanta",
+  "Universidad Católica Sedes Sapientiae", "Universidad Antonio Ruiz de Montoya",
+  "Universidad Católica de Trujillo Benedicto XVI",
+  "Universidad Nacional Intercultural Fabiola Salazar Leguía de Bagua",
+  "Universidad Nacional Intercultural de la Selva Central Juan Santos Atahualpa",
+  "Instituto Tecnológico de la Producción (ITP)", "Universidad de Huánuco",
+  "Hospital Nacional Guillermo Almenara Irigoyen (EsSalud)", "Instituto Geológico Minero y Metalúrgico (INGEMMET)",
+  "Instituto Nacional de Salud del Niño", "Universidad Tecnológica de los Andes",
+  "Instituto Nacional de Ciencias Neurológicas", "Universidad Nacional Intercultural de Quillabamba",
+  "Ministerio de Salud (MINSA)", "Universidad Católica Los Ángeles de Chimbote",
+  "Servicio Nacional de Meteorología e Hidrología del Perú (SENAMHI)",
+  "Universidad Femenina del Sagrado Corazón (UNIFE)", "Hospital Cayetano Heredia (UPCH)",
+  "Grupo de Análisis para el Desarrollo (GRADE)",
+  "Instituto Nacional de Investigación en Glaciares y Ecosistemas de Montaña (INAIGEM)",
+  "Universidad Privada de Trujillo", "Hospital Nacional Dos de Mayo", "Hospital Regional Lambayeque",
+  "Universidad María Auxiliadora", "Instituto de Evaluación de Tecnologías en Salud e Investigación (IETSI)",
+  "Instituto Nacional Cardiovascular", "Universidad Científica del Perú", "Universidad José Carlos Mariátegui",
+  "Universidad Nacional Ciro Alegría", "Comisión Nacional de Investigación y Desarrollo Aeroespacial (CONIDA)",
+  "Hospital Nacional Arzobispo Loayza",
+  "Instituto Nacional de Investigación y Capacitación de Telecomunicaciones (INICTEL-UNI)",
+  "Instituto Nacional de Salud Mental Honorio Delgado – Hideyo Noguchi", "Hospital Nacional Daniel Alcides Carrión",
+  "Instituto Peruano de Energía Nuclear (IPEN)", "Ministerio de Cultura", "Universidad Le Cordon Bleu",
+  "Universidad Nacional Daniel Alomía Robles",
+  "Consejo Nacional de Ciencia, Tecnología e Innovación Tecnológica (CONCYTEC)",
+  "Hospital Nacional Almanzor Aguinaga Asenjo (EsSalud)", "Ministerio de Educación (MINEDU)", "Ministerio Público",
+  "Museo de Historia Natural (UNMSM)", "Servicio Nacional de Adiestramiento en Trabajo Industrial (SENATI)",
+  "Superintendencia Nacional de Aduanas y de Administración Tributaria (SUNAT)", "Clínica Internacional",
+  "Hospital Santa Rosa (MINSA)", "Universidad San Pedro",
+  "Centro de Investigaciones Tecnológicas, Biomédicas y Medioambientales", "CENTRUM Católica (PUCP)",
+  "Congreso de la República", "Instituto Nacional Materno Perinatal",
+  "Programa Nacional de Investigación Científica y Estudios Avanzados (PROCIENCIA)", "Universidad La Salle",
+  "Universidad Marcelino Champagnat", "Autoridad Nacional del Agua (ANA)",
+  "Centro de Ornitología y Biodiversidad (CORBIDI)", "Instituto de Investigación Nutricional", "Oncosalud",
+  "Organismo de Evaluación y Fiscalización Ambiental (OEFA)", "Servicio Nacional de Sanidad Agraria (SENASA)",
+  "Servicio Nacional Forestal y de Fauna Silvestre (SERFOR)", "Universidad Alas Peruanas",
+  "Universidad para el Desarrollo Andino",
+  "Centro de Investigación de Enfermedades Tropicales de la Marina de los EE. UU. (NAMRU-6)", "Ejército del Perú",
+  "Instituto Peruano de Neurociencias", "Instituto Peruano de Salud Familiar", "Ministerio del Ambiente (MINAM)",
+  "Organismo Nacional de Sanidad Pesquera (SANIPES)",
+  "Organismo Supervisor de la Inversión en Energía y Minería (OSINERGMIN)",
+  "Universidad de Ciencias y Artes de América Latina (UCAL)", "Universidad Interamericana para el Desarrollo",
+  "Universidad Politécnica del Perú", "Fuerza Aérea del Perú", "Instituto de Medicina Legal y Ciencias Forenses",
+  "Poder Judicial del Perú", "Superintendencia Nacional de Educación Superior Universitaria (SUNEDU)",
+  "Universidad Inca Garcilaso de la Vega", "Universidad Privada de Puno",
+  "Servicio Nacional de Áreas Naturales Protegidas por el Estado (SERNANP)",
+  "Programa Nacional de Becas y Crédito Educativo (PRONABEC)",
+  "Instituto de Medicina Tropical Alexander von Humboldt (UPCH)", "Instituto Nacional de Oftalmología"
+];
+/* Instituciones extranjeras frecuentes con su país: al elegir una se completa el país. */
+const INST_EXT = [
+  ["Universidade de São Paulo (USP)","Brasil"],
+  ["Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET)","Argentina"],
+  ["Smithsonian Institution","Estados Unidos"], ["Universidad Pablo de Olavide","España"],
+  ["Universidade Estadual de Campinas (UNICAMP)","Brasil"], ["Universidade Estadual Paulista (UNESP)","Brasil"],
+  ["University College London (UCL)","Reino Unido"], ["Harvard University","Estados Unidos"],
+  ["Missouri Botanical Garden","Estados Unidos"], ["Universidad Complutense de Madrid","España"],
+  ["Universidade Federal de São Carlos (UFSCar)","Brasil"],
+  ["Universidade Federal do Rio de Janeiro (UFRJ)","Brasil"], ["University of Oxford","Reino Unido"],
+  ["Duke University","Estados Unidos"], ["Hospital Clínic de Barcelona","España"],
+  ["The Field Museum","Estados Unidos"], ["The University of Texas MD Anderson Cancer Center","Estados Unidos"],
+  ["Universidade Federal de Mato Grosso do Sul (UFMS)","Brasil"], ["University of Central Florida","Estados Unidos"],
+  ["Faculdade de Engenharia de Alimentos (UNICAMP)","Brasil"],
+  ["London School of Hygiene & Tropical Medicine","Reino Unido"], ["Mayo Clinic","Estados Unidos"],
+  ["The Ohio State University","Estados Unidos"], ["The Rockefeller University","Estados Unidos"],
+  ["Universidad Arturo Prat","Chile"], ["Universidad de Jaén","España"], ["Universidad de Sonora","México"],
+  ["Universidad Internacional de Valencia (VIU)","España"], ["Universidade Federal de Lavras (UFLA)","Brasil"],
+  ["Universidade Federal do ABC (UFABC)","Brasil"], ["Universidade Federal do Paraná (UFPR)","Brasil"],
+  ["Universidade Federal do Rio Grande do Sul (UFRGS)","Brasil"],
+  ["University of California, Berkeley","Estados Unidos"], ["University of Kentucky","Estados Unidos"],
+  ["University of Miami","Estados Unidos"], ["University of Minnesota","Estados Unidos"],
+  ["University of Toronto","Canadá"], ["University of Twente","Países Bajos"],
+  ["University of Virginia","Estados Unidos"], ["University of Washington","Estados Unidos"]
+];
+const EXT_COUNTRY = new Map(INST_EXT);
 const K_CID = "renacyt_calc_v1_cid", K_SENT = "renacyt_calc_v1_sent";
 
-function buildInst(){ $("#instList").innerHTML = INSTITUTIONS.map(n => `<option value="${esc(n)}"></option>`).join(""); }
+function buildInst(){
+  $("#country").innerHTML = '<option value="">Elige el país…</option>' + COUNTRIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  renderInstUi();
+}
+// Muestra u oculta los campos según la procedencia y cambia las sugerencias de la lista
+function renderInstUi(){
+  const o = S.instOrigin;
+  $("#instFields").hidden = !o;
+  $("#countryBox").hidden = o !== "extranjera";
+  const names = o === "extranjera" ? INST_EXT.map(x => x[0]) : (o === "nacional" ? INST_PE : []);
+  $("#instList").innerHTML = names.map(n => `<option value="${esc(n)}"></option>`).join("");
+  $("#inst").placeholder = o === "extranjera" ? "Nombre de la institución (puedes elegir de la lista)" : "Escribe o elige de la lista";
+}
+const originTxt = () => S.instOrigin === "nacional" ? "Nacional (Perú)" : S.instOrigin === "extranjera" ? "Extranjera" + (S.country ? " · " + S.country : "") : "No indicada";
+const instLabel = () => !S.inst ? "" : S.instOrigin === "extranjera" ? `${S.inst} (${S.country || "extranjera"})` : S.inst;
 
 function renderAuthor(){
   const A = AUTHOR, ids = [];
@@ -1405,7 +1582,8 @@ const readSent = () => { const a = store.get(K_SENT); return Array.isArray(a) ? 
 function buildPayload(){
   const c = compute(S);
   return {action:"submit", clientId:getCid(), level:levelName(c.level), total:c.total, formation:c.formation, production:c.production,
-    advising:c.advising, degree:S.degree, h:c.h, student:S.student, active:c.active, area:S.area, institution:S.inst.trim(),
+    advising:c.advising, degree:S.degree, h:c.h, student:S.student, active:c.active,
+    institution:S.instOrigin ? S.inst.trim() : "", instOrigin:S.instOrigin, country:S.instOrigin === "extranjera" ? S.country : "",
     counts:c.counts, v:CONFIG.appVersion, hp:""};
 }
 function renderShare(){
@@ -1414,8 +1592,8 @@ function renderShare(){
     `<div class="chip warn" style="margin-bottom:12px"><i>!</i><span>El envío todavía no está conectado a un servidor. Cuando el administrador lo active, podrás aportar desde aquí.</span></div>`;
   $("#shareSum").innerHTML = `<div class="sharegrid">
       <div><small>Nivel</small><b>${esc(levelName(c.level))}</b></div><div><small>Puntaje</small><b>${fmt(c.total)}</b></div>
-      <div><small>Institución</small><b>${esc(S.inst || "No indicada")}</b></div><div><small>Área</small><b>${esc(AREAS[S.area] || "No indicada")}</b></div></div>
-    <p class="sub" style="margin:8px 0 12px">Para cambiar institución o área, <a href="#calc">edítalas en la Calculadora</a>.</p>`;
+      <div><small>Institución</small><b>${esc(S.inst || "No indicada")}</b></div><div><small>Procedencia</small><b>${esc(originTxt())}</b></div></div>
+    <p class="sub" style="margin:8px 0 12px">Para cambiar tu institución o su procedencia, <a href="#calc">edítalas en la Calculadora</a>.</p>`;
   $("#payloadPrev").textContent = JSON.stringify(buildPayload(), null, 2);
   const sent = readSent(), lastS = sent[sent.length-1];
   $("#sentBox").innerHTML = lastS ? `<div class="chip ok"><i>✓</i><span>Has aportado ${sent.length} ${plural(sent.length,"vez","veces")} desde este navegador (último: ${fullDate(lastS.ts)}, ${fmt(lastS.total)} pts). Aportar de nuevo cuando avances permite medir tu progreso. <button class="btn ghost sm danger" data-action="withdraw" style="margin-top:8px">Retirar mis aportes</button></span></div>` : "";
@@ -1431,6 +1609,7 @@ async function sendContribution(){
   if(!endpointOK()){ say("El envío no está conectado.", "msg-bad"); return; }
   if(!$("#consent").checked){ say("Marca el consentimiento para continuar.", "msg-bad"); $("#consent").focus(); return; }
   const c = compute(S);
+  if(S.instOrigin === "extranjera" && !S.country){ say("Indica el país de tu institución en la Calculadora (paso 1) o elige «No indicar».", "msg-bad"); return; }
   if(!Object.keys(S.counts).length && S.degree==="none"){ say("Primero ingresa tus datos en la Calculadora.", "msg-bad"); return; }
   const payload = buildPayload(); payload.hp = $("#website").value;
   btn.disabled = true; say("Enviando…");
@@ -1489,8 +1668,10 @@ function renderMetrics(st){
   const levels = Object.entries(st.levels).reverse().filter(([,v]) => v>0).map(([k,v]) => [k, v, k]);
   const degNames = {doctor:"Doctor", master:"Magíster", title:"Título profesional", bachelor:"Bachiller / egresado", enrolled:"Matrícula", none:"Sin registro"};
   const degs = Object.entries(st.degrees).filter(([,v]) => v>0).map(([k,v]) => [degNames[k], v, k]);
-  const areaNames = {ing:AREAS.ing, nat:AREAS.nat, soc:AREAS.soc, none:"No indicada"};
-  const areas = Object.entries(st.areas).filter(([,v]) => v>0).map(([k,v]) => [areaNames[k], v, k]);
+  const originNames = {nacional:"Nacional (Perú)", extranjera:"Extranjera", none:"No indicada"};
+  const origins = Object.entries(st.origins || {}).filter(([,v]) => v>0).map(([k,v]) => [originNames[k], v, k]);
+  const extTotal = (st.origins && st.origins.extranjera) || 0;
+  const countries = (st.countries || []).length ? `<h3 class="mh">País de las instituciones extranjeras <small style="color:var(--muted);font-weight:400">(solo con ${st.minGroup}+ participantes)</small></h3>${hbars(st.countries.map(c => [c.name, c.n, c.name]), extTotal || 1)}` : "";
   // histograma
   let hi = 0; st.hist.forEach((v,i) => { if(v) hi = i; });
   const nb = Math.min(31, hi+3), mx = Math.max(...st.hist.slice(0,nb)), W=600,H=150,bw=W/nb;
@@ -1511,7 +1692,7 @@ function renderMetrics(st){
     <h3 class="mh">Distribución por nivel</h3>${hbars(levels, n, lvName)}
     <h3 class="mh">Distribución de puntajes</h3>${hist}
     <h3 class="mh">Por grado académico</h3>${hbars(degs, n)}
-    <h3 class="mh">Por gran área</h3>${hbars(areas, n)}
+    ${origins.length ? `<h3 class="mh">Procedencia de la institución</h3>${hbars(origins, n)}${countries}` : ""}
     ${inst}${months}
     <p class="sub" style="margin-top:16px">Actualizado: ${fullDate(Date.parse(st.updated))}. Cada persona cuenta una sola vez (su aporte más reciente).</p>`;
 }
@@ -1862,7 +2043,7 @@ async function downloadPdf(){
   doc.setTextColor(255); doc.setFont("helvetica", "bold"); doc.setFontSize(17);
   doc.text("Informe de autoevaluación RENACYT", M, 13);
   doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
-  doc.text(pdfTxt([S.name || "Sin nombre", S.inst].filter(Boolean).join("   |   ")), M, 20);
+  doc.text(pdfTxt([S.name || "Sin nombre", instLabel()].filter(Boolean).join("   |   ")), M, 20);
   doc.text(pdfTxt(`Generado el ${fullDate(Date.now())}   |   Reglamento RP 090-2021-CONCYTEC-P`), M, 25.5);
 
   /* --- Resultado --- */

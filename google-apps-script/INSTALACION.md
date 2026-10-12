@@ -65,6 +65,21 @@ La pestaña *Importar CTI Vitae* lee la ficha pública con el enlace. Como CTI V
 - **No probado contra Google real.** El lector se probó con una ficha real descargada y el script en un entorno simulado, pero no se pudo comprobar que el servidor de Google logre conectarse al de CONCYTEC (algunos sitios públicos del Estado rechazan conexiones de Google). Pruébalo con tu propio enlace tras publicar.
 - **Términos de uso.** No se pudo leer la página de términos de CTI Vitae y no hay `robots.txt`. La consulta es puntual, la inicia la persona usuaria y se limita a su propia ficha; aun así, si vas a difundir la herramienta, conviene avisar al CONCYTEC.
 
+## Actualización: procedencia y país de la institución
+
+La página ya no pide «gran área de conocimiento». En su lugar, la persona indica si su institución es **nacional** o **extranjera** (con país) y elige el nombre de una lista basada en el reporte de investigadores RENACYT. Para que el servidor guarde y muestre esos datos hay que **actualizar el script** (la página funciona igual si no lo haces, pero la procedencia y el país no quedan registrados).
+
+1. En tu hoja: **Extensiones → Apps Script**, reemplaza todo el contenido por el nuevo `Code.gs` y guarda.
+2. **Implementar → Administrar implementaciones →** lápiz → *Versión:* **Nueva versión → Implementar**. La URL no cambia.
+3. No hace falta tocar la hoja: al primer aporte nuevo se completan solas las cabeceras `origen_institucion` y `pais_institucion` (columnas P y Q). Las filas anteriores no se modifican.
+
+Qué cambia en los datos:
+
+- Se agregan 2 columnas al final: `origen_institucion` (`nacional` / `extranjera`) y `pais_institucion` (solo si es extranjera y está en la lista de países).
+- La columna `area` se conserva por compatibilidad, pero queda vacía en los aportes nuevos.
+- El nombre de la institución admite hasta 100 caracteres (antes 80).
+- El panel de métricas pasa de «por gran área» a «procedencia de la institución» y «país de las instituciones extranjeras» (este último solo con 5 o más participantes).
+
 ## Si cambias `Code.gs` más adelante
 
 Debes crear una **nueva versión**: *Implementar → Administrar implementaciones → editar (lápiz) → Versión: Nueva versión → Implementar*. La URL no cambia.

@@ -8,12 +8,19 @@
 
 const SHEET_NAME = 'Registros';
 const HEADERS = ['fecha_iso', 'client_id', 'nivel', 'total', 'formacion', 'produccion', 'asesoria',
-                 'grado', 'indice_h', 'estudiante', 'activo', 'area', 'institucion', 'conteos_json', 'version'];
+                 'grado', 'indice_h', 'estudiante', 'activo', 'area', 'institucion', 'conteos_json', 'version',
+                 'origen_institucion', 'pais_institucion'];
 
 const LEVELS = ['Sin nivel', 'Nivel VII', 'Nivel VI', 'Nivel V', 'Nivel IV', 'Nivel III', 'Nivel II', 'Nivel I',
                 'Investigador Distinguido'];
 const DEGREES = ['doctor', 'master', 'title', 'bachelor', 'enrolled', 'none'];
-const AREAS = ['', 'ing', 'nat', 'soc'];
+const AREAS = ['', 'ing', 'nat', 'soc'];   // en desuso: la página ya no envía área; se acepta vacío por compatibilidad
+const ORIGINS = ['', 'nacional', 'extranjera'];
+// Países en español (sin Perú, que es la opción «nacional»). Misma lista que la página.
+const COUNTRIES = [
+  "Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Antigua y Barbuda", "Arabia Saudita", "Argelia", "Argentina", "Armenia", "Australia", "Austria", "Azerbaiyán", "Bahamas", "Bangladés", "Barbados", "Baréin", "Bélgica", "Belice", "Benín", "Bielorrusia", "Birmania (Myanmar)", "Bolivia", "Bosnia y Herzegovina", "Botsuana", "Brasil", "Brunéi", "Bulgaria", "Burkina Faso", "Burundi", "Bután", "Cabo Verde", "Camboya", "Camerún", "Canadá", "Catar", "Chad", "Chile", "China", "Chipre", "Colombia", "Comoras", "Corea del Norte", "Corea del Sur", "Costa de Marfil", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "Emiratos Árabes Unidos", "Eritrea", "Eslovaquia", "Eslovenia", "España", "Estados Unidos", "Estonia", "Esuatini", "Etiopía", "Filipinas", "Finlandia", "Fiyi", "Francia", "Gabón", "Gambia", "Georgia", "Ghana", "Granada", "Grecia", "Guatemala", "Guinea", "Guinea Ecuatorial", "Guinea-Bisáu", "Guyana", "Haití", "Honduras", "Hong Kong", "Hungría", "India", "Indonesia", "Irak", "Irán", "Irlanda", "Islandia", "Islas Marshall", "Islas Salomón", "Israel", "Italia", "Jamaica", "Japón", "Jordania", "Kazajistán", "Kenia", "Kirguistán", "Kiribati", "Kosovo", "Kuwait", "Laos", "Lesoto", "Letonia", "Líbano", "Liberia", "Libia", "Liechtenstein", "Lituania", "Luxemburgo", "Macedonia del Norte", "Madagascar", "Malasia", "Malaui", "Maldivas", "Malí", "Malta", "Marruecos", "Mauricio", "Mauritania", "México", "Micronesia", "Moldavia", "Mónaco", "Mongolia", "Montenegro", "Mozambique", "Namibia", "Nauru", "Nepal", "Nicaragua", "Níger", "Nigeria", "Noruega", "Nueva Zelanda", "Omán", "Países Bajos", "Pakistán", "Palaos", "Palestina", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Polonia", "Portugal", "Puerto Rico", "Reino Unido", "República Centroafricana", "República Checa", "República del Congo", "República Democrática del Congo", "República Dominicana", "Ruanda", "Rumania", "Rusia", "Samoa", "San Cristóbal y Nieves", "San Marino", "San Vicente y las Granadinas", "Santa Lucía", "Santo Tomé y Príncipe", "Senegal", "Serbia", "Seychelles", "Sierra Leona", "Singapur", "Siria", "Somalia", "Sri Lanka", "Sudáfrica", "Sudán", "Sudán del Sur", "Suecia", "Suiza", "Surinam", "Tailandia", "Taiwán", "Tanzania", "Tayikistán", "Timor Oriental", "Togo", "Tonga", "Trinidad y Tobago", "Túnez", "Turkmenistán", "Turquía", "Tuvalu", "Ucrania", "Uganda", "Uruguay", "Uzbekistán", "Vanuatu", "Vaticano", "Venezuela", "Vietnam", "Yemen", "Yibuti", "Zambia", "Zimbabue"
+];
+const INST_MAX = 100;
 
 const MIN_GROUP = 5;               // no se publica ningún grupo con menos personas que esto
 const DEDUPE_MS = 10 * 60 * 1000;  // mismo navegador + mismo puntaje en 10 min = duplicado
@@ -56,7 +63,7 @@ function doPost(e) {
 
     sh.appendRow([new Date().toISOString(), rec.clientId, rec.level, rec.total, rec.formation, rec.production,
                   rec.advising, rec.degree, rec.h, rec.student, rec.active, rec.area, rec.institution,
-                  rec.counts, rec.version]);
+                  rec.counts, rec.version, rec.origin, rec.country]);
     CacheService.getScriptCache().remove('stats');
     return json_({ ok: true });
   } catch (err) {
@@ -136,6 +143,8 @@ function getSheet_(name, headers) {
     sh = ss.insertSheet(name);
     sh.appendRow(headers);
     sh.setFrozenRows(1);
+  } else if (sh.getLastColumn() < headers.length) {
+    sh.getRange(1, 1, 1, headers.length).setValues([headers]);
   }
   return sh;
 }
@@ -218,6 +227,13 @@ function cleanRecord_(p) {
   if (DEGREES.indexOf(p.degree) < 0) return null;
   const area = p.area == null ? '' : String(p.area);
   if (AREAS.indexOf(area) < 0) return null;
+  const origin = p.instOrigin == null ? '' : String(p.instOrigin);
+  if (ORIGINS.indexOf(origin) < 0) return null;
+  let country = '';
+  if (origin === 'extranjera') {                              // el país solo cuenta si la institución es extranjera y está en la lista
+    const c = String(p.country == null ? '' : p.country).trim();
+    country = COUNTRIES.indexOf(c) >= 0 ? c : '';
+  }
 
   const total = num_(p.total, 0, 1000), formation = num_(p.formation, 0, 10),
         production = num_(p.production, 0, 2000), advising = num_(p.advising, 0, 10),
@@ -235,8 +251,8 @@ function cleanRecord_(p) {
   return {
     clientId: String(p.clientId), level: p.level, total: total, formation: formation, production: production,
     advising: advising, degree: p.degree, h: Math.floor(h), student: p.student === true, active: p.active === true,
-    area: area, institution: cleanText_(p.institution, 80), counts: JSON.stringify(counts).slice(0, 600),
-    version: num_(p.v, 0, 1000) || 1
+    area: area, institution: cleanText_(p.institution, INST_MAX), counts: JSON.stringify(counts).slice(0, 600),
+    version: num_(p.v, 0, 1000) || 1, origin: origin, country: country
   };
 }
 
@@ -274,8 +290,8 @@ function aggregate_(rows) {
   const recs = rows.map(function (r) {
     return {
       t: new Date(r[0]).getTime(), cid: String(r[1]), level: String(r[2]), total: Number(r[3]), deg: String(r[7]),
-      active: r[10] === true || String(r[10]).toLowerCase() === 'true', area: String(r[11] || ''),
-      inst: String(r[12] || '')
+      active: r[10] === true || String(r[10]).toLowerCase() === 'true',
+      inst: String(r[12] || ''), origin: String(r[15] || ''), country: String(r[16] || '')
     };
   }).filter(function (x) { return isFinite(x.t) && isFinite(x.total); });
   recs.sort(function (a, b) { return a.t - b.t; });
@@ -299,14 +315,20 @@ function aggregate_(rows) {
 
   out.levels = {}; LEVELS.forEach(function (l) { out.levels[l] = 0; });
   out.degrees = {}; DEGREES.forEach(function (d) { out.degrees[d] = 0; });
-  out.areas = { ing: 0, nat: 0, soc: 0, none: 0 };
+  out.origins = { nacional: 0, extranjera: 0, none: 0 };
+  const byCountry = {};
   out.hist = []; for (let i = 0; i < HIST_BINS; i++) out.hist.push(0);
   cur.forEach(function (x) {
     if (out.levels[x.level] !== undefined) out.levels[x.level]++;
     if (out.degrees[x.deg] !== undefined) out.degrees[x.deg]++;
-    out.areas[x.area || 'none'] = (out.areas[x.area || 'none'] || 0) + 1;
+    out.origins[x.origin === 'nacional' || x.origin === 'extranjera' ? x.origin : 'none']++;
+    if (x.origin === 'extranjera' && x.country) byCountry[x.country] = (byCountry[x.country] || 0) + 1;
     out.hist[Math.min(HIST_BINS - 1, Math.floor(x.total / 10))]++;
   });
+
+  // Países de las instituciones extranjeras: solo los que tienen al menos MIN_GROUP personas
+  out.countries = Object.keys(byCountry).filter(function (c) { return byCountry[c] >= MIN_GROUP; })
+    .map(function (c) { return { name: c, n: byCountry[c] }; }).sort(function (a, b) { return b.n - a.n; });
 
   // Instituciones: solo grupos con al menos MIN_GROUP personas
   const groups = {};
