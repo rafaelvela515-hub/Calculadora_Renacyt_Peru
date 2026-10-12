@@ -1,0 +1,2048 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora RENACYT</title>
+<meta name="description" content="Calcula tu puntaje y nivel RENACYT según el Reglamento RP 090-2021-CONCYTEC-P, planifica tu ascenso y guarda el historial de tu avance.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0b4639">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_PE">
+<meta property="og:title" content="Calculadora RENACYT">
+<meta property="og:description" content="Calcula tu puntaje y nivel RENACYT, importa tu ficha CTI Vitae, planifica tu ascenso y descarga tu evaluación en PDF.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b4639'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-size='28' font-weight='700' text-anchor='middle' fill='white'%3ERN%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f4f6f3; --surface:#ffffff; --surface-2:#eef2ee; --ink:#15211d; --muted:#5a6a63; --line:#d9e0db;
+  --brand:#0e5a4a; --brand-2:#0b4639; --hdr:#0b4639; --on-brand:#ffffff; --soft:#e3efe9;
+  --gold:#b7791f; --gold-soft:#fbf1da;
+  --ok:#17794a; --ok-soft:#dff3e8; --warn:#9a5b06; --warn-soft:#fdf0d5; --bad:#b3261e; --bad-soft:#fbe4e1;
+  --shadow:0 1px 2px rgba(20,40,32,.06),0 6px 20px rgba(20,40,32,.06);
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1513; --surface:#16211e; --surface-2:#1c2a26; --ink:#e7f0ec; --muted:#9bb1a8; --line:#2b3d37;
+    --brand:#52c7a4; --brand-2:#7fdcc0; --on-brand:#06241b; --soft:#1d332c; --hdr:#0a2a22;
+    --gold:#e6b04a; --gold-soft:#33290f;
+    --ok:#5fd495; --ok-soft:#14301f; --warn:#f0b455; --warn-soft:#33260c; --bad:#ff8f86; --bad-soft:#3a1714;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1513; --surface:#16211e; --surface-2:#1c2a26; --ink:#e7f0ec; --muted:#9bb1a8; --line:#2b3d37;
+  --brand:#52c7a4; --brand-2:#7fdcc0; --on-brand:#06241b; --soft:#1d332c; --hdr:#0a2a22;
+  --gold:#e6b04a; --gold-soft:#33290f;
+  --ok:#5fd495; --ok-soft:#14301f; --warn:#f0b455; --warn-soft:#33260c; --bad:#ff8f86; --bad-soft:#3a1714;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{line-height:1.2;margin:0}
+a{color:var(--brand)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+
+/* Header */
+.top{background:var(--hdr);color:#fff}
+.top .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-top:14px;padding-bottom:0}
+.brand{display:flex;align-items:center;gap:12px;flex:1;min-width:240px;padding-bottom:12px}
+.mark{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:.5px}
+.brand h1{font-size:20px;font-weight:700;color:#fff}
+.brand p{margin:0;font-size:13px;opacity:.82}
+.theme-btn{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:10px;width:40px;height:40px;cursor:pointer;margin-bottom:12px}
+nav.tabs{display:flex;gap:4px;width:100%;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:transparent;color:rgba(255,255,255,.78);padding:11px 16px;font-weight:600;font-size:15px;border-radius:10px 10px 0 0;cursor:pointer;white-space:nowrap;min-height:44px}
+.tab:hover{color:#fff;background:rgba(255,255,255,.08)}
+.tab[aria-selected="true"]{background:var(--bg);color:var(--brand)}
+
+.notice{margin:16px 0 0;padding:10px 14px;border-radius:10px;background:var(--gold-soft);color:var(--ink);font-size:14px;border:1px solid color-mix(in srgb,var(--gold) 35%,transparent)}
+.view{display:none;padding:20px 0 90px}
+.view.on{display:block}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media (max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.card h2{font-size:18px;display:flex;align-items:center;gap:10px}
+.step{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--brand);color:var(--on-brand);font-size:14px;font-weight:700;flex:none}
+.card .sub{color:var(--muted);font-size:14px;margin:6px 0 14px}
+.badge-cap{margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);background:var(--surface-2);padding:3px 9px;border-radius:99px;white-space:nowrap}
+
+label.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:0 0 5px}
+input[type=text],input[type=number],select{width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible,.degree:focus-within{outline:3px solid color-mix(in srgb,var(--brand) 55%,transparent);outline-offset:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+
+.degrees{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.degree{position:relative;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;background:var(--surface);display:flex;flex-direction:column;gap:2px;min-height:62px}
+.degree input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.degree b{font-size:15px}.degree span{font-size:12px;color:var(--muted)}
+.degree:has(input:checked){border-color:var(--brand);background:var(--soft)}
+.degree:has(input:checked)::after{content:"✓";position:absolute;top:8px;right:10px;color:var(--brand);font-weight:800}
+.check{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--surface-2);cursor:pointer;font-size:14px}
+.check input{margin-top:3px;width:18px;height:18px;accent-color:var(--brand);flex:none}
+
+/* Item lists */
+.cat{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
+.cat:first-of-type{border-top:0;padding-top:0;margin-top:8px}
+.cat-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.cat-head h3{font-size:15px}
+.cat-head .sum{margin-left:auto;font-size:13px;font-weight:700;color:var(--brand)}
+.cat-head small{color:var(--muted);font-size:12.5px;flex-basis:100%}
+.icon-btn{border:0;background:transparent;color:var(--muted);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:15px}
+.icon-btn:hover{background:var(--bad-soft);color:var(--bad)}
+.empty{color:var(--muted);font-size:13.5px;padding:6px 2px 10px}
+.capnote{font-size:12.5px;color:var(--warn);background:var(--warn-soft);padding:6px 10px;border-radius:8px;margin:0 0 10px}
+
+.btn{appearance:none;border:1px solid var(--brand);background:var(--brand);color:var(--on-brand);padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;min-height:44px}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--brand)}
+.btn.ghost:hover{background:var(--soft)}
+.btn.sm{min-height:38px;padding:7px 12px;font-size:14px}
+.btn.danger{border-color:var(--bad);color:var(--bad);background:transparent}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Result panel */
+.col-result{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;border-radius:var(--r)}
+@media (max-width:960px){.col-result{position:static;max-height:none}}
+.res{padding:20px}
+.res h2{font-size:14px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px}
+.score{display:flex;align-items:baseline;gap:8px}
+.score .n{font-size:56px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--brand)}
+.score .u{color:var(--muted);font-weight:600}
+.level{margin:10px 0 4px;display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:99px;font-weight:800;background:var(--brand);color:var(--on-brand);font-size:17px}
+.level.none{background:var(--surface-2);color:var(--muted)}
+.level.dist{background:var(--gold);color:#fff}
+.lvl-sub{color:var(--muted);font-size:13.5px;margin:2px 0 14px}
+.bar{height:10px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;background:var(--brand);border-radius:99px;transition:width .35s ease}
+.barlabel{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
+.ladder{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:14px 0}
+.ladder div{text-align:center;font-size:11px;font-weight:700;padding:6px 0;border-radius:7px;background:var(--surface-2);color:var(--muted);line-height:1.15}
+.ladder div small{display:block;font-weight:500;font-size:9.5px;opacity:.85}
+.ladder div.cur{background:var(--brand);color:var(--on-brand)}
+.ladder div.cur.dist{background:var(--gold)}
+.ladder div.past{background:var(--soft);color:var(--brand)}
+.mini{display:grid;gap:8px;margin:12px 0}
+.mini .m{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;font-size:13.5px}
+.mini .m .bar{margin:0}
+.mini .m b{font-variant-numeric:tabular-nums;font-size:13px}
+.chips{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.chip{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:9px;font-size:13.5px}
+.chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip i{font-style:normal;font-weight:800;flex:none}
+.chip span{color:var(--ink)}
+.res .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.res .actions .btn{flex:1;white-space:nowrap}
+table.bd{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+table.bd td,table.bd th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+table.bd td:last-child,table.bd th:last-child{text-align:right;font-variant-numeric:tabular-nums}
+table.bd tr.tot td{font-weight:800;border-bottom:0}
+
+.mobilebar{display:none}
+@media (max-width:960px){
+  .mobilebar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--hdr);color:#fff;padding:10px 16px;gap:14px;align-items:center;box-shadow:0 -4px 16px rgba(0,0,0,.2)}
+  .mobilebar b{font-size:24px;font-variant-numeric:tabular-nums}
+  .mobilebar span{font-size:14px;flex:1}
+  .mobilebar a{color:#fff;font-weight:700;font-size:14px;padding:8px 10px}
+}
+
+/* Plan */
+.target-row{display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:16px;align-items:end}
+@media (max-width:700px){.target-row{grid-template-columns:1fr}}
+.gap-big{font-size:15px;color:var(--muted)}
+.gap-big b{font-size:30px;color:var(--brand);margin-right:6px;font-variant-numeric:tabular-nums}
+.strat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:12px}
+.strat{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:4px}
+.strat.full{border-color:color-mix(in srgb,var(--brand) 50%,var(--line));background:var(--soft)}
+.strat h4{margin:0;font-size:15px}
+.strat p{margin:0;font-size:13px;color:var(--muted)}
+.strat .gain{font-weight:800;color:var(--brand);font-size:14px}
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;margin:14px 0}
+.stepper{display:flex;align-items:center;gap:8px;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:6px 8px 6px 12px;background:var(--surface)}
+.stepper span{font-size:13.5px;flex:1}
+.stepper small{display:block;color:var(--muted);font-size:11.5px}
+.stepper button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer;font-weight:800;font-size:17px}
+.stepper output{min-width:20px;text-align:center;font-weight:800}
+.simres{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+@media (max-width:640px){.simres{grid-template-columns:1fr}}
+.simres div{border-radius:12px;padding:14px;background:var(--surface-2)}
+.simres small{display:block;color:var(--muted);font-size:12.5px;margin-bottom:2px}
+.simres b{font-size:26px;font-variant-numeric:tabular-nums}
+.delta{font-size:14px;font-weight:700;color:var(--ok)}
+
+/* History */
+.hist-grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media (max-width:960px){.hist-grid{grid-template-columns:minmax(0,1fr)}}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:11px}
+.snap{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin-bottom:8px}
+.snap .big{font-size:26px;font-weight:800;min-width:56px;text-align:center;color:var(--brand);font-variant-numeric:tabular-nums}
+.snap h4{margin:0;font-size:15px}
+.snap small{color:var(--muted);font-size:12.5px;display:block}
+.snap .d{font-weight:700;font-size:13px}
+.snap .d.up{color:var(--ok)}.snap .d.down{color:var(--bad)}
+.snap .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){.snap{grid-template-columns:auto 1fr}.snap .acts{grid-column:1/-1;justify-content:flex-start}}
+table.cmp{width:100%;border-collapse:collapse;font-size:14px}
+table.cmp th,table.cmp td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+table.cmp th:first-child,table.cmp td:first-child{text-align:left}
+
+/* Reference */
+table.ref{width:100%;border-collapse:collapse;font-size:14.5px}
+table.ref th,table.ref td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+table.ref th{background:var(--surface-2);font-size:13px;color:var(--muted)}
+details{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0 16px;margin-bottom:8px}
+details summary{cursor:pointer;font-weight:600;padding:13px 0;min-height:44px}
+details p,details ul{color:var(--muted);font-size:14.5px;margin:0 0 14px}
+.refgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:860px){.refgrid{grid-template-columns:1fr}}
+
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);padding:22px;max-width:min(420px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h3{margin-bottom:12px}
+.toast{position:fixed;left:50%;bottom:78px;transform:translateX(-50%);background:#1b2a25;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;z-index:50;display:none;gap:14px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:92vw}
+.toast.on{display:flex}
+.toast button{background:none;border:0;color:#8ae4c4;font-weight:700;cursor:pointer;padding:4px}
+footer{border-top:1px solid var(--line);padding:22px 0 100px;color:var(--muted);font-size:13px}
+footer p{margin:0 0 6px}
+
+#printArea{display:none}
+@media print{
+  body.printing > *:not(#printArea){display:none !important}
+  body.printing #printArea{display:block;padding:0}
+  body{background:#fff;color:#000}
+  #printArea h1{font-size:22px;margin-bottom:4px}
+  #printArea table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12.5px}
+  #printArea th,#printArea td{border-bottom:1px solid #bbb;padding:5px 6px;text-align:left}
+  #printArea .r{text-align:right}
+  #printArea small{color:#444}
+}
+
+/* Autor */
+.author{display:flex;gap:16px;align-items:center;margin:16px 0 0;padding:16px 18px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.author .av{flex:none;width:56px;height:56px;border-radius:50%;background:var(--brand);color:var(--on-brand);display:grid;place-items:center;font-weight:800;font-size:19px}
+.author .eyebrow{font-size:11.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.author h2{font-size:19px;margin:1px 0 3px}
+.author p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.4}
+.author .ids{margin-top:5px;font-weight:600}
+.author .ids a{margin-right:4px}
+footer .author{margin:0 0 22px}
+footer .author p{color:var(--muted)}
+
+/* Comunidad */
+.sharegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:6px}
+.sharegrid div,.tile{background:var(--surface-2);border-radius:12px;padding:12px 14px;min-width:0}
+.sharegrid small,.tile small{display:block;color:var(--muted);font-size:12.5px}
+.sharegrid b{font-size:15px;overflow-wrap:anywhere}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.tile b{font-size:28px;font-variant-numeric:tabular-nums;color:var(--brand)}
+.tile em{font-style:normal;font-size:12.5px;color:var(--muted);display:block}
+.hb{display:grid;grid-template-columns:minmax(120px,190px) 1fr 74px;gap:10px;align-items:center;font-size:13.5px;margin:5px 0}
+.hb .bar{margin:0}
+.hb b{text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.hb.me .bar i{background:var(--gold)}
+@media (max-width:560px){.hb{grid-template-columns:100px 1fr 62px;font-size:12.5px}}
+.mh{font-size:15px;margin:20px 0 6px}
+pre.payload{background:var(--surface-2);padding:12px;border-radius:10px;overflow:auto;font-size:12.5px;max-height:260px;margin:0 0 14px}
+.pos{padding:12px 14px;border-radius:12px;background:var(--gold-soft);margin-bottom:16px;font-size:14.5px}
+.msg-ok{color:var(--ok);font-weight:600}.msg-bad{color:var(--bad);font-weight:600}
+
+/* Contadores por tipo */
+.chead,.crow{display:grid;grid-template-columns:minmax(0,1.7fr) 148px 148px 62px;gap:10px;align-items:center}
+.chead{font-size:12px;font-weight:700;color:var(--muted);padding:0 4px 6px;border-bottom:1px solid var(--line)}
+.chead span:last-child{text-align:right}
+.crow{padding:9px 4px;border-bottom:1px solid var(--line)}
+.crow:last-child{border-bottom:0}
+.crow .cl{display:flex;gap:10px;align-items:center;min-width:0}
+.crow .cl strong{display:block;font-size:14px;font-weight:600;line-height:1.3}
+.crow .cl small{color:var(--muted);font-size:12px}
+.tag{font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;background:var(--soft);color:var(--brand);min-width:38px;text-align:center;flex:none}
+.spin{display:flex;align-items:center;gap:4px}
+.spin button{width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);font-weight:800;font-size:18px;cursor:pointer;flex:none;line-height:1}
+.spin button:hover:not([disabled]){background:var(--soft);border-color:var(--brand)}
+.spin button[disabled]{opacity:.35;cursor:not-allowed}
+.spin input{width:56px;min-width:0;min-height:38px;padding:4px;text-align:center;font-weight:700;-moz-appearance:textfield;appearance:textfield}
+.spin input::-webkit-outer-spin-button,.spin input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.crow .cp{text-align:right;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.crow.has .cp{color:var(--brand)}
+.crow .na{color:var(--muted);padding-left:10px}
+.mlbl{display:none;font-size:12px;color:var(--muted);margin-bottom:3px}
+.crow .cs{min-width:0}
+@media (max-width:720px){
+  .chead{display:none}
+  .crow{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:8px;position:relative}
+  .crow .cl{grid-column:1/-1;padding-right:52px}
+  .mlbl{display:block}
+  .crow .na{display:none}
+  .crow .cp{position:absolute;top:9px;right:4px}
+  .spin button{width:36px}
+  .spin input{width:52px}
+}
+
+/* CTI Vitae */
+.ctitbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+.ctitbl th{background:var(--surface-2);font-size:12px;color:var(--muted);text-align:left;padding:7px 8px}
+.ctitbl td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.ctitbl td:first-child{white-space:nowrap;color:var(--muted);width:64px}
+.ctitbl td small{display:block;color:var(--muted);font-size:12px}
+.ctitbl td em{display:block;font-style:normal;font-size:12.5px;color:var(--warn);margin-top:3px}
+.ctitbl tr.rv td:nth-child(2){border-left:3px solid var(--gold)}
+.ctitbl select{min-width:220px;min-height:40px}
+@media (max-width:720px){
+  .ctitbl,.ctitbl tbody,.ctitbl tr,.ctitbl td{display:block;width:100%}
+  .ctitbl tr:first-child{display:none}
+  .ctitbl tr{padding:10px 0;border-bottom:1px solid var(--line)}
+  .ctitbl td{border:0;padding:3px 0;white-space:normal}
+  .ctitbl td:first-child{width:auto}
+  .ctitbl select{width:100%;min-width:0}
+}
+#ctiFile{max-width:100%}
+.ctibanner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px;padding:11px 14px;border-radius:12px;background:var(--soft);font-size:14px}
+.ctibanner span{flex:1;min-width:200px}
+
+/* Sugerencias */
+textarea{width:100%;min-height:140px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);resize:vertical;line-height:1.5}
+textarea:focus-visible,input[type=email]:focus-visible{outline:3px solid color-mix(in srgb,var(--brand) 55%,transparent);outline-offset:1px}
+input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.fbcount{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:6px 0 14px;font-size:12.5px;color:var(--muted)}
+.fbcount #fbN.bad{color:var(--bad);font-weight:700}
+.fbcontact{margin-bottom:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.stars{display:inline-flex;flex-direction:row-reverse;gap:2px}
+.stars input{position:absolute;opacity:0;width:1px;height:1px}
+.stars label{font-size:30px;line-height:1;color:var(--line);cursor:pointer;padding:2px 3px;border-radius:6px;min-width:36px;min-height:44px;display:grid;place-items:center}
+.stars input:checked + label,.stars input:checked + label ~ label,.stars label:hover,.stars label:hover ~ label{color:var(--gold)}
+.stars input:focus-visible + label{outline:3px solid color-mix(in srgb,var(--brand) 55%,transparent)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">RN</div>
+      <div>
+        <h1>Calculadora RENACYT</h1>
+        <p>Puntaje, nivel, plan de ascenso e historial · Reglamento RP 090-2021-CONCYTEC-P</p>
+      </div>
+    </div>
+    <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema">◐</button>
+    <nav class="tabs" role="tablist" aria-label="Secciones">
+      <button class="tab" role="tab" data-view="calc" aria-selected="true">Calculadora</button>
+      <button class="tab" role="tab" data-view="cti" aria-selected="false">Importar CTI Vitae</button>
+      <button class="tab" role="tab" data-view="plan" aria-selected="false">Plan de ascenso</button>
+      <button class="tab" role="tab" data-view="hist" aria-selected="false">Historial</button>
+      <button class="tab" role="tab" data-view="comm" aria-selected="false">Comunidad</button>
+      <button class="tab" role="tab" data-view="feed" aria-selected="false">Sugerencias</button>
+      <button class="tab" role="tab" data-view="ref" aria-selected="false">Reglamento y ayuda</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="notice"><strong>Herramienta referencial.</strong> La calificación oficial la realiza solo el CONCYTEC mediante la plataforma CTI Vitae, con verificación documentaria. Tus datos se guardan en este navegador; solo se envía algo si tú decides aportar de forma anónima en la pestaña Comunidad.</div>
+
+  <!-- ============ CALCULADORA ============ -->
+  <section class="view on" id="view-calc">
+    <div class="layout">
+      <div>
+        <div class="card">
+          <h2><span class="step">1</span> Perfil y formación</h2>
+          <p class="sub">Solo cuenta el máximo grado o título registrado en SUNEDU o MINEDU. No se acumula.</p>
+          <div class="ctibanner"><span><b>¿Tienes ficha en CTI Vitae?</b> Impórtala y la calculadora rellena tu formación, artículos con su cuartil, propiedad intelectual y asesorías.</span><button class="btn sm" data-go="cti">Importar CTI Vitae</button></div>
+          <div class="grid2" style="margin-bottom:14px">
+            <div><label class="lbl" for="name">Tu nombre (opcional, para el historial e informe)</label><input type="text" id="name" maxlength="80" autocomplete="name" placeholder="Nombre y apellidos"></div>
+            <div><label class="lbl" for="hidx">Índice h en Scopus</label><input type="number" id="hidx" min="0" max="300" inputmode="numeric" placeholder="0"></div>
+          </div>
+          <div class="grid2" style="margin-bottom:14px">
+            <div><label class="lbl" for="inst">Institución donde laboras (opcional)</label><input type="text" id="inst" maxlength="80" list="instList" autocomplete="organization" placeholder="Escribe o elige de la lista"><datalist id="instList"></datalist></div>
+            <div><label class="lbl" for="area">Gran área de conocimiento (opcional)</label><select id="area"><option value="">Prefiero no indicarla</option><option value="ing">Ingeniería y Tecnología</option><option value="nat">Ciencias Naturales, Médicas y de la Salud, y Agropecuarias</option><option value="soc">Ciencias Sociales y Humanidades</option></select></div>
+          </div>
+          <label class="lbl" id="degLbl">Máximo grado académico o título</label>
+          <div class="degrees" role="radiogroup" aria-labelledby="degLbl" id="degrees"></div>
+          <div style="display:grid;gap:8px;margin-top:14px">
+            <label class="check"><input type="checkbox" id="student"><span><b>Soy estudiante de pregrado.</b> El mínimo de producción sube de 6 a 9 puntos.</span></label>
+            <label class="check"><input type="checkbox" id="affil"><span><b>Mi producción está afiliada a mi institución principal.</b> Define si tu condición de activo es “afiliado”.</span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2><span class="step">2</span> Producción total <span class="badge-cap" id="prodBadge">mín. 6 pts</span></h2>
+          <p class="sub">Obligatoria. Indica cuántos tienes de cada tipo. La columna “en los últimos 3 años” solo sirve para saber si estás activo; no cambia tu puntaje.</p>
+          <div id="cats-prod"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="step">3</span> Asesoría de tesis <span class="badge-cap">máx. 10 pts</span></h2>
+          <p class="sub">Solo tesis sustentadas y aprobadas (verificables en RENATI o repositorio institucional), como asesor o coasesor.</p>
+          <div id="cats-adv"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="step">4</span> Proyectos de CTI <span class="badge-cap">sin puntaje</span></h2>
+          <p class="sub">No suman puntos, pero un proyecto aprobado por pares externos mantiene tu condición de activo aunque no publiques.</p>
+          <div id="cats-proj"></div>
+        </div>
+
+        <div class="row" style="margin-bottom:8px">
+          <button class="btn ghost sm" data-action="sample">Cargar ejemplo</button>
+          <button class="btn ghost sm danger" data-action="clear">Borrar todo</button>
+        </div>
+      </div>
+
+      <aside class="col-result card" id="resultado" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <!-- ============ CTI VITAE ============ -->
+  <section class="view" id="view-cti">
+    <div class="layout">
+      <div>
+        <div class="card">
+          <h2>Importar desde tu ficha CTI Vitae</h2>
+          <p class="sub">Pega el enlace público de tu ficha. La calculadora lee tu formación, artículos con su cuartil, propiedad intelectual y asesorías, propone cómo contarlos y te deja revisar todo antes de aplicarlo.</p>
+          <label class="lbl" for="ctiUrl">Enlace de tu ficha</label>
+          <div class="row" style="align-items:stretch">
+            <input type="text" id="ctiUrl" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://ctivitae.concytec.gob.pe/appDirectorioCTI/VerDatosInvestigador.do?id_investigador=…" style="flex:1 1 260px;min-width:0">
+            <button class="btn" id="ctiBtn" data-action="cti-fetch">Leer mi ficha</button>
+          </div>
+          <p id="ctiMsg" class="sub" role="status" style="margin:10px 0 0"></p>
+          <details style="margin-top:12px">
+            <summary>¿No funciona el enlace? Sube tu ficha guardada</summary>
+            <p>Abre tu ficha en CTI Vitae, pulsa <b>Ctrl+S</b>, elige “Página web, solo HTML” y sube aquí el archivo. Se procesa únicamente en tu navegador: no se envía a ningún servidor.</p>
+            <input type="file" id="ctiFile" accept=".html,.htm,text/html" style="margin-bottom:14px">
+          </details>
+          <div class="chip warn" style="margin-top:12px"><i>!</i><span>Usa solo <b>tu propia ficha</b> o una que tengas autorización para evaluar. Lo que se lee no se guarda ni se envía; solo se aplican a tu calculadora las cantidades que tú confirmes.</span></div>
+        </div>
+        <div id="ctiReview"></div>
+      </div>
+      <aside class="card">
+        <h2>Cómo se interpretan los datos</h2>
+        <ul style="margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.7">
+          <li><b>Cuartil:</b> el del año de publicación del artículo (pregunta 39 del RENACYT).</li>
+          <li><b>Sin cuartil en su año:</b> 1 punto, dentro del tope de 10 junto con proceedings y SciELO.</li>
+          <li><b>Duplicados</b> (mismo DOI o título, típico de lo importado de ORCID) se descartan.</li>
+          <li><b>Propiedad intelectual:</b> solo registros otorgados; de los derechos de autor, solo software.</li>
+          <li><b>Tesis:</b> solo sustentadas; sin enlace al repositorio necesitarás el acta.</li>
+          <li><b>Formación:</b> solo la fuente SUNEDU.</li>
+          <li>Lo que no se puede decidir con seguridad queda <b>sin contar</b> y marcado en ámbar para que elijas tú.</li>
+          <li>CTI Vitae <b>no muestra el índice h</b>: se toma de Scopus.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ PLAN ============ -->
+  <section class="view" id="view-plan">
+    <div class="card">
+      <h2>Tu meta</h2>
+      <p class="sub">Elige el nivel al que quieres llegar. Las rutas respetan los topes del reglamento, así que no te proponen puntos que no se contarían.</p>
+      <div class="target-row">
+        <div><label class="lbl" for="target">Nivel objetivo</label><select id="target"></select></div>
+        <div class="gap-big" id="gapBig"></div>
+      </div>
+      <div id="reqs" class="chips"></div>
+      <div class="strat-grid" id="strats"></div>
+    </div>
+
+    <div class="card">
+      <h2>Simulador “¿y si…?”</h2>
+      <p class="sub">Suma productos hipotéticos a tu perfil actual y mira cómo cambiaría tu nivel. No modifica tus datos.</p>
+      <div class="grid2" style="margin-bottom:6px">
+        <div><label class="lbl" for="simDeg">Grado alcanzado</label><select id="simDeg"></select></div>
+        <div><label class="lbl" for="simH">Índice h hipotético</label><input type="number" id="simH" min="0" max="300" inputmode="numeric"></div>
+      </div>
+      <div class="sim-grid" id="simGrid"></div>
+      <div class="simres" id="simRes"></div>
+      <div class="row" style="margin-top:12px"><button class="btn ghost sm" data-action="sim-reset">Reiniciar simulador</button></div>
+    </div>
+  </section>
+
+  <!-- ============ HISTORIAL ============ -->
+  <section class="view" id="view-hist">
+    <div class="hist-grid">
+      <div>
+        <div class="card">
+          <h2>Evolución de tu puntaje</h2>
+          <p class="sub">Cada captura guarda tu perfil completo en ese momento. Úsalo para ver cuánto avanzaste entre solicitudes.</p>
+          <div id="chartBox"></div>
+        </div>
+        <div id="snaps"></div>
+      </div>
+      <aside>
+        <div class="card">
+          <h2>Guardar y compartir</h2>
+          <p class="sub">Tu historial vive en este navegador. Exporta una copia para no perderlo o para llevarlo a otro equipo.</p>
+          <div class="row" style="flex-direction:column;align-items:stretch">
+            <button class="btn" data-action="open-save">Guardar captura actual</button>
+            <button class="btn ghost" data-action="export-json">Exportar copia (JSON)</button>
+            <button class="btn ghost" data-action="import-json">Importar copia…</button>
+            <button class="btn ghost" data-action="export-csv">Exportar historial (CSV)</button>
+            <button class="btn" data-action="pdf">Descargar PDF (evaluación + historial)</button>
+            <button class="btn ghost" data-action="print">Imprimir informe</button>
+          </div>
+          <input type="file" id="fileIn" accept="application/json,.json" hidden>
+        </div>
+        <div class="card" id="cmpCard">
+          <h2>Comparar capturas</h2>
+          <p class="sub">Marca dos capturas con “Comparar”.</p>
+          <div id="cmpBox"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ COMUNIDAD ============ -->
+  <section class="view" id="view-comm">
+    <div class="layout">
+      <div>
+        <div class="card">
+          <h2>Aporta tu resultado de forma anónima</h2>
+          <p class="sub">Ayuda a conocer cómo se distribuyen los niveles RENACYT entre investigadores y por institución. Es voluntario: la calculadora funciona igual si no participas.</p>
+          <div id="shareStatus"></div>
+          <div id="shareSum"></div>
+          <label class="check" style="margin-bottom:12px"><input type="checkbox" id="consent"><span>Acepto aportar de forma <b>anónima</b> mi nivel, puntaje, grado, índice h, composición de producción y los datos opcionales indicados arriba, para estadísticas agregadas. <b>No se envía</b> mi nombre, correo ni los títulos de mis productos. Se usa un identificador aleatorio de este navegador para medir avances sin identificarme. Puedo retirar mis aportes cuando quiera.</span></label>
+          <input type="text" id="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0">
+          <div class="row" style="margin-bottom:12px"><button class="btn" id="shareBtn" data-action="share">Enviar aporte anónimo</button><span id="shareMsg" role="status"></span></div>
+          <details><summary>Ver exactamente qué se enviaría</summary><pre class="payload" id="payloadPrev"></pre></details>
+          <div id="sentBox"></div>
+        </div>
+        <div class="card">
+          <h2>Métricas de la comunidad</h2>
+          <p class="sub">Datos autodeclarados y no verificados por el CONCYTEC. Solo se muestran agregados.</p>
+          <div id="metrics"></div>
+        </div>
+      </div>
+      <aside class="card">
+        <h2>Tu privacidad</h2>
+        <ul style="margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.7">
+          <li>No pedimos nombre ni correo.</li>
+          <li>La institución y el área son opcionales.</li>
+          <li>Ninguna institución se publica si tiene menos de 5 participantes.</li>
+          <li>Puedes retirar todos tus aportes desde este navegador.</li>
+          <li>Tus datos personales de la calculadora (productos, títulos, fechas) nunca salen de tu navegador.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ SUGERENCIAS ============ -->
+  <section class="view" id="view-feed">
+    <div class="layout">
+      <div class="card">
+        <h2>Cuéntanos cómo mejorar esta plataforma</h2>
+        <p class="sub">Tu opinión sirve para corregir errores y decidir qué mejorar primero. Es voluntario y puedes escribir de forma anónima.</p>
+        <div id="fbStatus"></div>
+        <form id="fbForm" novalidate autocomplete="off">
+          <div class="grid2" style="margin-bottom:14px">
+            <div>
+              <label class="lbl" for="fbType">¿Qué quieres contarnos?</label>
+              <select id="fbType">
+                <option value="mejora">Una mejora para algo que ya existe</option>
+                <option value="idea">Una idea nueva</option>
+                <option value="error">Un error o algo que no funciona</option>
+                <option value="reglamento">Un dato del reglamento que parece incorrecto</option>
+                <option value="otro">Otro comentario</option>
+              </select>
+            </div>
+            <div>
+              <span class="lbl" id="fbRateLbl">¿Qué tan útil te resultó? (opcional)</span>
+              <div class="row" style="gap:8px;flex-wrap:nowrap">
+                <div class="stars" role="radiogroup" aria-labelledby="fbRateLbl" id="fbStars">
+                  <input type="radio" name="fbRate" id="fbR5" value="5"><label for="fbR5" title="5 de 5"><span class="sr">5 de 5</span>★</label>
+                  <input type="radio" name="fbRate" id="fbR4" value="4"><label for="fbR4" title="4 de 5"><span class="sr">4 de 5</span>★</label>
+                  <input type="radio" name="fbRate" id="fbR3" value="3"><label for="fbR3" title="3 de 5"><span class="sr">3 de 5</span>★</label>
+                  <input type="radio" name="fbRate" id="fbR2" value="2"><label for="fbR2" title="2 de 5"><span class="sr">2 de 5</span>★</label>
+                  <input type="radio" name="fbRate" id="fbR1" value="1"><label for="fbR1" title="1 de 5"><span class="sr">1 de 5</span>★</label>
+                </div>
+                <button type="button" class="btn ghost sm" data-action="fb-unrate" id="fbUnrate" hidden>Quitar</button>
+              </div>
+            </div>
+          </div>
+
+          <label class="lbl" for="fbMsg">Tu sugerencia</label>
+          <textarea id="fbMsg" rows="6" maxlength="1500" placeholder="Cuéntanos qué pasó, qué esperabas o qué te gustaría que hiciera la plataforma." aria-describedby="fbCount"></textarea>
+          <p class="fbcount" id="fbCount"><span id="fbN">0 / 1500</span><span>Mínimo 10 caracteres. No escribas datos sensibles.</span></p>
+
+          <details class="fbcontact">
+            <summary>Quiero que me respondan (opcional)</summary>
+            <label class="lbl" for="fbMail" style="margin-top:6px">Correo electrónico</label>
+            <input type="email" id="fbMail" maxlength="120" autocomplete="email" placeholder="tucorreo@ejemplo.pe">
+            <label class="check" style="margin-top:10px"><input type="checkbox" id="fbOk"><span>Acepto que me contacten a este correo <b>solo por esta sugerencia</b>. Se guardará hasta que sea atendida y puedo pedir su eliminación.</span></label>
+          </details>
+
+          <input type="text" id="fbWebsite" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0">
+          <div class="row" style="margin:14px 0 12px">
+            <button class="btn" type="submit" id="fbBtn">Enviar sugerencia</button>
+            <button class="btn ghost" type="button" data-action="fb-copy">Copiar texto</button>
+            <span id="fbOut" role="status"></span>
+          </div>
+          <details>
+            <summary>Ver exactamente qué se enviaría</summary>
+            <pre class="payload" id="fbPrev"></pre>
+          </details>
+        </form>
+      </div>
+
+      <aside>
+        <div class="card">
+          <h2>¿Qué pasa con tu sugerencia?</h2>
+          <ul style="margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.7">
+            <li>Llega a una hoja privada del administrador de la plataforma.</li>
+            <li>No pedimos tu nombre. El correo es opcional y solo se guarda si das tu consentimiento.</li>
+            <li>Además del texto se envía la pestaña desde la que escribes y un identificador aleatorio de este navegador (para frenar el spam).</li>
+            <li>Máximo 3 sugerencias al día por navegador.</li>
+            <li>No se publican y no se usan para nada distinto a mejorar la plataforma.</li>
+          </ul>
+          <div id="fbSentBox"></div>
+        </div>
+        <div class="card">
+          <h2>¿Dudas sobre tu puntaje?</h2>
+          <p class="sub" style="margin:8px 0 0">Esta plataforma es referencial. Para consultas sobre tu calificación oficial, escribe al CONCYTEC a través de su plataforma RENACYT.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ REFERENCIA ============ -->
+  <section class="view" id="view-ref">
+    <div class="refgrid">
+      <div class="card">
+        <h2>Niveles (Tabla 3, Anexo N° 1)</h2>
+        <table class="ref" id="refLevels"></table>
+        <p class="sub" style="margin-top:12px">Para <b>Investigador Distinguido</b> se exige además índice h ≥ 10 en Scopus.</p>
+      </div>
+      <div class="card">
+        <h2>Puntaje por ítem (Tabla 1)</h2>
+        <table class="ref" id="refPts"></table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Reglas que más confunden</h2>
+      <div style="margin-top:12px">
+        <details><summary>¿Qué topes existen realmente?</summary><ul>
+          <li>Formación: solo cuenta el máximo grado o título (máx. 10).</li>
+          <li>Artículos Scopus/WoS sin cuartil en su año de publicación, conference proceedings (Scopus/WoS) y artículos SciELO: 1 punto cada uno y hasta 10 puntos en toda tu trayectoria.</li>
+          <li>Libros y capítulos: hasta 10 puntos en conjunto.</li>
+          <li>Asesoría de tesis: hasta 10 puntos.</li>
+          <li>Artículos Q1–Q4 y propiedad intelectual no tienen tope.</li></ul></details>
+        <details><summary>¿Cuál es el requisito obligatorio?</summary><p>La Producción total debe sumar al menos 6 puntos (9 si eres estudiante de pregrado), sin importar tu puntaje total. Se cumple con artículos, propiedad intelectual y/o libros y capítulos. Formación y asesoría no cuentan para ese mínimo.</p></details>
+        <details><summary>¿Qué significa ser investigador “activo”?</summary><p>Haber tenido, en los últimos 3 años, al menos una producción (artículo, propiedad intelectual, libro o capítulo) o participación en un proyecto de CTI aprobado por pares externos. Si no cumples, sigues clasificado pero como “no activo”. El Investigador Distinguido es vitalicio y no está sujeto a esta condición.</p></details>
+        <details><summary>¿Cuándo cuenta un libro o capítulo?</summary><p>Si lo edita una institución peruana: debe ser resultado de investigación, con revisión por pares (validación del Vicerrectorado de Investigación o constancia de revisión) y normalización básica (ISBN, depósito legal, tabla de contenido y referencias). Si lo edita una editorial internacional: debe haber pasado revisión por pares externos.</p></details>
+        <details><summary>¿Qué tesis cuentan?</summary><p>Solo tesis sustentadas y aprobadas. Una resolución que te designa asesor no sirve como sustento. Puedes informar el enlace de RENATI (SUNEDU) o del repositorio institucional.</p></details>
+        <details><summary>Alcanzo 200 puntos pero mi índice h es menor que 10</summary><p>No accedes a Investigador Distinguido. Esta calculadora te muestra Nivel I y te avisa que te falta el índice h. Además, el art. 8.4.7 del reglamento prevé la incorporación excepcional de Investigadores Distinguidos por invitación del CONCYTEC; confirma el procedimiento vigente con el CONCYTEC.</p></details>
+                <details><summary>¿Cómo se usa mi ficha de CTI Vitae?</summary><p>Al pegar tu enlace, un servicio consulta tu ficha pública (el navegador no puede hacerlo directamente) y la devuelve a tu pantalla; no se guarda. La interpretación ocurre en tu navegador y tú revisas cada producto antes de aplicarlo. Si prefieres no usar el enlace, puedes subir tu ficha guardada como HTML y no sale de tu equipo.</p></details>
+        <details><summary>¿Qué pasa con mis datos?</summary><p>Todo lo que ingresas se guarda solo en tu navegador (almacenamiento local). Únicamente si marcas el consentimiento en la pestaña Comunidad y pulsas “Enviar”, se envía un resumen anónimo: nivel, puntaje por criterio, grado, índice h, cantidades por tipo de producto y, si lo indicas, tu institución y área. No se envían nombres, correos ni títulos de tus productos. Puedes retirar tus aportes en cualquier momento desde esa pestaña. Si envías una sugerencia, se guarda el texto, la pestaña desde la que escribes y, solo si lo indicas y lo consientes, tu correo; puedes retirarla desde el mismo botón de “Retirar”. Se aplican los principios de la Ley N° 29733 de Protección de Datos Personales del Perú.</p></details>
+        <details><summary>¿Qué mide esta calculadora y qué no?</summary><p>Aplica las Tablas 1 y 3 del Anexo N° 1 sobre lo que tú declares. No verifica que tus revistas estén indizadas, que el cuartil sea el correcto para el año, ni que tus documentos de sustento sean aceptables. Esa verificación la hace el CONCYTEC.</p></details>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Fuentes oficiales</h2>
+      <ul style="margin:12px 0 0;padding-left:20px;line-height:1.9">
+        <li><a href="https://servicio-renacyt.concytec.gob.pe/normativas/reglamento/" target="_blank" rel="noopener">Plataforma RENACYT · Reglamento vigente</a></li>
+        <li><a href="https://servicio-renacyt.concytec.gob.pe/wp-content/uploads/2022/03/RP-090-2021-CONCYTEC-P-GOB.pdf" target="_blank" rel="noopener">Resolución de Presidencia N° 090-2021-CONCYTEC-P (PDF)</a></li>
+        <li><a href="https://servicio-renacyt.concytec.gob.pe/normativas/preguntas-frecuentes/" target="_blank" rel="noopener">Preguntas frecuentes del RENACYT</a></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="author" id="authorCard"></div>
+    <p><b>Fuente normativa:</b> Reglamento de Calificación, Clasificación y Registro de los Investigadores del SINACYT, RP N° 090-2021-CONCYTEC-P, Anexo N° 1 (Tablas 1, 2 y 3).</p>
+    <p>Herramienta educativa e independiente, sin vínculo con el CONCYTEC. Verifica siempre el reglamento vigente antes de postular.</p>
+    <p>Material educativo © 2026 · <a href="#feed">Enviar una sugerencia</a></p>
+  </div>
+</footer>
+
+<div class="mobilebar" id="mobilebar"><b id="mbScore">0</b><span id="mbLevel">Sin nivel</span><a href="#resultado">Ver detalle ↓</a></div>
+
+<dialog id="saveDlg">
+  <form method="dialog" id="saveForm">
+    <h3>Guardar captura</h3>
+    <label class="lbl" for="snapLabel">Etiqueta (por ejemplo, “Antes de postular a promoción”)</label>
+    <input type="text" id="snapLabel" maxlength="80">
+    <div class="row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn ghost" value="cancel" type="submit">Cancelar</button>
+      <button class="btn" value="ok" type="submit" id="saveOk">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo" hidden>Deshacer</button></div>
+<div id="printArea"></div>
+
+<script>
+"use strict";
+/* ================= Datos del reglamento (RP 090-2021-CONCYTEC-P, Anexo N° 1) ================= */
+const DEGREES = {
+  doctor:   {label:"Grado de Doctor", pts:10},
+  master:   {label:"Grado de Magíster", pts:6},
+  title:    {label:"Título profesional", pts:4},
+  bachelor: {label:"Bachiller o egresado", pts:2},
+  enrolled: {label:"Estudiante con constancia de matrícula", pts:1},
+  none:     {label:"Sin evidencia registrable", pts:0}
+};
+const DEG_ORDER = ["none","enrolled","bachelor","title","master","doctor"];
+
+/* grp: art (Q1-Q4, sin tope) · minor (proceedings/SciELO, tope 10) · ip (sin tope) · book (libros+capítulos, tope 10) · adv (tope 10) · proj (sin puntaje) */
+const TYPES = {
+  art_q1:{label:"Artículo Q1 (Scopus/WoS)", short:"Q1", pts:5, grp:"art", cat:"art"},
+  art_q2:{label:"Artículo Q2 (Scopus/WoS)", short:"Q2", pts:4, grp:"art", cat:"art"},
+  art_q3:{label:"Artículo Q3 (Scopus/WoS)", short:"Q3", pts:3, grp:"art", cat:"art"},
+  art_q4:{label:"Artículo Q4 (Scopus/WoS)", short:"Q4", pts:2, grp:"art", cat:"art"},
+  art_oth:{label:"Sin cuartil, proceedings (Scopus/WoS) o SciELO", short:"PRO", pts:1, grp:"minor", cat:"art"},
+  ip_hi:{label:"Patente de invención, certificado de obtentor o paquete tecnológico", short:"PI", pts:3, grp:"ip", cat:"ip"},
+  ip_lo:{label:"Patente de modelo de utilidad o derecho de autor por software", short:"PU", pts:1, grp:"ip", cat:"ip"},
+  book:{label:"Libro", short:"LIB", pts:2, grp:"book", cat:"book"},
+  chapter:{label:"Capítulo de libro", short:"CAP", pts:1, grp:"book", cat:"book"},
+  th_phd:{label:"Tesis de doctorado asesorada", short:"DR", pts:2, grp:"adv", cat:"adv"},
+  th_ms:{label:"Tesis de maestría asesorada", short:"MG", pts:1, grp:"adv", cat:"adv"},
+  th_ug:{label:"Tesis de bachiller o título profesional asesorada", short:"PG", pts:0.5, grp:"adv", cat:"adv"},
+  pr_pi:{label:"Proyecto de CTI · Investigador principal", short:"IP", pts:0, grp:"proj", cat:"proj"},
+  pr_as:{label:"Proyecto de CTI · Asociado, postdoctoral, doctoral u otro", short:"IA", pts:0, grp:"proj", cat:"proj"}
+};
+const CATS = {
+  art: {title:"Artículos científicos", note:"Scopus, Web of Science (colección principal) o SciELO, según cuartil Scimago/JCR.", box:"cats-prod"},
+  ip:  {title:"Propiedad intelectual", note:"Registros concedidos por INDECOPI u otras entidades equivalentes del extranjero.", box:"cats-prod"},
+  book:{title:"Libros y capítulos", note:"Con revisión por pares; tope conjunto de 10 pts.", box:"cats-prod"},
+  adv: {title:"Tesis asesoradas o coasesoradas", note:"", box:"cats-adv"},
+  proj:{title:"Proyectos aprobados por pares externos", note:"Con o sin financiamiento, para la academia o la empresa. No cuentan proyectos de bachiller, magíster ni título.", box:"cats-proj"}
+};
+const LEVELS = [ // ascendente
+  {id:"VII",  min:10,  max:24,  name:"Nivel VII"},
+  {id:"VI",   min:25,  max:34,  name:"Nivel VI"},
+  {id:"V",    min:35,  max:49,  name:"Nivel V"},
+  {id:"IV",   min:50,  max:69,  name:"Nivel IV"},
+  {id:"III",  min:70,  max:99,  name:"Nivel III"},
+  {id:"II",   min:100, max:159, name:"Nivel II"},
+  {id:"I",    min:160, max:199, name:"Nivel I"},
+  {id:"DIST", min:200, max:Infinity, name:"Investigador Distinguido"}
+];
+const CAP = 10, WINDOW_MONTHS = 36;
+
+/* ================= Utilidades ================= */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
+const plural = (n, a, b) => n === 1 ? a : b;
+const ptsTxt = n => `${fmt(n)} ${n === 1 ? "pt" : "pts"}`;
+const MONTHS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } }
+};
+const K_STATE = "renacyt_calc_v1_state", K_HIST = "renacyt_calc_v1_hist";
+const now = new Date();
+const nowIdx = now.getFullYear()*12 + now.getMonth();
+const ymIdx = (y, m) => y*12 + (m ? m-1 : 0);   // sin mes: se asume enero (criterio conservador)
+const fullDate = ts => new Date(ts).toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"});
+
+/* ================= Estado ================= */
+const blankState = () => ({name:"", inst:"", cti:"", area:"", degree:"none", student:false, affil:false, h:0, counts:{}, recent:{}, project:false, last:null});
+let S = blankState();
+let HIST = [];
+let sim = {counts:{}, degree:null, h:null};
+let cmpSel = [];
+
+function sanitizeState(o){
+  const s = blankState();
+  if(!o || typeof o !== "object") return s;
+  s.name = String(o.name||"").slice(0,80);
+  s.inst = String(o.inst||"").replace(/\s+/g," ").trim().slice(0,80);
+  s.area = ["ing","nat","soc"].includes(o.area) ? o.area : "";
+  s.cti = /^\d{1,9}$/.test(String(o.cti || "")) ? String(o.cti) : "";
+  s.degree = DEGREES[o.degree] ? o.degree : "none";
+  s.student = !!o.student; s.affil = !!o.affil;
+  s.h = Math.max(0, Math.min(300, parseInt(o.h,10) || 0));
+  const REC = k => ["art","minor","ip","book"].includes(TYPES[k].grp);
+  const TKEYS = Object.keys(TYPES).filter(k => TYPES[k].grp !== "proj");
+  if(o.counts && typeof o.counts === "object"){
+    for(const k of TKEYS){
+      const n = Math.max(0, Math.min(200, parseInt(o.counts[k],10) || 0));
+      if(!n) continue;
+      s.counts[k] = n;
+      if(REC(k)){ const r = Math.max(0, Math.min(n, parseInt(o.recent && o.recent[k],10) || 0)); if(r) s.recent[k] = r; }
+    }
+    s.project = !!o.project;
+    if(o.last && typeof o.last === "object"){
+      const y = parseInt(o.last.y,10), m = parseInt(o.last.m,10);
+      if(y >= 1950 && y <= now.getFullYear()+1) s.last = {y, m:(m>=1 && m<=12) ? m : 0};
+    }
+  } else if(Array.isArray(o.items)){            // migración desde la versión con registro individual
+    let lastIdx = -Infinity;
+    for(const it of o.items){
+      if(!it || !TYPES[it.type]) continue;
+      const y = parseInt(it.y,10); if(!(y >= 1950 && y <= now.getFullYear()+1)) continue;
+      const m = parseInt(it.m,10) || 0, idx = ymIdx(y, m), rec = idx >= nowIdx - WINDOW_MONTHS;
+      if(TYPES[it.type].grp === "proj"){ if(it.ongoing || rec) s.project = true; continue; }
+      s.counts[it.type] = Math.min(200, (s.counts[it.type]||0) + 1);
+      if(REC(it.type)){
+        if(rec) s.recent[it.type] = Math.min(s.counts[it.type], (s.recent[it.type]||0) + 1);
+        if(idx > lastIdx){ lastIdx = idx; s.last = {y, m:(m>=1 && m<=12) ? m : 0}; }
+      }
+    }
+  }
+  return s;
+}
+const persist = () => { store.set(K_STATE, S); };
+const persistHist = () => { store.set(K_HIST, HIST); };
+
+/* ================= Cálculo ================= */
+function levelFor(total, prodOK, h){
+  if(!prodOK) return {level:null, hBlocked:false};
+  let lv = null;
+  for(const L of LEVELS) if(total >= L.min) lv = L;
+  if(lv && lv.id === "DIST" && h < 10) return {level:LEVELS.find(l=>l.id==="I"), hBlocked:true};
+  return {level:lv, hBlocked:false};
+}
+
+function compute(st, ref = now){
+  const refIdx = ref.getFullYear()*12 + ref.getMonth();
+  const c = {counts:{}, formation:DEGREES[st.degree].pts, artQ:0, minorRaw:0, ip:0, bookRaw:0, advRaw:0};
+  let recentN = 0;
+  for(const [k, t] of Object.entries(TYPES)){
+    if(t.grp === "proj") continue;
+    const n = (st.counts && st.counts[k]) || 0;
+    if(!n) continue;
+    c.counts[k] = n;
+    const p = n * t.pts;
+    if(t.grp==="art") c.artQ += p;
+    else if(t.grp==="minor") c.minorRaw += p;
+    else if(t.grp==="ip") c.ip += p;
+    else if(t.grp==="book") c.bookRaw += p;
+    else if(t.grp==="adv") c.advRaw += p;
+    // condición de activo: producción reciente (Tabla 1 B, C, D) o proyecto de CTI (H)
+    if(["art","minor","ip","book"].includes(t.grp)) recentN += Math.min(n, (st.recent && st.recent[k]) || 0);
+  }
+  c.minor = Math.min(CAP, c.minorRaw);
+  c.book  = Math.min(CAP, c.bookRaw);
+  c.advising = Math.min(CAP, c.advRaw);
+  c.production = c.artQ + c.minor + c.ip + c.book;
+  c.total = c.formation + c.production + c.advising;
+  c.minProd = st.student ? 9 : 6;
+  c.prodOK = c.production >= c.minProd;
+  const h = Number(st.h) || 0;
+  const r = levelFor(c.total, c.prodOK, h);
+  c.level = r.level; c.hBlocked = r.hBlocked;
+  c.h = h;
+  c.recentN = recentN;
+  c.active = recentN > 0 || !!st.project;
+  c.activeForever = !!st.project;
+  const lastIdx = st.last ? ymIdx(st.last.y, st.last.m) : null;
+  c.activeUntil = (!st.project && recentN > 0 && lastIdx !== null) ? lastIdx + WINDOW_MONTHS : null;
+  c.dateConflict = c.activeUntil !== null && c.activeUntil < refIdx;
+  return c;
+}
+const levelIdx = L => L ? LEVELS.findIndex(x => x.id===L.id) : -1;
+function nextLevel(c){
+  if(c.hBlocked) return LEVELS[LEVELS.length-1];
+  const i = levelIdx(c.level);
+  return i+1 < LEVELS.length ? LEVELS[i+1] : null;
+}
+const levelName = L => L ? L.name : "Sin nivel";
+function idxToText(idx){ const y = Math.floor(idx/12), m = idx%12; return `${MONTHS[m]} ${y}`; }
+
+/* ================= Render: perfil e ítems ================= */
+function buildDegrees(){
+  const box = $("#degrees");
+  box.innerHTML = Object.entries(DEGREES).map(([k,d]) =>
+    `<label class="degree"><input type="radio" name="degree" value="${k}"><b>${esc(d.label)}</b><span>${d.pts} ${d.pts===1?"punto":"puntos"}</span></label>`).join("");
+}
+function syncProfile(){
+  $("#name").value = S.name; $("#hidx").value = S.h || "";
+  $("#inst").value = S.inst; $("#area").value = S.area;
+  if(S.cti && !$("#ctiUrl").value) $("#ctiUrl").value = "https://ctivitae.concytec.gob.pe/appDirectorioCTI/VerDatosInvestigador.do?id_investigador=" + S.cti;
+  $("#student").checked = S.student; $("#affil").checked = S.affil;
+  $$("input[name=degree]").forEach(r => r.checked = (r.value === S.degree));
+}
+const yearOpts = () => {
+  let o = `<option value="">Año</option>`;
+  for(let y = now.getFullYear(); y >= 1970; y--) o += `<option value="${y}">${y}</option>`;
+  return o;
+};
+const REC_GRP = ["art","minor","ip","book"];
+const spin = (k, kind) => `<div class="spin"><button type="button" data-ct="${k}" data-kind="${kind}" data-d="-1" aria-label="Quitar uno">−</button><input type="number" min="0" max="200" inputmode="numeric" data-ct="${k}" data-kind="${kind}" aria-label="${kind==="n"?"Cantidad total":"Cantidad en los últimos 3 años"}: ${esc(TYPES[k].label)}"><button type="button" data-ct="${k}" data-kind="${kind}" data-d="1" aria-label="Agregar uno">+</button></div>`;
+
+function buildCats(){
+  const boxes = {};
+  for(const [cat, cfg] of Object.entries(CATS)){
+    const wrap = document.createElement("section");
+    wrap.className = "cat"; wrap.dataset.cat = cat;
+    if(cat === "proj"){
+      wrap.innerHTML = `<label class="check"><input type="checkbox" id="project"><span><b>Participo o participé, en los últimos 3 años, en un proyecto de CTI</b> aprobado por pares externos (con o sin financiamiento; como investigador principal, asociado, doctoral, postdoctoral u otro). No cuentan los proyectos de bachiller, magíster ni título profesional.</span></label>`;
+    } else {
+      const types = Object.entries(TYPES).filter(([,t]) => t.cat === cat);
+      const hasRec = types.some(([,t]) => REC_GRP.includes(t.grp));
+      wrap.innerHTML = `
+        <div class="cat-head"><h3>${cfg.title}</h3><span class="sum" data-sum="${cat}"></span>${cfg.note?`<small>${cfg.note}</small>`:""}</div>
+        <div data-capnote="${cat}"></div>
+        <div class="chead"><span>Tipo</span><span>Cantidad total</span><span>${hasRec?"De ellos, en los últimos 3 años":""}</span><span>Puntos</span></div>
+        ${types.map(([k,t]) => `<div class="crow" data-type="${k}">
+          <div class="cl"><span class="tag">${t.short}</span><div><strong>${esc(t.label)}</strong><small>${fmt(t.pts)} ${t.pts===1?"pt":"pts"} c/u</small></div></div>
+          <div class="cs"><span class="mlbl">Cantidad total</span>${spin(k,"n")}</div>
+          <div class="cs">${REC_GRP.includes(t.grp)?`<span class="mlbl">En los últimos 3 años</span>${spin(k,"r")}`:`<span class="na">—</span>`}</div>
+          <div class="cp" data-pts="${k}">—</div></div>`).join("")}`;
+    }
+    (boxes[cfg.box] ||= $("#"+cfg.box)).appendChild(wrap);
+  }
+  const lastBox = document.createElement("section");
+  lastBox.className = "cat";
+  lastBox.innerHTML = `<div class="cat-head"><h3>Tu producción más reciente</h3><small>Opcional. Sirve para calcular hasta cuándo conservas la condición de activo. No cambia tu puntaje.</small></div>
+    <div class="grid2"><div><label class="lbl" for="lastM">Mes</label><select id="lastM"><option value="0">Mes</option>${MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("")}</select></div>
+    <div><label class="lbl" for="lastY">Año</label><select id="lastY">${yearOpts()}</select></div></div>`;
+  boxes["cats-prod"].appendChild(lastBox);
+}
+
+function setCount(k, kind, v){
+  v = Math.max(0, Math.min(200, Math.floor(Number(v) || 0)));
+  const n = S.counts[k] || 0;
+  if(kind === "n"){
+    if(v) S.counts[k] = v; else delete S.counts[k];
+    if((S.recent[k]||0) > v){ if(v) S.recent[k] = v; else delete S.recent[k]; }
+  } else {
+    const r = Math.min(v, n);
+    if(r) S.recent[k] = r; else delete S.recent[k];
+  }
+  refresh();
+}
+
+function renderCounts(c){
+  for(const [k, t] of Object.entries(TYPES)){
+    if(t.grp === "proj") continue;
+    const n = S.counts[k] || 0, r = S.recent[k] || 0;
+    const row = $(`.crow[data-type=${k}]`);
+    row.querySelectorAll("input[data-ct]").forEach(inp => { if(document.activeElement !== inp) inp.value = inp.dataset.kind === "n" ? n : r; });
+    row.querySelectorAll("button[data-ct]").forEach(b => {
+      const isN = b.dataset.kind === "n", cur = isN ? n : r;
+      b.disabled = b.dataset.d === "-1" ? cur <= 0 : (!isN && r >= n);
+    });
+    $(`[data-pts=${k}]`).textContent = n ? "+" + fmt(n * t.pts) : "—";
+    row.classList.toggle("has", n > 0);
+  }
+  for(const cat of ["art","ip","book","adv"]){
+    const sumEl = $(`[data-sum=${cat}]`), noteEl = $(`[data-capnote=${cat}]`);
+    let sum = 0, note = "";
+    if(cat==="art"){ sum = c.artQ + c.minor; if(c.minorRaw>CAP) note = `Sin cuartil, proceedings y SciELO: sumas ${fmt(c.minorRaw)} pts, pero solo se cuentan ${CAP}.`; }
+    if(cat==="ip") sum = c.ip;
+    if(cat==="book"){ sum = c.book; if(c.bookRaw>CAP) note = `Libros y capítulos: sumas ${fmt(c.bookRaw)} pts, pero solo se cuentan ${CAP}.`; }
+    if(cat==="adv"){ sum = c.advising; if(c.advRaw>CAP) note = `Asesorías: sumas ${fmt(c.advRaw)} pts, pero solo se cuentan ${CAP}.`; }
+    sumEl.textContent = `${fmt(sum)} pts`;
+    noteEl.innerHTML = note ? `<p class="capnote">${note}</p>` : "";
+  }
+  $("#project").checked = S.project;
+  if(document.activeElement !== $("#lastY")) $("#lastY").value = S.last ? String(S.last.y) : "";
+  if(document.activeElement !== $("#lastM")) $("#lastM").value = S.last ? String(S.last.m) : "0";
+  $("#prodBadge").textContent = `${fmt(c.production)} / mín. ${c.minProd} pts`;
+}
+
+/* ================= Render: resultado ================= */
+function renderResult(c){
+  const L = c.level, i = levelIdx(L), nxt = nextLevel(c);
+  const isDist = L && L.id==="DIST";
+  let barPct = 0, barL = "", barR = "";
+  if(!c.prodOK){ barPct = Math.min(100, c.production / c.minProd * 100); barL = `Producción ${fmt(c.production)}`; barR = `mínimo ${c.minProd}`; }
+  else if(c.hBlocked){ barPct = Math.min(100, c.h/10*100); barL = `Índice h ${c.h}`; barR = "requiere 10"; }
+  else if(nxt){ const lo = L ? L.min : 0; barPct = Math.max(0, Math.min(100, (c.total-lo)/(nxt.min-lo)*100)); barL = `${fmt(c.total)} pts`; barR = `${nxt.name} desde ${nxt.min}`; }
+  else { barPct = 100; barL = "Nivel máximo"; }
+
+  const chips = [];
+  chips.push(c.prodOK
+    ? `<div class="chip ok"><i>✓</i><span>Producción mínima cumplida (${fmt(c.production)} de ${c.minProd} pts).</span></div>`
+    : `<div class="chip bad"><i>✕</i><span><b>No calificas todavía:</b> te faltan ${fmt(c.minProd - c.production)} pts de producción (artículos, propiedad intelectual o libros). Es obligatorio sin importar tu puntaje total.</span></div>`);
+  if(c.hBlocked) chips.push(`<div class="chip warn"><i>!</i><span>Tienes ${fmt(c.total)} pts, suficiente para Investigador Distinguido, pero necesitas índice h ≥ 10 (tienes ${c.h}).</span></div>`);
+  else if(L && L.id==="DIST") chips.push(`<div class="chip ok"><i>✓</i><span>Índice h ${c.h} ≥ 10. Distinguido es vitalicio y no exige estar activo.</span></div>`);
+  if(isDist) {}
+  else if(c.active){
+    const aff = S.affil ? " afiliado" : "";
+    if(c.activeForever) chips.push(`<div class="chip ok"><i>✓</i><span>Condición de <b>activo${aff}</b> mientras participes en tu proyecto de CTI.</span></div>`);
+    else if(c.dateConflict) chips.push(`<div class="chip warn"><i>!</i><span>Indicas producción reciente, pero la fecha de tu producción más reciente es anterior a 3 años. Corrige uno de los dos datos.</span></div>`);
+    else if(c.activeUntil !== null){
+      const months = c.activeUntil - nowIdx, cls = months <= 6 ? "warn" : "ok";
+      chips.push(`<div class="chip ${cls}"><i>${cls==="ok"?"✓":"!"}</i><span>Condición de <b>activo${aff}</b> hasta ${idxToText(c.activeUntil)}.${months<=6?" Renueva pronto tu producción.":""}</span></div>`);
+    } else chips.push(`<div class="chip ok"><i>✓</i><span>Condición de <b>activo${aff}</b>. Indica en el paso 2 la fecha de tu producción más reciente para saber hasta cuándo.</span></div>`);
+  } else {
+    chips.push(`<div class="chip warn"><i>!</i><span>Sin producción ni proyecto en los últimos 3 años: quedarías como <b>no activo</b>.</span></div>`);
+  }
+
+  $("#resultado").innerHTML = `<div class="res">
+    <h2>Tu resultado</h2>
+    <div class="score"><span class="n">${fmt(c.total)}</span><span class="u">puntos</span></div>
+    <div class="level ${L?(isDist?"dist":""):"none"}">${esc(levelName(L))}</div>
+    <p class="lvl-sub">${L ? (c.hBlocked?"Nivel asignado mientras no alcances h ≥ 10.":(isDist?"Máxima clasificación.":`Rango de este nivel: ${L.min}–${L.max} pts.`)) : (c.prodOK?"Necesitas al menos 10 pts en total para el Nivel VII.":"Primero cumple la producción mínima.")}</p>
+    <div class="barlabel"><span>${barL}</span><span>${barR}</span></div>
+    <div class="bar"><i style="width:${barPct}%"></i></div>
+    <div class="ladder" aria-label="Escala de niveles">${LEVELS.map((x,k)=>`<div class="${k===i?"cur "+(x.id==="DIST"?"dist":""):(k<i?"past":"")}">${x.id==="DIST"?"DIST":x.id}<small>${x.min}${x.id==="DIST"?"+":""}</small></div>`).join("")}</div>
+    <div class="mini">
+      ${miniBar("Formación", c.formation, 10)}
+      ${miniBar("Producción", c.production, Math.max(c.minProd, c.production), c.prodOK)}
+      ${miniBar("Asesoría", c.advising, 10)}
+    </div>
+    <div class="chips">${chips.join("")}</div>
+    <table class="bd">
+      <tr><th>Detalle</th><th>Pts</th></tr>
+      <tr><td>Formación (${esc(DEGREES[S.degree].label)})</td><td>${fmt(c.formation)}</td></tr>
+      <tr><td>Artículos Q1–Q4</td><td>${fmt(c.artQ)}</td></tr>
+      <tr><td>Sin cuartil / proceedings / SciELO</td><td>${fmt(c.minor)}</td></tr>
+      <tr><td>Propiedad intelectual</td><td>${fmt(c.ip)}</td></tr>
+      <tr><td>Libros y capítulos</td><td>${fmt(c.book)}</td></tr>
+      <tr><td>Asesoría de tesis</td><td>${fmt(c.advising)}</td></tr>
+      <tr class="tot"><td>Total</td><td>${fmt(c.total)}</td></tr>
+    </table>
+    <div class="actions">
+      <button class="btn" data-action="open-save">Guardar en historial</button>
+      <button class="btn ghost" data-go="plan">Plan de ascenso →</button>
+      <button class="btn ghost" data-action="pdf">Descargar PDF</button>
+    </div>
+    <p class="lvl-sub" style="margin:12px 0 0"><a href="#comm">Aporta tu resultado de forma anónima a las métricas →</a></p>
+  </div>`;
+  $("#mbScore").textContent = fmt(c.total);
+  $("#mbLevel").textContent = levelName(L) + (c.prodOK ? "" : " · falta producción");
+}
+function miniBar(label, v, max, ok=true){
+  const pct = max ? Math.min(100, v/max*100) : 0;
+  return `<div class="m"><span>${label}</span><div class="bar"><i style="width:${pct}%${ok?"":";background:var(--bad)"}"></i></div><b>${fmt(v)}</b></div>`;
+}
+
+/* ================= Plan de ascenso ================= */
+function targetOptions(c){
+  const cur = levelIdx(c.level);
+  return LEVELS.filter((_,k) => k > cur || (c.hBlocked && LEVELS[k].id==="DIST"));
+}
+function renderPlan(c){
+  const sel = $("#target");
+  const opts = targetOptions(c);
+  const prev = sel.value;
+  sel.innerHTML = opts.length ? opts.map(L => `<option value="${L.id}">${L.name} (${L.min}${L.id==="DIST"?"+":""} pts)</option>`).join("")
+                              : `<option value="">Ya estás en el nivel máximo</option>`;
+  if(opts.some(o => o.id===prev)) sel.value = prev;
+  const tgt = opts.find(o => o.id===sel.value) || opts[0] || null;
+
+  const reqs = [], box = $("#strats");
+  let gapTxt = "", gap = 0, onlyProd = false;
+  if(!tgt){ $("#gapBig").innerHTML = `<b>🏆</b> Estás en el nivel máximo.`; $("#reqs").innerHTML = ""; box.innerHTML = ""; return; }
+  if(!c.prodOK){
+    onlyProd = true; gap = c.minProd - c.production;
+    gapTxt = `<b>${fmt(gap)}</b> pts de producción para poder calificar`;
+    reqs.push(`<div class="chip bad"><i>1</i><span><b>Primero:</b> cumple el mínimo obligatorio de producción (${c.minProd} pts). Después podrás ascender de nivel.</span></div>`);
+  } else {
+    gap = Math.max(0, tgt.min - c.total);
+    gapTxt = gap ? `<b>${fmt(gap)}</b> pts para ${esc(tgt.name)}` : `Ya tienes el puntaje para ${esc(tgt.name)}`;
+    if(tgt.id==="DIST") reqs.push(c.h >= 10
+      ? `<div class="chip ok"><i>✓</i><span>Índice h ${c.h} ≥ 10.</span></div>`
+      : `<div class="chip warn"><i>!</i><span>Además del puntaje, necesitas <b>índice h ≥ 10</b> en Scopus (hoy ${c.h}; faltan ${10-c.h}). El h crece con citas a tus artículos, no con más puntos.</span></div>`);
+  }
+  $("#gapBig").innerHTML = `<div class="gap-big">${gapTxt}</div>`;
+  $("#reqs").innerHTML = reqs.join("");
+
+  // estrategias
+  const room = {art:Infinity, ip:Infinity, minor:CAP-c.minor, book:CAP-c.book, adv:CAP-c.advising};
+  const S_DEF = [
+    ["art_q1","artículo Q1","artículos Q1"],["art_q2","artículo Q2","artículos Q2"],["art_q3","artículo Q3","artículos Q3"],["art_q4","artículo Q4","artículos Q4"],
+    ["ip_hi","patente de invención / obtentor / paquete tecnológico","patentes de invención / obtentores / paquetes tecnológicos"],
+    ["ip_lo","modelo de utilidad o software registrado","modelos de utilidad o software registrados"],
+    ["art_oth","artículo sin cuartil, proceeding o SciELO","artículos sin cuartil, proceedings o SciELO"],
+    ["book","libro con revisión por pares","libros con revisión por pares"],["chapter","capítulo de libro","capítulos de libro"],
+    ["th_phd","tesis de doctorado asesorada","tesis de doctorado asesoradas"],["th_ms","tesis de maestría asesorada","tesis de maestría asesoradas"],["th_ug","tesis de pregrado asesorada","tesis de pregrado asesoradas"]
+  ];
+  const cards = [];
+  if(gap > 0){
+    for(const [k, one, many] of S_DEF){
+      const t = TYPES[k];
+      if(onlyProd && !["art","minor","ip","book"].includes(t.grp)) continue;
+      const r = room[t.grp]; const maxN = r===Infinity ? Infinity : Math.floor(r / t.pts + 1e-9);
+      if(maxN <= 0) continue;
+      const need = Math.ceil(gap / t.pts - 1e-9);
+      if(need <= maxN) cards.push({full:true, need, k, title:`${need} ${plural(need,one,many)}`, desc:`${ptsTxt(t.pts)} c/u${r!==Infinity?` · te queda tope para ${maxN}`:""}. Cubre la brecha completa.`, gain:`+${fmt(need*t.pts)} pts`, order:need});
+      else cards.push({full:false, need:maxN, k, title:`Hasta ${maxN} ${plural(maxN,one,many)} más`, desc:`Es lo máximo que aún se contaría por el tope de ${CAP} pts. No alcanza solo; combínalo con otra vía.`, gain:`+${fmt(maxN*t.pts)} pts`, order:1000-maxN*t.pts});
+    }
+    if(!onlyProd){
+      const di = DEG_ORDER.indexOf(S.degree);
+      if(di < DEG_ORDER.length-1){
+        const nextD = DEG_ORDER[di+1] === "enrolled" ? null : DEG_ORDER[di+1];
+        const targetD = nextD || DEG_ORDER[di+2];
+        if(targetD){
+          const d = DEGREES[targetD].pts - c.formation;
+          cards.push({full:d>=gap, k:"deg", title:`Obtener: ${DEGREES[targetD].label}`, desc:`Registrado en SUNEDU o MINEDU. Reemplaza tu formación actual (no se acumula).`, gain:`+${fmt(d)} pts`, order:d>=gap?50:900});
+        }
+      }
+    }
+    cards.sort((a,b) => (b.full-a.full) || (a.order-b.order));
+  }
+  box.innerHTML = cards.length ? cards.map(x => `<div class="strat ${x.full?"full":""}"><h4>${esc(x.title)}</h4><p>${esc(x.desc)}</p><span class="gain">${x.gain}</span></div>`).join("")
+    : (gap>0 ? `<p class="empty">Con los topes del reglamento ya no hay más puntos en las vías disponibles; revisa el simulador.</p>` : `<p class="empty">No te falta puntaje. Revisa los requisitos de arriba y presenta tu solicitud de promoción en CTI Vitae.</p>`);
+}
+
+/* ================= Simulador ================= */
+const SIM_TYPES = ["art_q1","art_q2","art_q3","art_q4","art_oth","ip_hi","ip_lo","book","chapter","th_phd","th_ms","th_ug"];
+function buildSim(){
+  $("#simGrid").innerHTML = SIM_TYPES.map(k => `<div class="stepper"><span>${esc(TYPES[k].label)}<small>${ptsTxt(TYPES[k].pts)} c/u</small></span>
+    <button data-sim="-" data-k="${k}" aria-label="Quitar uno">−</button><output id="sim-${k}">0</output><button data-sim="+" data-k="${k}" aria-label="Agregar uno">+</button></div>`).join("");
+  $("#simDeg").innerHTML = DEG_ORDER.slice().reverse().map(k => `<option value="${k}">${DEGREES[k].label}</option>`).join("");
+}
+function renderSim(c){
+  if(!sim.dTouched) sim.degree = S.degree;       // sigue al perfil hasta que el usuario lo cambie en el simulador
+  if(!sim.hTouched) sim.h = S.h;
+  $("#simDeg").value = sim.degree;
+  if(document.activeElement !== $("#simH")) $("#simH").value = sim.h || "";
+  SIM_TYPES.forEach(k => { $("#sim-"+k).textContent = sim.counts[k]||0; });
+  const st = {...S, degree:sim.degree, h:Number(sim.h)||0, counts:{...S.counts}};
+  for(const [k,n] of Object.entries(sim.counts)) if(n) st.counts[k] = (st.counts[k]||0) + n;
+  const p = compute(st);
+  const d = p.total - c.total;
+  $("#simRes").innerHTML = `
+    <div><small>Puntaje proyectado</small><b>${fmt(p.total)}</b> <span class="delta">${d?(d>0?"+":"")+fmt(d):"sin cambio"}</span></div>
+    <div><small>Nivel proyectado</small><b style="font-size:20px">${esc(levelName(p.level))}</b>${p.hBlocked?`<br><span class="delta" style="color:var(--warn)">Falta h ≥ 10</span>`:""}</div>
+    <div><small>Producción</small><b>${fmt(p.production)}</b> <span class="delta" style="color:${p.prodOK?"var(--ok)":"var(--bad)"}">${p.prodOK?"cumple":"falta "+fmt(p.minProd-p.production)}</span></div>`;
+}
+
+/* ================= Historial ================= */
+function snapFrom(label){
+  const c = compute(S);
+  return {id:uid(), ts:Date.now(), label, total:c.total, formation:c.formation, production:c.production, advising:c.advising,
+          level:c.level?c.level.name:"Sin nivel", h:c.h, counts:c.counts, state:JSON.parse(JSON.stringify(S))};
+}
+function chartSVG(){
+  const pts = HIST.slice().sort((a,b)=>a.ts-b.ts);
+  if(pts.length < 2) return `<p class="empty">${pts.length?"Guarda otra captura para ver la evolución.":"Todavía no hay capturas. Guarda la primera para empezar tu historial."}</p>`;
+  const W=640,H=270,pl=44,pr=16,pt=14,pb=34;
+  const maxV = Math.max(...pts.map(p=>p.total), 20);
+  const ymax = Math.ceil((maxV*1.15)/10)*10;
+  const x = i => pl + (pts.length===1?0:i*(W-pl-pr)/(pts.length-1));
+  const y = v => pt + (H-pt-pb)*(1 - v/ymax);
+  const grid = LEVELS.filter(L => L.min <= ymax).map(L => `<line x1="${pl}" x2="${W-pr}" y1="${y(L.min)}" y2="${y(L.min)}" stroke="var(--line)" stroke-dasharray="4 4"/><text x="${pl-6}" y="${y(L.min)+4}" text-anchor="end">${L.id==="DIST"?"D":L.id}</text>`).join("");
+  const line = pts.map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.total)}`).join(" ");
+  const dots = pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.total)}" r="5" fill="var(--brand)"><title>${esc(p.label)}: ${fmt(p.total)} pts (${esc(p.level)})</title></circle><text x="${x(i)}" y="${y(p.total)-10}" text-anchor="middle" style="fill:var(--ink);font-weight:700">${fmt(p.total)}</text>`).join("");
+  const labels = pts.map((p,i)=> (pts.length<=8 || i%Math.ceil(pts.length/8)===0) ? `<text x="${x(i)}" y="${H-12}" text-anchor="middle">${new Date(p.ts).toLocaleDateString("es-PE",{month:"short",year:"2-digit"})}</text>` : "").join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución del puntaje total en el tiempo">${grid}<path d="${line}" fill="none" stroke="var(--brand)" stroke-width="2.5"/>${dots}${labels}</svg>`;
+}
+function renderHistory(){
+  $("#chartBox").innerHTML = chartSVG();
+  const sorted = HIST.slice().sort((a,b)=>b.ts-a.ts);
+  if(!sorted.length){ $("#snaps").innerHTML = `<div class="card"><p class="empty" style="margin:0">Aún no tienes capturas. Pulsa “Guardar captura actual”.</p></div>`; renderCompare(); return; }
+  $("#snaps").innerHTML = sorted.map((s,i) => {
+    const older = sorted[i+1]; const d = older ? s.total - older.total : null;
+    return `<div class="snap" data-id="${esc(s.id)}">
+      <div class="big">${fmt(s.total)}</div>
+      <div><h4>${esc(s.label)}</h4><small>${fullDate(s.ts)} · ${esc(s.level)} · Prod. ${fmt(s.production)} · h ${s.h}</small>
+        ${d===null?"":`<span class="d ${d>0?"up":d<0?"down":""}">${d>0?"▲ +":d<0?"▼ ":"= "}${fmt(d)} pts vs. captura anterior</span>`}</div>
+      <div class="acts">
+        <label class="btn ghost sm" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" data-action="cmp" ${cmpSel.includes(s.id)?"checked":""}> Comparar</label>
+        <button class="btn ghost sm" data-action="restore">Restaurar</button>
+        <button class="icon-btn" data-action="del-snap" aria-label="Eliminar captura">✕</button>
+      </div></div>`;
+  }).join("");
+  renderCompare();
+}
+function renderCompare(){
+  const box = $("#cmpBox");
+  const a = HIST.find(h=>h.id===cmpSel[0]), b = HIST.find(h=>h.id===cmpSel[1]);
+  if(!a || !b){ box.innerHTML = `<p class="empty" style="margin:0">Selecciona dos capturas para ver qué cambió.</p>`; return; }
+  const [o, n] = a.ts <= b.ts ? [a,b] : [b,a];
+  const row = (lab, x, y) => { const d = y-x; return `<tr><td>${lab}</td><td>${fmt(x)}</td><td>${fmt(y)}</td><td style="color:${d>0?"var(--ok)":d<0?"var(--bad)":"var(--muted)"}">${d>0?"+":""}${fmt(d)}</td></tr>`; };
+  let rows = row("Total", o.total, n.total) + row("Formación", o.formation, n.formation) + row("Producción", o.production, n.production) + row("Asesoría", o.advising, n.advising) + row("Índice h", o.h, n.h);
+  for(const k of Object.keys(TYPES)){ const x=o.counts[k]||0, y=n.counts[k]||0; if(x||y) rows += row(TYPES[k].short+" · "+TYPES[k].label.split("(")[0].trim(), x, y); }
+  box.innerHTML = `<p class="sub" style="margin-top:0">${esc(o.label)} → ${esc(n.label)}</p><table class="cmp"><tr><th></th><th>Antes</th><th>Ahora</th><th>Δ</th></tr>${rows}</table>`;
+}
+
+/* ================= Informe imprimible ================= */
+function buildReport(){
+  const c = compute(S);
+  const rows = Object.entries(TYPES).filter(([k,t]) => t.grp !== "proj" && S.counts[k]).map(([k,t]) =>
+    `<tr><td>${esc(t.label)}</td><td class="r">${S.counts[k]}</td><td class="r">${REC_GRP.includes(t.grp) ? (S.recent[k]||0) : "—"}</td><td class="r">${fmt(t.pts)}</td></tr>`).join("");
+  $("#printArea").innerHTML = `
+    <h1>Informe de autoevaluación RENACYT</h1>
+    <small>${esc(S.name||"Sin nombre")}${S.inst?" · "+esc(S.inst):""} · generado el ${fullDate(Date.now())} · Reglamento RP 090-2021-CONCYTEC-P</small>
+    <h2 style="margin:14px 0 4px">${esc(levelName(c.level))} — ${fmt(c.total)} puntos</h2>
+    <table><tr><th>Criterio</th><th class="r">Puntos</th></tr>
+      <tr><td>Formación (${esc(DEGREES[S.degree].label)})</td><td class="r">${fmt(c.formation)}</td></tr>
+      <tr><td>Artículos Q1–Q4</td><td class="r">${fmt(c.artQ)}</td></tr>
+      <tr><td>Sin cuartil / proceedings / SciELO (tope ${CAP})</td><td class="r">${fmt(c.minor)}</td></tr>
+      <tr><td>Propiedad intelectual</td><td class="r">${fmt(c.ip)}</td></tr>
+      <tr><td>Libros y capítulos (tope ${CAP})</td><td class="r">${fmt(c.book)}</td></tr>
+      <tr><td>Asesoría de tesis (tope ${CAP})</td><td class="r">${fmt(c.advising)}</td></tr>
+      <tr><td><b>Total</b></td><td class="r"><b>${fmt(c.total)}</b></td></tr></table>
+    <p>Producción total: ${fmt(c.production)} pts (mínimo ${c.minProd}) — ${c.prodOK?"cumple":"NO cumple"}. Índice h Scopus: ${c.h}. Condición: ${c.active?(c.activeUntil!==null && !c.activeForever ? "activo hasta "+idxToText(c.activeUntil) : "activo"):"no activo"}${c.hBlocked?". Puntaje de Distinguido pero h < 10.":"."}</p>
+    <h3>Producción declarada</h3>
+    <table><tr><th>Tipo</th><th class="r">Cantidad</th><th class="r">En últimos 3 años</th><th class="r">Pts c/u</th></tr>${rows||'<tr><td colspan="4">Sin productos declarados.</td></tr>'}</table>
+    <small>Cálculo referencial. La calificación oficial la realiza el CONCYTEC en CTI Vitae.</small>`;
+  document.body.classList.add("printing");
+  setTimeout(() => { window.print(); }, 50);
+}
+window.addEventListener("afterprint", () => document.body.classList.remove("printing"));
+
+/* ================= Referencia ================= */
+function buildRef(){
+  $("#refLevels").innerHTML = `<tr><th>Nivel</th><th>Puntaje</th></tr>` +
+    LEVELS.slice().reverse().map(L => `<tr><td>${L.name}</td><td>${L.id==="DIST"?"200 o más + h ≥ 10":L.min+" – "+L.max}</td></tr>`).join("");
+  const rows = [
+    ["Doctor / Magíster / Título / Bachiller / Matrícula","10 / 6 / 4 / 2 / 1"],
+    ["Artículo Q1 / Q2 / Q3 / Q4 (Scopus, WoS)","5 / 4 / 3 / 2"],
+    ["Artículo sin cuartil en su año, proceedings (Scopus/WoS) o SciELO (tope 10)","1"],
+    ["Patente de invención / obtentor / paquete tecnológico","3"],
+    ["Modelo de utilidad / software","1"],
+    ["Libro / Capítulo (tope conjunto 10)","2 / 1"],
+    ["Asesoría: doctorado / maestría / pregrado (tope 10)","2 / 1 / 0.5"],
+    ["Producción mínima obligatoria","6 (9 si eres estudiante)"]
+  ];
+  $("#refPts").innerHTML = `<tr><th>Ítem</th><th>Pts</th></tr>` + rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
+}
+
+/* ================= Interacción ================= */
+function toast(msg, undo){
+  $("#toastMsg").textContent = msg;
+  const u = $("#toastUndo"); u.hidden = !undo;
+  $("#toast").classList.add("on");
+  clearTimeout(toast.t); toast.t = setTimeout(() => $("#toast").classList.remove("on"), undo ? 6000 : 2600);
+}
+function refresh(){
+  const c = compute(S);
+  renderCounts(c); renderResult(c); renderPlan(c); renderSim(c); renderShare();
+  persist();
+}
+function showView(v){
+  if(v !== "feed") lastView = v;
+  $$(".view").forEach(s => s.classList.toggle("on", s.id==="view-"+v));
+  $$(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.view===v));
+  if(v==="hist") renderHistory();
+  if(v==="comm") renderComm();
+  if(v==="feed") fbRefresh();
+  window.scrollTo({top:0});
+  try{ history.replaceState(null,"","#"+v); }catch{}
+}
+function downloadFile(name, text, mime){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text],{type:mime})); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function csvCell(v){ v = String(v ?? ""); return /[",\n;]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+
+document.addEventListener("click", e => {
+  const go = e.target.closest("[data-go]"); if(go){ showView(go.dataset.go); return; }
+  const tab = e.target.closest(".tab"); if(tab){ showView(tab.dataset.view); return; }
+  const sb = e.target.closest("[data-sim]");
+  if(sb){ const k = sb.dataset.k; sim.counts[k] = Math.max(0, Math.min(50, (sim.counts[k]||0) + (sb.dataset.sim==="+"?1:-1))); renderSim(compute(S)); return; }
+  const a = e.target.closest("[data-action]"); if(!a) return;
+  const act = a.dataset.action;
+  if(act==="sample"){
+    const y = now.getFullYear();
+    S = sanitizeState({name:S.name, inst:S.inst, area:S.area, degree:"master", h:4, student:false, affil:true, project:true,
+      counts:{art_q2:2, art_q3:1, art_oth:2, chapter:1, th_ms:2, th_ug:1}, recent:{art_q2:2, chapter:1}, last:{y:y-1, m:5}});
+    syncProfile(); refresh(); toast("Ejemplo cargado: reemplázalo con tus datos");
+  } else if(act==="clear"){
+    if(confirm("¿Borrar todos los datos del perfil actual? Tu historial no se borra.")){ S = blankState(); syncProfile(); refresh(); toast("Perfil reiniciado"); }
+  } else if(act==="open-save"){
+    $("#snapLabel").value = `Captura ${now.toLocaleDateString("es-PE",{day:"numeric",month:"short",year:"numeric"})}`;
+    $("#saveDlg").showModal(); $("#snapLabel").select();
+  } else if(act==="restore"){
+    const s = HIST.find(h => h.id===a.closest(".snap").dataset.id);
+    if(s && confirm("Esto reemplaza tu perfil actual por el de esa captura. ¿Continuar?")){ S = sanitizeState(s.state); syncProfile(); refresh(); toast("Captura restaurada"); showView("calc"); }
+  } else if(act==="del-snap"){
+    const id = a.closest(".snap").dataset.id;
+    if(confirm("¿Eliminar esta captura del historial?")){ HIST = HIST.filter(h=>h.id!==id); cmpSel = cmpSel.filter(x=>x!==id); persistHist(); renderHistory(); }
+  } else if(act==="cmp"){
+    const id = a.closest(".snap").dataset.id;
+    cmpSel = a.checked ? [...cmpSel.filter(x=>x!==id), id].slice(-2) : cmpSel.filter(x=>x!==id);
+    renderHistory();
+  } else if(act==="export-json"){
+    downloadFile(`renacyt-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify({app:"calculadora-renacyt",version:1,exported:new Date().toISOString(),state:S,history:HIST},null,2), "application/json");
+  } else if(act==="import-json"){ $("#fileIn").click(); }
+  else if(act==="export-csv"){
+    if(!HIST.length){ toast("No hay capturas que exportar"); return; }
+    const head = ["fecha","etiqueta","total","formacion","produccion","asesoria","nivel","indice_h",...Object.keys(TYPES)];
+    const lines = [head.join(",")].concat(HIST.slice().sort((a,b)=>a.ts-b.ts).map(s =>
+      [new Date(s.ts).toISOString().slice(0,10), s.label, s.total, s.formation, s.production, s.advising, s.level, s.h, ...Object.keys(TYPES).map(k=>s.counts[k]||0)].map(csvCell).join(",")));
+    downloadFile("historial-renacyt.csv", "﻿"+lines.join("\n"), "text/csv;charset=utf-8");
+  } else if(act==="print"){ buildReport(); }
+  else if(act==="fb-unrate"){ document.querySelectorAll("#fbStars input").forEach(r => r.checked = false); fbSaveDraft(); fbRefresh(); }
+  else if(act==="fb-copy"){ fbCopy(); }
+  else if(act==="cti-fetch"){ ctiFetch(); }
+  else if(act==="cti-apply"){ ctiApply(); }
+  else if(act==="cti-clear"){ CTI = null; renderCtiReview(); ctiMsg("", "sub"); }
+  else if(act==="pdf"){ downloadPdf(); }
+  else if(act==="share"){ sendContribution(); }
+  else if(act==="withdraw"){ withdrawContributions(); }
+  else if(act==="sim-reset"){ sim = {counts:{}, degree:null, h:null}; renderSim(compute(S)); }
+});
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button[data-ct]"); if(!b || b.disabled) return;
+  const k = b.dataset.ct, kind = b.dataset.kind, cur = kind === "n" ? (S.counts[k]||0) : (S.recent[k]||0);
+  setCount(k, kind, cur + Number(b.dataset.d));
+});
+document.addEventListener("input", e => { const el = e.target.closest("input[data-ct]"); if(el && el.value !== "") setCount(el.dataset.ct, el.dataset.kind, el.value); });
+document.addEventListener("change", e => { const el = e.target.closest("input[data-ct]"); if(el) setCount(el.dataset.ct, el.dataset.kind, el.value); });
+// Estos controles se crean en buildCats(), así que se atienden por delegación.
+document.addEventListener("change", e => {
+  if(e.target.id === "project"){ S.project = e.target.checked; refresh(); }
+  else if(e.target.id === "lastY" || e.target.id === "lastM"){
+    const y = parseInt($("#lastY").value,10), m = parseInt($("#lastM").value,10) || 0;
+    S.last = y ? {y, m} : null; refresh();
+  }
+});
+
+$("#name").addEventListener("input", e => { S.name = e.target.value.slice(0,80); persist(); });
+$("#inst").addEventListener("input", e => { S.inst = e.target.value.slice(0,80); persist(); renderShare(); });
+$("#area").addEventListener("change", e => { S.area = e.target.value; persist(); renderShare(); });
+$("#hidx").addEventListener("input", e => { S.h = Math.max(0, Math.min(300, parseInt(e.target.value,10)||0)); refresh(); });
+$("#student").addEventListener("change", e => { S.student = e.target.checked; refresh(); });
+$("#affil").addEventListener("change", e => { S.affil = e.target.checked; refresh(); });
+$("#degrees").addEventListener("change", e => { if(e.target.name==="degree"){ S.degree = e.target.value; refresh(); } });
+$("#target").addEventListener("change", () => renderPlan(compute(S)));
+$("#simDeg").addEventListener("change", e => { sim.dTouched = true; sim.degree = e.target.value; renderSim(compute(S)); });
+$("#simH").addEventListener("input", e => { sim.hTouched = true; sim.h = Math.max(0, parseInt(e.target.value,10)||0); renderSim(compute(S)); });
+
+$("#saveForm").addEventListener("submit", e => {
+  if(e.submitter && e.submitter.value==="ok"){
+    const label = $("#snapLabel").value.trim() || "Captura sin etiqueta";
+    HIST.push(snapFrom(label)); persistHist(); renderHistory(); toast("Captura guardada en tu historial");
+  }
+});
+$("#fileIn").addEventListener("change", async e => {
+  const file = e.target.files[0]; e.target.value = ""; if(!file) return;
+  try{
+    if(file.size > 5e6) throw new Error("size");
+    const data = JSON.parse(await file.text());
+    if(data.app !== "calculadora-renacyt") throw new Error("format");
+    const incoming = (Array.isArray(data.history) ? data.history : []).filter(h => h && typeof h.ts==="number" && h.state).slice(0,500).map(h => ({
+      id:String(h.id||uid()), ts:h.ts, label:String(h.label||"Captura").slice(0,80), total:Number(h.total)||0, formation:Number(h.formation)||0,
+      production:Number(h.production)||0, advising:Number(h.advising)||0, level:String(h.level||"").slice(0,40), h:Number(h.h)||0,
+      counts:(h.counts && typeof h.counts==="object") ? Object.fromEntries(Object.entries(h.counts).filter(([k,v])=>TYPES[k] && Number.isFinite(v))) : {},
+      state:sanitizeState(h.state)}));
+    if(!confirm(`Se importarán ${incoming.length} capturas y se reemplazará tu perfil actual. ¿Continuar?`)) return;
+    S = sanitizeState(data.state);
+    const ids = new Set(HIST.map(h=>h.id));
+    HIST = HIST.concat(incoming.filter(h=>!ids.has(h.id)));
+    syncProfile(); persistHist(); refresh(); renderHistory(); toast("Copia importada");
+  }catch{ toast("El archivo no es una copia válida de esta calculadora"); }
+});
+
+$("#ctiFile").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; ctiFile(f); });
+$("#ctiUrl").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); ctiFetch(); } });
+document.addEventListener("change", e => {
+  if(!CTI) return;
+  const sel = e.target.closest("select[data-cti]");
+  if(sel){ CTI[sel.dataset.cti][+sel.dataset.i].choice = sel.value; ctiRefreshSummary(); }
+  else if(e.target.id === "ctiDeg"){ CTI.degreeSel = e.target.value; ctiRefreshSummary(); }
+  else if(e.target.id === "ctiProj"){ CTI.projectSel = e.target.checked; ctiRefreshSummary(); }
+});
+
+$("#themeBtn").addEventListener("click", () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const next = cur==="dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try{ localStorage.setItem("renacyt_calc_v1_theme", next); }catch{}
+});
+
+/* ================= Configuración, autor y comunidad ================= */
+const CONFIG = {
+  // URL de la aplicación web de Google Apps Script (ver google-apps-script/INSTALACION.md).
+  // Mientras esté vacía, el envío de aportes queda desactivado.
+  endpoint: "https://script.google.com/macros/s/AKfycbwhaE48b5_s4gEfc4DIHtcIIwUzFxTyp_vEZDuuyv-KyW5-rm5iLqJBvYbnYFHRL0OW/exec",
+  appVersion: 1
+};
+const AUTHOR = {
+  name: "Rafael Segundo Vela-Paredes",
+  title: "Doctorando en Nutrición · Universidad Nacional Agraria La Molina (UNALM), programa PROCIENCIA",
+  affiliation: "Facultad de Industrias Alimentarias · Universidad Nacional de la Amazonía Peruana (UNAP), Iquitos",
+  initials: "RV",
+  orcid: "0000-0001-7255-6209",   // formato 0000-0000-0000-0000; vacío = no se muestra
+  scopus: "57200699171"           // solo dígitos; vacío = no se muestra
+};
+const VIEWS = ["calc","cti","plan","hist","comm","feed","ref"];
+const AREAS = {ing:"Ingeniería y Tecnología", nat:"Ciencias Naturales, Médicas y Agropecuarias", soc:"Ciencias Sociales y Humanidades"};
+const INSTITUTIONS = [
+  "Universidad Nacional de la Amazonía Peruana","Universidad Nacional Agraria La Molina","Universidad Nacional Mayor de San Marcos",
+  "Pontificia Universidad Católica del Perú","Universidad Nacional de Ingeniería","Universidad Peruana Cayetano Heredia",
+  "Universidad Nacional Federico Villarreal","Universidad Nacional San Antonio Abad del Cusco","Universidad Nacional de Trujillo",
+  "Universidad Nacional de San Agustín de Arequipa","Universidad Nacional de Cajamarca","Universidad Nacional del Altiplano",
+  "Universidad Nacional de San Martín","Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas","Universidad Nacional Agraria de la Selva",
+  "Universidad Nacional del Centro del Perú","Universidad Nacional de Piura","Universidad Nacional Pedro Ruiz Gallo",
+  "Universidad Nacional de Ucayali","Universidad Científica del Perú","Universidad de Lima","Universidad del Pacífico",
+  "Universidad Peruana Unión","Universidad Señor de Sipán","Universidad San Ignacio de Loyola","Universidad Continental",
+  "Universidad Peruana de Ciencias Aplicadas","Universidad de San Martín de Porres","Universidad César Vallejo",
+  "Instituto Nacional de Innovación Agraria (INIA)","Instituto de Investigaciones de la Amazonía Peruana (IIAP)","Instituto Nacional de Salud (INS)"
+];
+const K_CID = "renacyt_calc_v1_cid", K_SENT = "renacyt_calc_v1_sent";
+
+function buildInst(){ $("#instList").innerHTML = INSTITUTIONS.map(n => `<option value="${esc(n)}"></option>`).join(""); }
+
+function renderAuthor(){
+  const A = AUTHOR, ids = [];
+  if(/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/.test(A.orcid)) ids.push(`<a href="https://orcid.org/${A.orcid}" target="_blank" rel="noopener">ORCID ${A.orcid}</a>`);
+  if(/^\d{6,14}$/.test(A.scopus)) ids.push(`<a href="https://www.scopus.com/authid/detail.uri?authorId=${A.scopus}" target="_blank" rel="noopener">Scopus ID ${A.scopus}</a>`);
+  $("#authorCard").innerHTML = `<div class="av" aria-hidden="true">${esc(A.initials)}</div>
+    <div><span class="eyebrow">Plataforma creada por</span><h2>${esc(A.name)}</h2><p>${esc(A.title)}</p><p>${esc(A.affiliation)}</p>${ids.length?`<p class="ids">${ids.join(" · ")}</p>`:""}</div>`;
+}
+
+/* ---- Envío anónimo ---- */
+const endpointOK = () => /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(CONFIG.endpoint)
+  || (location.hostname === "localhost" && /^http:\/\/localhost:\d+\//.test(CONFIG.endpoint));   // solo para pruebas locales
+function getCid(){
+  let id = store.get(K_CID);
+  if(typeof id !== "string" || !/^[a-z0-9]{12,40}$/.test(id)){
+    const a = new Uint8Array(12); window.crypto.getRandomValues(a);
+    id = [...a].map(b => (b % 36).toString(36)).join("") + Date.now().toString(36);
+    store.set(K_CID, id);
+  }
+  return id;
+}
+const readSent = () => { const a = store.get(K_SENT); return Array.isArray(a) ? a.filter(x => x && typeof x.ts==="number") : []; };
+function buildPayload(){
+  const c = compute(S);
+  return {action:"submit", clientId:getCid(), level:levelName(c.level), total:c.total, formation:c.formation, production:c.production,
+    advising:c.advising, degree:S.degree, h:c.h, student:S.student, active:c.active, area:S.area, institution:S.inst.trim(),
+    counts:c.counts, v:CONFIG.appVersion, hp:""};
+}
+function renderShare(){
+  const c = compute(S);
+  $("#shareStatus").innerHTML = endpointOK() ? "" :
+    `<div class="chip warn" style="margin-bottom:12px"><i>!</i><span>El envío todavía no está conectado a un servidor. Cuando el administrador lo active, podrás aportar desde aquí.</span></div>`;
+  $("#shareSum").innerHTML = `<div class="sharegrid">
+      <div><small>Nivel</small><b>${esc(levelName(c.level))}</b></div><div><small>Puntaje</small><b>${fmt(c.total)}</b></div>
+      <div><small>Institución</small><b>${esc(S.inst || "No indicada")}</b></div><div><small>Área</small><b>${esc(AREAS[S.area] || "No indicada")}</b></div></div>
+    <p class="sub" style="margin:8px 0 12px">Para cambiar institución o área, <a href="#calc">edítalas en la Calculadora</a>.</p>`;
+  $("#payloadPrev").textContent = JSON.stringify(buildPayload(), null, 2);
+  const sent = readSent(), lastS = sent[sent.length-1];
+  $("#sentBox").innerHTML = lastS ? `<div class="chip ok"><i>✓</i><span>Has aportado ${sent.length} ${plural(sent.length,"vez","veces")} desde este navegador (último: ${fullDate(lastS.ts)}, ${fmt(lastS.total)} pts). Aportar de nuevo cuando avances permite medir tu progreso. <button class="btn ghost sm danger" data-action="withdraw" style="margin-top:8px">Retirar mis aportes</button></span></div>` : "";
+  $("#shareBtn").disabled = !endpointOK();
+}
+async function postJSON(body){
+  const r = await fetch(CONFIG.endpoint, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body)});
+  return r.json();
+}
+async function sendContribution(){
+  const msg = $("#shareMsg"), btn = $("#shareBtn");
+  const say = (t, cls) => { msg.textContent = t; msg.className = cls || ""; };
+  if(!endpointOK()){ say("El envío no está conectado.", "msg-bad"); return; }
+  if(!$("#consent").checked){ say("Marca el consentimiento para continuar.", "msg-bad"); $("#consent").focus(); return; }
+  const c = compute(S);
+  if(!Object.keys(S.counts).length && S.degree==="none"){ say("Primero ingresa tus datos en la Calculadora.", "msg-bad"); return; }
+  const payload = buildPayload(); payload.hp = $("#website").value;
+  btn.disabled = true; say("Enviando…");
+  try{
+    const res = await postJSON(payload);
+    if(res && res.ok){
+      const sent = readSent(); if(!res.dedup) sent.push({ts:Date.now(), total:c.total}); store.set(K_SENT, sent.slice(-50));
+      say(res.dedup ? "Ya habías enviado este mismo resultado hace poco." : "¡Gracias! Tu aporte anónimo fue registrado.", "msg-ok");
+      sessionStorage.removeItem("renacyt_stats"); $("#consent").checked = false; renderShare(); loadMetrics(true);
+    } else {
+      const why = {rate:"Alcanzaste el límite de aportes por día.", full:"El registro está lleno.", invalid:"El servidor rechazó los datos."}[res && res.error] || "El servidor no aceptó el aporte.";
+      say(why, "msg-bad");
+    }
+  }catch{ say("No se pudo confirmar el envío. Revisa tu conexión e inténtalo de nuevo.", "msg-bad"); }
+  btn.disabled = !endpointOK();
+}
+async function withdrawContributions(){
+  if(!confirm("Se eliminarán todos los aportes anónimos y las sugerencias enviados desde este navegador. ¿Continuar?")) return;
+  try{
+    const res = await postJSON({action:"delete", clientId:getCid()});
+    if(res && res.ok){ store.set(K_SENT, []); store.set(K_FB, []); sessionStorage.removeItem("renacyt_stats"); renderShare(); fbRefresh(); loadMetrics(true); toast(`Se retiraron ${res.removed} registros`); }
+    else toast("No se pudo retirar. Inténtalo de nuevo.");
+  }catch{ toast("No se pudo conectar para retirar tus aportes."); }
+}
+
+/* ---- Métricas ---- */
+async function fetchStats(force){
+  if(!endpointOK()) return null;
+  try{ const c = JSON.parse(sessionStorage.getItem("renacyt_stats") || "null"); if(!force && c && Date.now()-c.t < 180000) return c.d; }catch{}
+  const r = await fetch(CONFIG.endpoint + "?action=stats"); const d = await r.json();
+  if(!d || !d.ok) throw new Error("stats");
+  try{ sessionStorage.setItem("renacyt_stats", JSON.stringify({t:Date.now(), d})); }catch{}
+  return d;
+}
+async function loadMetrics(force){
+  const box = $("#metrics");
+  if(!endpointOK()){ box.innerHTML = `<p class="empty">Las métricas estarán disponibles cuando se conecte el servidor de aportes.</p>`; return; }
+  box.innerHTML = `<p class="empty">Cargando métricas…</p>`;
+  try{ renderMetrics(await fetchStats(force)); }
+  catch{ box.innerHTML = `<p class="empty">No se pudieron cargar las métricas. Inténtalo más tarde.</p>`; }
+}
+function hbars(entries, total, meKey){
+  return entries.map(([label, n, key]) => { const pct = total ? n/total*100 : 0;
+    return `<div class="hb ${key===meKey?"me":""}"><span>${esc(label)}</span><div class="bar"><i style="width:${pct}%"></i></div><b>${n} · ${Math.round(pct)}%</b></div>`; }).join("");
+}
+function renderMetrics(st){
+  const box = $("#metrics");
+  if(!st || st.n < (st.minGroup||5)){
+    box.innerHTML = `<p class="empty">Hay ${st ? st.n : 0} ${st && st.n===1 ? "participante" : "participantes"}. Para proteger el anonimato, el detalle se mostrará cuando haya al menos ${st && st.minGroup || 5}.</p>`; return;
+  }
+  const c = compute(S), n = st.n;
+  const bin = Math.min(30, Math.floor(c.total/10));
+  let below = 0; for(let i=0;i<bin;i++) below += st.hist[i];
+  const pct = Math.round((below + st.hist[bin]/2) / n * 100);
+  const lvName = levelName(c.level);
+  const levels = Object.entries(st.levels).reverse().filter(([,v]) => v>0).map(([k,v]) => [k, v, k]);
+  const degNames = {doctor:"Doctor", master:"Magíster", title:"Título profesional", bachelor:"Bachiller / egresado", enrolled:"Matrícula", none:"Sin registro"};
+  const degs = Object.entries(st.degrees).filter(([,v]) => v>0).map(([k,v]) => [degNames[k], v, k]);
+  const areaNames = {ing:AREAS.ing, nat:AREAS.nat, soc:AREAS.soc, none:"No indicada"};
+  const areas = Object.entries(st.areas).filter(([,v]) => v>0).map(([k,v]) => [areaNames[k], v, k]);
+  // histograma
+  let hi = 0; st.hist.forEach((v,i) => { if(v) hi = i; });
+  const nb = Math.min(31, hi+3), mx = Math.max(...st.hist.slice(0,nb)), W=600,H=150,bw=W/nb;
+  const bars = st.hist.slice(0,nb).map((v,i) => `<rect x="${i*bw+2}" y="${H-24-(mx?v/mx*(H-40):0)}" width="${bw-4}" height="${mx?v/mx*(H-40):0}" rx="3" fill="${i===bin?"var(--gold)":"var(--brand)"}" opacity="${i===bin?1:.75}"><title>${i*10}–${i*10+9} pts: ${v}</title></rect>`).join("");
+  const ticks = Array.from({length:nb},(_,i)=>i).filter(i => i % Math.ceil(nb/8) === 0).map(i => `<text x="${i*bw+bw/2}" y="${H-8}" text-anchor="middle">${i*10}</text>`).join("");
+  const hist = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Distribución de puntajes de la comunidad">${bars}${ticks}</svg>`;
+  const inst = (st.institutions||[]).length ? `<h3 class="mh">Por institución <small style="color:var(--muted);font-weight:400">(solo con ${st.minGroup}+ participantes)</small></h3>
+    <table class="cmp"><tr><th>Institución</th><th>Participantes</th><th>Puntaje medio</th></tr>${st.institutions.map(g=>`<tr><td>${esc(g.name)}</td><td>${g.n}</td><td>${fmt(g.avgTotal)}</td></tr>`).join("")}</table>` : "";
+  const months = (st.byMonth||[]).length > 1 ? `<h3 class="mh">Participantes nuevos por mes</h3>${hbars(st.byMonth.map(m=>[m.m,m.n,m.m]), Math.max(...st.byMonth.map(m=>m.n)))}` : "";
+  box.innerHTML = `
+    <div class="tiles">
+      <div class="tile"><small>Participantes</small><b>${n}</b></div>
+      <div class="tile"><small>Puntaje medio</small><b>${fmt(st.avgTotal)}</b><em>mediana ${fmt(st.medianTotal)}</em></div>
+      <div class="tile"><small>Investigadores activos</small><b>${st.activePct}%</b></div>
+      <div class="tile"><small>Con seguimiento</small><b>${st.repeaters}</b><em>${st.avgGain!==null && st.avgGain!==undefined ? `avance medio ${st.avgGain>0?"+":""}${fmt(st.avgGain)} pts` : "aportaron 2 o más veces"}</em></div>
+    </div>
+    ${c.total>0 ? `<div class="pos"><b>Tu posición:</b> con ${fmt(c.total)} pts (${esc(lvName)}) superas aproximadamente al <b>${pct}%</b> de los participantes. <small>(Cálculo por tramos de 10 pts.)</small></div>` : ""}
+    <h3 class="mh">Distribución por nivel</h3>${hbars(levels, n, lvName)}
+    <h3 class="mh">Distribución de puntajes</h3>${hist}
+    <h3 class="mh">Por grado académico</h3>${hbars(degs, n)}
+    <h3 class="mh">Por gran área</h3>${hbars(areas, n)}
+    ${inst}${months}
+    <p class="sub" style="margin-top:16px">Actualizado: ${fullDate(Date.parse(st.updated))}. Cada persona cuenta una sola vez (su aporte más reciente).</p>`;
+}
+function renderComm(){ renderShare(); loadMetrics(false); }
+
+/* ================= Importar desde CTI Vitae ================= */
+/* La ficha pública se lee y se interpreta en el navegador. Nada de lo importado se envía ni se guarda,
+   salvo las cantidades que la persona decide aplicar a su calculadora. */
+const normTxt = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+const cellTxt = c => (c.textContent || "").replace(/\s+/g, " ").trim();
+const cl = (cs, i) => (i >= 0 && cs[i]) ? cellTxt(cs[i]) : "";
+const MES = {enero:1, febrero:2, marzo:3, abril:4, mayo:5, junio:6, julio:7, agosto:8, setiembre:9, septiembre:9, octubre:10, noviembre:11, diciembre:12};
+const CTI_OPT = {   // opciones del selector de clasificación
+  prod: [["art_q1","Artículo Q1 (5 pts)"],["art_q2","Artículo Q2 (4 pts)"],["art_q3","Artículo Q3 (3 pts)"],["art_q4","Artículo Q4 (2 pts)"],
+         ["art_oth","Sin cuartil / proceedings / SciELO (1 pt)"],["book","Libro (2 pts)"],["chapter","Capítulo de libro (1 pt)"],["none","No contar"]],
+  ip:   [["ip_hi","Invención, obtentor o paquete tecnológico (3 pts)"],["ip_lo","Modelo de utilidad o software (1 pt)"],["none","No contar"]],
+  thes: [["th_phd","Doctorado (2 pts)"],["th_ms","Maestría (1 pt)"],["th_ug","Bachiller o título (0.5 pts)"],["none","No contar"]]
+};
+let CTI = null;   // resultado del último análisis (solo en memoria)
+
+function parseCtiId(raw){
+  raw = String(raw || "").trim();
+  if(/^\d{1,9}$/.test(raw)) return raw;
+  try{
+    const u = new URL(raw);
+    const id = u.searchParams.get("id_investigador");
+    if(u.hostname === "ctivitae.concytec.gob.pe" && /^\d{1,9}$/.test(id || "")) return id;
+  }catch{}
+  return null;
+}
+function parseEsDate(t){
+  t = normTxt(t);
+  if(/actualidad|presente|vigente|en curso/.test(t)) return {ongoing:true};
+  const m = t.match(/([a-z]+)\s+(\d{4})/);
+  if(m && MES[m[1]]) return {y:+m[2], m:MES[m[1]]};
+  const y = t.match(/(\d{4})/);
+  return y ? {y:+y[1], m:0} : null;
+}
+function parseQuartiles(text){
+  const map = {};
+  for(const x of String(text).matchAll(/(\d{4})\s*:\s*(Q[1-4]|No disponible)/gi)) map[x[1]] = /^q/i.test(x[2]) ? x[2].toUpperCase() : null;
+  return map;
+}
+function pickQuartile(y, qmap){
+  if(qmap[y]) return {q:qmap[y], note:""};
+  if(y >= now.getFullYear() - 1 && qmap[y-1]) return {q:qmap[y-1], note:`Cuartil ${y-1} (provisional: el de ${y} aún no está disponible; criterio de la pregunta 40 del RENACYT).`};
+  return {q:null, note:"Sin cuartil en su año de publicación."};
+}
+const cleanDoi = s => String(s || "").toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//, "").trim();
+const isRecentYear = y => (y*12 + 6) >= nowIdx - WINDOW_MONTHS;      // solo hay año: se asume mitad de año
+
+/* Devuelve {meta, prod[], thes[], ip[], projects[], degrees[]} a partir del HTML de la ficha. */
+function parseCtiHtml(html){
+  const doc = new DOMParser().parseFromString(html, "text/html");      // documento inerte: no ejecuta scripts ni carga recursos
+  if(!doc.querySelector("h1.titulo_fichas_dos")) throw new Error("not_profile");
+
+  // Tablas agrupadas por el título de sección que las precede
+  const sec = {}; let cur = null;
+  doc.querySelectorAll("h1.titulo_fichas_dos, table").forEach(el => {
+    if(el.tagName === "H1"){ cur = normTxt(el.textContent); sec[cur] = sec[cur] || []; }
+    else if(cur && sec[cur].length === 0) sec[cur].push(el);
+  });
+  const find = re => { const k = Object.keys(sec).find(k => re.test(k)); return k ? sec[k][0] : null; };
+  const grid = tbl => {
+    if(!tbl) return {head:[], rows:[]};
+    const trs = [...tbl.querySelectorAll("tr")];
+    const head = trs.length ? [...trs[0].children].map(c => normTxt(cellTxt(c))) : [];
+    return {head, rows:trs.slice(1).map(tr => [...tr.children]).filter(cs => cs.length >= 3)};
+  };
+  const ix = (head, re) => head.findIndex(h => re.test(h));
+  const body = doc.body ? doc.body.textContent : "";
+
+  const meta = {
+    name: cellTxt(doc.querySelector(".tituloNombreFicha2") || {textContent:""}),
+    updated: (body.match(/Fecha de ultima actualizacion:\s*([\d-]+)/i) || body.match(/Fecha de última actualización:\s*([\d-]+)/i) || [])[1] || "",
+    scopusId: (body.match(/Scopus Author Identifier:\s*(\d{6,14})/) || [])[1] || "",
+    orcid: (body.match(/\b(\d{4}-\d{4}-\d{4}-\d{3}[\dX])\b/) || [])[1] || ""
+  };
+
+  /* ---- Formación (solo fuente SUNEDU) ---- */
+  const degrees = [];
+  const f = grid(find(/^formacion academica \(fuente: sunedu\)/));
+  const fg = Math.max(0, ix(f.head, /^grado/));
+  f.rows.forEach(cs => {
+    const g = normTxt(cl(cs,fg));
+    if(/doctor/.test(g)) degrees.push("doctor");
+    else if(/magister|maestr/.test(g)) degrees.push("master");
+    else if(/licenciado|titulo/.test(g)) degrees.push("title");
+    else if(/bachiller|egresado/.test(g)) degrees.push("bachelor");
+  });
+  const enrolled = grid(find(/en curso/)).rows.length > 0;
+
+  /* ---- Producción científica (+ otras producciones), con deduplicación por DOI ---- */
+  const prod = [], seenDoi = new Set(), seenTitle = new Set();
+  const pushProd = (cs, h, origin) => {
+    const iT = ix(h, /^tipo/), iTi = ix(h, /^titulo$/), iY = ix(h, /^ano/), iD = ix(h, /^doi/), iJ = ix(h, /^revista|^titulo de la fuente/), iQ = ix(h, /cuartil/);
+    const typeRaw = cl(cs,iT), type = normTxt(typeRaw);
+    const y = parseInt(cl(cs,iY), 10), doi = iD >= 0 ? cleanDoi(cl(cs,iD)) : "";
+    const qmap = iQ >= 0 ? parseQuartiles(cl(cs,iQ)) : {};
+    const row = {origin, title:cl(cs,iTi), journal:iJ >= 0 ? cl(cs,iJ) : "", year:y, typeRaw, doi, choice:"none", note:"", review:false};
+    const validYear = y >= 1950 && y <= now.getFullYear() + 1;
+    const isArticle = /^articulo en revista cientifica$/.test(type), isOrcidArt = /^(journal-article|article)$/.test(type);
+    if(!validYear){ row.note = "Año no válido en la ficha."; prod.push(row); return; }
+    if(doi && seenDoi.has(doi)){ row.note = "Duplicado: mismo DOI que otro producto."; prod.push(row); return; }
+    if(doi) seenDoi.add(doi);
+    const tk = normTxt(row.title).replace(/[^a-z0-9]/g, "").slice(0, 80);
+    if(tk && seenTitle.has(tk)){ row.note = "Duplicado: mismo título que otro producto."; prod.push(row); return; }
+    if(tk) seenTitle.add(tk);
+    if(isArticle || isOrcidArt){
+      const pq = pickQuartile(y, qmap);
+      if(pq.q){ row.choice = "art_" + pq.q.toLowerCase(); row.note = pq.note; row.review = !!pq.note; }
+      else if(isArticle && origin === "cientifica"){ row.choice = "art_oth"; row.note = "Sin cuartil en su año. Cuenta 1 pt solo si la revista está en Scopus, WoS o SciELO: verifícalo."; row.review = true; }
+      else { row.note = "Sin cuartil ni verificación de indexación. Elige una opción si sabes que está en Scopus/WoS/SciELO."; row.review = true; }
+    } else if(/^book$|^libro$/.test(type)){ row.note = "Libro: cuenta si es resultado de investigación con revisión por pares o ISBN verificable."; row.review = true; }
+    else if(/capitulo|chapter/.test(type)){ row.note = "Capítulo: cuenta si es resultado de investigación con revisión por pares."; row.review = true; }
+    else if(/articulo en congreso|proceeding|conference/.test(type)){ row.note = "Congreso: cuenta 1 pt solo si es proceeding indizado en Scopus o WoS."; row.review = true; }
+    else row.note = "Tipo de producción que el reglamento no puntúa.";
+    prod.push(row);
+  };
+  const p1 = grid(find(/^produccion cientifica$/));
+  p1.rows.forEach(cs => pushProd(cs, p1.head, "cientifica"));
+  const p2 = grid(find(/^otras producciones$/));
+  p2.rows.forEach(cs => pushProd(cs, p2.head, "otras"));
+
+  /* ---- Propiedad intelectual ---- */
+  const ip = [];
+  const t3 = grid(find(/propiedad intelectual/));
+  const iTipo = ix(t3.head, /^tipo de pi/), iEst = ix(t3.head, /^estado/);
+  t3.rows.forEach(cs => {
+    const tipo = normTxt(cl(cs,iTipo)), est = normTxt(cl(cs,iEst));
+    const row = {title:cl(cs,0), typeRaw:cl(cs,iTipo), status:cl(cs,iEst), choice:"none", note:"", review:false};
+    const granted = /otorg|conced|registrad/.test(est);
+    if(!granted) row.note = "No cuenta: solo se puntúan registros concedidos.";
+    else if(/patente de invencion|obtentor|paquete tecnologico/.test(tipo)) row.choice = "ip_hi";
+    else if(/modelo de utilidad|software/.test(tipo)) row.choice = "ip_lo";
+    else { row.note = "Derecho de autor: solo cuenta el certificado de software. Si lo es, elige “Modelo de utilidad o software”."; row.review = true; }
+    ip.push(row);
+  });
+
+  /* ---- Asesorías de tesis (sin mostrar nombres de tesistas) ---- */
+  const thes = [];
+  const t4 = grid(find(/asesor de tesis/));
+  const iNivel = ix(t4.head, /^tesis/), iFecha = ix(t4.head, /fecha/), iRepo = ix(t4.head, /repositorio/);
+  t4.rows.forEach(cs => {
+    const nivel = normTxt(cl(cs,iNivel));
+    const dt = parseEsDate(cl(cs,iFecha));
+    const hasRepo = iRepo >= 0 && !!cs[iRepo].querySelector("a[href]");
+    const row = {institution:cl(cs,0), level:cl(cs,iNivel), date:cl(cs,iFecha), choice:"none", note:"", review:false};
+    if(/doctor/.test(nivel)) row.choice = "th_phd";
+    else if(/magister|maestr/.test(nivel)) row.choice = "th_ms";
+    else if(/licenciado|titulo|bachiller/.test(nivel)) row.choice = "th_ug";
+    else { row.note = "Nivel no reconocido."; row.review = true; }
+    if(row.choice !== "none" && !hasRepo){ row.note = "Sin enlace al repositorio: necesitarás el acta de sustentación como sustento."; row.review = true; }
+    if(dt && dt.y > now.getFullYear()) { row.choice = "none"; row.note = "Fecha futura: la tesis aún no fue sustentada."; row.review = true; }
+    thes.push(row);
+  });
+
+  /* ---- Proyectos ---- */
+  const projects = [];
+  const t5 = grid(find(/^proyectos de investigacion$/));
+  const iIni = ix(t5.head, /fecha de inicio/), iFin = ix(t5.head, /fecha fin/);
+  t5.rows.forEach(cs => {
+    const end = parseEsDate(cl(cs,iFin));
+    const recent = !!end && (end.ongoing || (end.y*12 + (end.m ? end.m-1 : 11)) >= nowIdx - WINDOW_MONTHS);
+    projects.push({title:cl(cs,1), start:cl(cs,iIni), end:cl(cs,iFin), recent});
+  });
+
+  return {meta, prod, thes, ip, projects, degrees, enrolled};
+}
+
+/* ---- Estado de la revisión → estado de la calculadora ---- */
+function ctiDegreeDefault(c){
+  for(const d of ["doctor","master","title","bachelor"]) if(c.degrees.includes(d)) return d;
+  return c.enrolled ? "enrolled" : "none";
+}
+function ctiBuildState(c){
+  const counts = {}, recent = {}; let lastY = 0;
+  const add = (k, rec, y) => {
+    counts[k] = (counts[k] || 0) + 1;
+    if(REC_GRP.includes(TYPES[k].grp)){ if(rec) recent[k] = (recent[k] || 0) + 1; if(y && y > lastY) lastY = y; }
+  };
+  c.prod.forEach(r => { if(r.choice !== "none") add(r.choice, isRecentYear(r.year), r.year); });
+  c.ip.forEach(r => { if(r.choice !== "none") add(r.choice, false, 0); });
+  c.thes.forEach(r => { if(r.choice !== "none") add(r.choice, false, 0); });
+  return {...S, degree:c.degreeSel, counts, recent, project:c.projectSel, last:lastY ? {y:lastY, m:0} : S.last};
+}
+
+/* ---- Pantalla de revisión ---- */
+function ctiSummaryHtml(r){
+  return `<div><small>Puntaje estimado</small><b>${fmt(r.total)}</b></div>
+    <div><small>Nivel</small><b style="font-size:20px">${esc(levelName(r.level))}</b>${r.hBlocked?`<br><span class="delta" style="color:var(--warn)">Falta h ≥ 10</span>`:""}</div>
+    <div><small>Producción</small><b>${fmt(r.production)}</b> <span class="delta" style="color:${r.prodOK?"var(--ok)":"var(--bad)"}">${r.prodOK?"cumple el mínimo":"falta "+fmt(r.minProd-r.production)}</span></div>`;
+}
+function ctiRefreshSummary(){ const el = $("#ctiSummary"); if(CTI && el) el.innerHTML = ctiSummaryHtml(compute(ctiBuildState(CTI))); }
+function ctiSelect(group, idx, value){
+  return `<select data-cti="${group}" data-i="${idx}" aria-label="Clasificación">${CTI_OPT[group].map(([k,l]) => `<option value="${k}"${k===value?" selected":""}>${esc(l)}</option>`).join("")}</select>`;
+}
+function renderCtiReview(){
+  const box = $("#ctiReview");
+  if(!CTI){ box.innerHTML = ""; return; }
+  const c = CTI, st = ctiBuildState(c), r = compute(st);
+  const trunc = (s, n) => s.length > n ? s.slice(0, n-1) + "…" : s;
+  const prodRow = (p, i) => `<tr class="${p.review?"rv":""}"><td>${isFinite(p.year)?p.year:"—"}</td><td><b>${esc(trunc(p.title, 95))}</b><small>${esc(trunc(p.journal, 60))}${p.journal&&p.typeRaw?" · ":""}${esc(p.typeRaw)}</small>${p.note?`<em>${esc(p.note)}</em>`:""}</td><td>${ctiSelect("prod", i, p.choice)}</td></tr>`;
+  // Lo que el reglamento no puntúa (pósteres, ponencias, tesis propias…) va aparte para no ocultar lo importante.
+  const noScore = p => p.choice === "none" && /^Tipo de producción que el reglamento no punt/.test(p.note);
+  const prodMain = c.prod.map((p, i) => noScore(p) ? "" : prodRow(p, i)).join("");
+  const prodOther = c.prod.map((p, i) => noScore(p) ? prodRow(p, i) : "").join("");
+  const nOther = c.prod.filter(noScore).length;
+  const prodRows = prodMain;
+  const ipRows = c.ip.map((p, i) => `<tr class="${p.review?"rv":""}"><td>—</td><td><b>${esc(trunc(p.title, 95))}</b><small>${esc(p.typeRaw)} · ${esc(p.status)}</small>${p.note?`<em>${esc(p.note)}</em>`:""}</td><td>${ctiSelect("ip", i, p.choice)}</td></tr>`).join("");
+  const thRows = c.thes.map((p, i) => `<tr class="${p.review?"rv":""}"><td>${esc(p.date)}</td><td><b>${esc(p.level)}</b><small>${esc(trunc(p.institution, 70))}</small>${p.note?`<em>${esc(p.note)}</em>`:""}</td><td>${ctiSelect("thes", i, p.choice)}</td></tr>`).join("");
+  const table = (title, rows, empty) => `<div class="card"><h2>${title}</h2>${rows ? `<table class="ctitbl"><tr><th>Año</th><th>Detalle</th><th>Cómo contarlo</th></tr>${rows}</table>` : `<p class="empty">${empty}</p>`}</div>`;
+  const pRecent = c.projects.filter(p => p.recent).length;
+  const stale = c.meta.updated && /^\d{2}-\d{2}-\d{4}$/.test(c.meta.updated) ? (() => { const [d,m,y] = c.meta.updated.split("-").map(Number); return (nowIdx - (y*12 + m-1)) > 12; })() : false;
+  box.innerHTML = `
+    <div class="card">
+      <h2>Ficha leída: ${esc(c.meta.name || "perfil sin nombre")}</h2>
+      <p class="sub" style="margin-bottom:8px">Última actualización de la ficha: <b>${esc(c.meta.updated || "no indicada")}</b>${stale?` <span class="msg-bad">· tiene más de 12 meses; actualízala en CTI Vitae antes de postular</span>`:""}.
+        Revisa las filas marcadas en ámbar: son las que la calculadora no pudo decidir con seguridad.</p>
+      <div class="chips" style="margin:0">
+        <div class="chip warn"><i>!</i><span>El <b>índice h</b> no aparece en CTI Vitae${c.meta.scopusId ? `. Consúltalo en tu <a href="https://www.scopus.com/authid/detail.uri?authorId=${esc(c.meta.scopusId)}" target="_blank" rel="noopener">perfil de Scopus</a>` : ""} e ingrésalo en la Calculadora.</span></div>
+        <div class="chip warn"><i>!</i><span>Los datos de CTI Vitae son autodeclarados y el CONCYTEC los verificará con documentos. Esto es una <b>estimación</b>.</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Formación y proyectos</h2>
+      <div class="grid2" style="margin-top:12px">
+        <div><label class="lbl" for="ctiDeg">Máximo grado según SUNEDU</label>
+          <select id="ctiDeg">${Object.entries(DEGREES).map(([k,d]) => `<option value="${k}"${k===c.degreeSel?" selected":""}>${esc(d.label)} (${d.pts} pts)</option>`).join("")}</select>
+          ${c.degrees.length ? "" : `<small class="msg-bad">No se encontraron grados de SUNEDU en la ficha.</small>`}</div>
+        <div><label class="check" style="margin-top:22px"><input type="checkbox" id="ctiProj"${c.projectSel?" checked":""}><span><b>Contar proyecto de CTI para la condición de activo.</b> ${pRecent} de ${c.projects.length} proyecto(s) terminaron o siguen vigentes en los últimos 3 años. Deben haber sido evaluados por pares externos.</span></label></div>
+      </div>
+    </div>
+    ${table("Producción científica y otras producciones", prodRows, "No se encontró producción puntuable en la ficha.")}
+    ${nOther ? `<details style="margin-bottom:16px"><summary>${nOther} producciones que el reglamento no puntúa (carteles, tesis propias, etc.)</summary><table class="ctitbl"><tr><th>Año</th><th>Detalle</th><th>Cómo contarlo</th></tr>${prodOther}</table></details>` : ""}
+    ${table("Propiedad intelectual", ipRows, "No se encontraron registros de propiedad intelectual.")}
+    ${table("Asesorías de tesis", thRows, "No se encontraron asesorías de tesis.")}
+    <div class="card ctiapply">
+      <h2>Resultado con esta selección</h2>
+      <div class="simres" id="ctiSummary" style="margin:12px 0">${ctiSummaryHtml(r)}</div>
+      <p class="sub" style="margin:0 0 12px">Al aplicar, se <b>reemplazan</b> las cantidades de artículos, propiedad intelectual, libros, tesis, grado y proyecto de tu calculadora. Tu nombre, institución, área, índice h y casillas no cambian.</p>
+      <div class="row"><button class="btn" data-action="cti-apply">Aplicar a mi calculadora</button><button class="btn ghost" data-action="cti-clear">Descartar</button></div>
+    </div>`;
+}
+
+/* ---- Lectura (enlace o archivo) ---- */
+const CTI_ERR = {
+  bad_id:"El enlace no es válido. Debe contener “id_investigador=” seguido de un número.",
+  busy:"El servicio está atendiendo muchas consultas. Espera un minuto e inténtalo de nuevo.",
+  not_profile:"No se encontró una ficha pública con ese número.",
+  fetch_failed:"No se pudo conectar con CTI Vitae. Prueba subiendo tu ficha guardada.",
+};
+function ctiMsg(t, cls){ const m = $("#ctiMsg"); m.textContent = t; m.className = cls || "sub"; }
+function ctiLoadHtml(html, id){
+  try{
+    const parsed = parseCtiHtml(html);
+    parsed.degreeSel = ctiDegreeDefault(parsed);
+    parsed.projectSel = parsed.projects.some(p => p.recent);
+    parsed.id = id || "";
+    CTI = parsed;
+    ctiMsg(`Listo: ${parsed.prod.length} producciones, ${parsed.ip.length} registros de PI y ${parsed.thes.length} asesorías leídas. Revísalas abajo.`, "msg-ok");
+    renderCtiReview();
+    $("#ctiReview").scrollIntoView({behavior:"smooth", block:"start"});
+  }catch(e){ CTI = null; renderCtiReview(); ctiMsg(CTI_ERR.not_profile, "msg-bad"); }
+}
+async function ctiFetch(){
+  const id = parseCtiId($("#ctiUrl").value);
+  if(!id){ ctiMsg(CTI_ERR.bad_id, "msg-bad"); return; }
+  if(!endpointOK()){ ctiMsg("La lectura automática aún no está conectada a un servidor. Guarda tu ficha como HTML y súbela aquí abajo; funciona igual y todo ocurre en tu navegador.", "msg-bad"); return; }
+  const btn = $("#ctiBtn"); btn.disabled = true; ctiMsg("Leyendo tu ficha en CTI Vitae…");
+  try{
+    const r = await fetch(`${CONFIG.endpoint}?action=cti&id=${id}`);
+    const d = await r.json();
+    if(!d.ok){ ctiMsg(CTI_ERR[d.error] || (String(d.error).startsWith("upstream_") ? "CTI Vitae no respondió correctamente (" + d.error.slice(9) + ")." : "No se pudo leer la ficha."), "msg-bad"); }
+    else { S.cti = id; persist(); ctiLoadHtml(d.html, id); }
+  }catch{ ctiMsg("No se pudo conectar. Revisa tu conexión o sube tu ficha guardada.", "msg-bad"); }
+  btn.disabled = false;
+}
+async function ctiFile(file){
+  if(!file) return;
+  if(file.size > 8e6){ ctiMsg("El archivo es demasiado grande para ser una ficha de CTI Vitae.", "msg-bad"); return; }
+  ctiLoadHtml(await file.text(), "");
+}
+function ctiApply(){
+  if(!CTI) return;
+  if(!confirm("Se reemplazarán las cantidades de tu calculadora por las de esta selección. ¿Continuar?")) return;
+  const st = ctiBuildState(CTI);
+  S.degree = st.degree; S.counts = st.counts; S.recent = st.recent; S.project = st.project; S.last = st.last;
+  if(CTI.id) S.cti = CTI.id;
+  syncProfile(); refresh(); toast("Datos de CTI Vitae aplicados"); showView("calc");
+}
+
+/* ================= Descarga en PDF (evaluación + historial) ================= */
+/* jsPDF y autotable (MIT) están incluidos en la carpeta vendor/ y solo se cargan al pulsar el botón. */
+function loadScript(src){
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error(src));
+    document.head.appendChild(s);
+  });
+}
+async function ensurePdfLibs(){
+  if(!(window.jspdf && window.jspdf.jsPDF)) await loadScript("vendor/jspdf.umd.min.js");
+  if(!(window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable)) await loadScript("vendor/jspdf.plugin.autotable.min.js");
+}
+// Las fuentes estándar de PDF solo cubren Latin-1: se cambia lo demás por equivalentes seguros.
+const pdfTxt = s => String(s == null ? "" : s).replace(/≥/g, ">=").replace(/≤/g, "<=").replace(/[→▲]/g, ">").replace(/▼/g, "<")
+  .replace(/[^\x20-\x7E -ÿ–—‘’“”•]/g, "?");
+
+function pdfChart(doc, pts, x0, y0, w, h, colors){
+  const maxV = Math.max(...pts.map(p => p.total), 20);
+  const ymax = Math.ceil((maxV * 1.15) / 10) * 10;
+  const X = i => x0 + (pts.length === 1 ? w/2 : i * w / (pts.length - 1));
+  const Y = v => y0 + h * (1 - v / ymax);
+  doc.setLineWidth(0.15);
+  doc.setFontSize(7.5);
+  LEVELS.filter(L => L.min <= ymax).forEach(L => {
+    doc.setDrawColor(200, 208, 204); doc.setLineDashPattern([1.2, 1.2], 0);
+    doc.line(x0, Y(L.min), x0 + w, Y(L.min));
+    doc.setLineDashPattern([], 0);
+    doc.setTextColor(...colors.mu); doc.text(L.id === "DIST" ? "Dist." : L.id, x0 - 2, Y(L.min) + 1, {align:"right"});
+  });
+  doc.setDrawColor(...colors.mu); doc.setLineWidth(0.3);
+  doc.line(x0, y0, x0, y0 + h); doc.line(x0, y0 + h, x0 + w, y0 + h);
+  doc.setDrawColor(...colors.br); doc.setLineWidth(0.8);
+  for(let i = 1; i < pts.length; i++) doc.line(X(i-1), Y(pts[i-1].total), X(i), Y(pts[i].total));
+  pts.forEach((p, i) => {
+    doc.setFillColor(...colors.br); doc.circle(X(i), Y(p.total), 1.4, "F");
+    doc.setTextColor(...colors.ink); doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+    doc.text(fmt(p.total), X(i), Y(p.total) - 3, {align:"center"});
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...colors.mu);
+    if(pts.length <= 8 || i % Math.ceil(pts.length / 8) === 0)
+      doc.text(new Date(p.ts).toLocaleDateString("es-PE", {month:"short", year:"2-digit"}), X(i), y0 + h + 5, {align:"center"});
+  });
+}
+
+async function downloadPdf(){
+  try{ await ensurePdfLibs(); }
+  catch{ toast("No se pudo cargar el generador de PDF. Se abre la vista de impresión."); buildReport(); return; }
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:"mm", format:"a4"});
+  const W = 210, M = 15, c = compute(S);
+  const col = {br:[14,90,74], gold:[183,121,31], ink:[21,33,29], mu:[90,106,99]};
+  const isDist = c.level && c.level.id === "DIST";
+
+  /* --- Cabecera --- */
+  doc.setFillColor(...col.br); doc.rect(0, 0, W, 30, "F");
+  doc.setTextColor(255); doc.setFont("helvetica", "bold"); doc.setFontSize(17);
+  doc.text("Informe de autoevaluación RENACYT", M, 13);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
+  doc.text(pdfTxt([S.name || "Sin nombre", S.inst].filter(Boolean).join("   |   ")), M, 20);
+  doc.text(pdfTxt(`Generado el ${fullDate(Date.now())}   |   Reglamento RP 090-2021-CONCYTEC-P`), M, 25.5);
+
+  /* --- Resultado --- */
+  let y = 44;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(38); doc.setTextColor(...col.br);
+  doc.text(fmt(c.total), M, y);
+  const tw = doc.getTextWidth(fmt(c.total));
+  doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.setTextColor(...col.mu); doc.text("puntos", M + tw + 2, y);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+  const lvl = pdfTxt(levelName(c.level)), lw = doc.getTextWidth(lvl) + 10;
+  doc.setFillColor(...(c.level ? (isDist ? col.gold : col.br) : [150, 160, 156]));
+  doc.roundedRect(M, y + 5, lw, 9, 4.5, 4.5, "F");
+  doc.setTextColor(255); doc.text(lvl, M + 5, y + 11.2);
+
+  const lines = [];
+  lines.push(`${c.prodOK ? "Cumple" : "NO cumple"} la producción mínima: ${fmt(c.production)} de ${c.minProd} pts.`);
+  if(c.hBlocked) lines.push(`Puntaje de Investigador Distinguido, pero el índice h (${c.h}) es menor que 10.`);
+  else lines.push(`Índice h (Scopus): ${c.h}${c.h >= 10 ? " (cumple el requisito de Distinguido)." : "."}`);
+  if(isDist) lines.push("Investigador Distinguido: clasificación vitalicia, sin condición de activo.");
+  else if(c.activeForever) lines.push("Condición de activo: sí, por proyecto de CTI en curso.");
+  else if(c.active) lines.push("Condición de activo: sí" + (c.activeUntil !== null && !c.dateConflict ? ` (hasta ${idxToText(c.activeUntil)}, aprox.).` : "."));
+  else lines.push("Condición de activo: no (sin producción ni proyecto en 3 años).");
+  if(S.cti) lines.push("Datos importados de CTI Vitae y revisados por la persona usuaria.");
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(...col.ink);
+  let ty = y - 6;
+  lines.forEach(t => { const parts = doc.splitTextToSize("•  " + pdfTxt(t), 92); doc.text(parts, 105, ty); ty += parts.length * 4.6 + 1.2; });
+  y = Math.max(y + 20, ty) + 4;
+
+  /* --- Desglose por criterio --- */
+  doc.autoTable({
+    startY: y, margin:{left:M, right:M}, theme:"striped",
+    head:[["Criterio", "Puntos", "Nota"]],
+    body:[
+      ["Formación (" + pdfTxt(DEGREES[S.degree].label) + ")", fmt(c.formation), "Solo cuenta el máximo grado o título"],
+      ["Artículos Q1 a Q4", fmt(c.artQ), "Sin tope"],
+      ["Sin cuartil, proceedings y SciELO", fmt(c.minor), c.minorRaw > CAP ? `Sumas ${fmt(c.minorRaw)}; tope de ${CAP}` : `Tope de ${CAP}`],
+      ["Propiedad intelectual", fmt(c.ip), "Sin tope"],
+      ["Libros y capítulos", fmt(c.book), c.bookRaw > CAP ? `Sumas ${fmt(c.bookRaw)}; tope de ${CAP}` : `Tope de ${CAP}`],
+      ["Asesoría de tesis", fmt(c.advising), c.advRaw > CAP ? `Sumas ${fmt(c.advRaw)}; tope de ${CAP}` : `Tope de ${CAP}`],
+      [{content:"Total", styles:{fontStyle:"bold"}}, {content:fmt(c.total), styles:{fontStyle:"bold"}}, ""]
+    ],
+    styles:{fontSize:9, cellPadding:2.2, textColor:col.ink}, headStyles:{fillColor:col.br, textColor:255},
+    columnStyles:{1:{halign:"right", cellWidth:22}}
+  });
+  y = doc.lastAutoTable.finalY + 8;
+
+  /* --- Producción declarada --- */
+  const rows = Object.entries(TYPES).filter(([k,t]) => t.grp !== "proj" && S.counts[k]).map(([k,t]) => [
+    pdfTxt(t.label), S.counts[k], REC_GRP.includes(t.grp) ? (S.recent[k] || 0) : "-", fmt(t.pts), fmt(S.counts[k] * t.pts)]);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(...col.ink);
+  doc.text("Producción declarada", M, y);
+  doc.autoTable({
+    startY: y + 3, margin:{left:M, right:M}, theme:"striped",
+    head:[["Tipo", "Cantidad", "Últimos 3 años", "Pts c/u", "Subtotal"]],
+    body:rows.length ? rows : [[{content:"Sin productos declarados.", colSpan:5}]],
+    styles:{fontSize:9, cellPadding:2.2, textColor:col.ink}, headStyles:{fillColor:col.br, textColor:255},
+    columnStyles:{1:{halign:"right"}, 2:{halign:"right"}, 3:{halign:"right"}, 4:{halign:"right"}}
+  });
+
+  /* --- Historial --- */
+  const hist = HIST.slice().sort((a,b) => a.ts - b.ts);
+  doc.addPage();
+  doc.setFillColor(...col.br); doc.rect(0, 0, W, 16, "F");
+  doc.setTextColor(255); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("Historial de capturas", M, 10.5);
+  y = 28;
+  if(!hist.length){
+    doc.setTextColor(...col.mu); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    doc.text("Aún no hay capturas guardadas. Usa “Guardar en historial” para registrar tu avance en el tiempo.", M, y);
+  } else {
+    if(hist.length >= 2){
+      const a = hist[0], b = hist[hist.length - 1], d = b.total - a.total;
+      doc.setTextColor(...col.ink); doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+      const t = doc.splitTextToSize(pdfTxt(`Entre el ${fullDate(a.ts)} y el ${fullDate(b.ts)} tu puntaje pasó de ${fmt(a.total)} a ${fmt(b.total)} (${d >= 0 ? "+" : ""}${fmt(d)} pts) y tu nivel de "${a.level}" a "${b.level}".`), W - 2*M);
+      doc.text(t, M, y); y += t.length * 5 + 4;
+      pdfChart(doc, hist, M + 8, y + 4, W - 2*M - 12, 62, col);
+      y += 62 + 14;
+    }
+    doc.autoTable({
+      startY: y, margin:{left:M, right:M}, theme:"striped",
+      head:[["Fecha", "Etiqueta", "Total", "Nivel", "Form.", "Prod.", "Aseso.", "h", "Cambio"]],
+      body:hist.map((s, i) => [fullDate(s.ts), pdfTxt(s.label), fmt(s.total), pdfTxt(s.level), fmt(s.formation), fmt(s.production), fmt(s.advising), s.h,
+        i ? (s.total - hist[i-1].total >= 0 ? "+" : "") + fmt(s.total - hist[i-1].total) : "-"]),
+      styles:{fontSize:8.5, cellPadding:2, textColor:col.ink}, headStyles:{fillColor:col.br, textColor:255},
+      columnStyles:{2:{halign:"right"}, 4:{halign:"right"}, 5:{halign:"right"}, 6:{halign:"right"}, 7:{halign:"right"}, 8:{halign:"right"}}
+    });
+  }
+
+  /* --- Pie en todas las páginas --- */
+  const n = doc.getNumberOfPages();
+  for(let i = 1; i <= n; i++){
+    doc.setPage(i);
+    doc.setDrawColor(210, 218, 214); doc.setLineWidth(0.2); doc.line(M, 284, W - M, 284);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...col.mu);
+    doc.text(pdfTxt("Cálculo referencial: la calificación oficial la realiza el CONCYTEC en CTI Vitae. Plataforma desarrollada por " + AUTHOR.name + "."), M, 289);
+    doc.text(`Página ${i} de ${n}`, W - M, 289, {align:"right"});
+  }
+  doc.save(`evaluacion-renacyt-${new Date().toISOString().slice(0,10)}.pdf`);
+  toast("PDF descargado");
+}
+
+/* ================= Sugerencias de mejora ================= */
+const K_FB = "renacyt_calc_v1_fbsent", K_FBDRAFT = "renacyt_calc_v1_fbdraft";
+const FB_MIN = 10, FB_MAX = 1500;
+const FB_LABEL = {mejora:"Mejora", idea:"Idea nueva", error:"Error", reglamento:"Dato del reglamento", otro:"Otro"};
+let lastView = "calc";                      // pestaña desde la que se escribió la sugerencia
+const readFb = () => { const a = store.get(K_FB); return Array.isArray(a) ? a.filter(x => x && typeof x.ts === "number") : []; };
+
+function fbRating(){ const r = document.querySelector("#fbStars input:checked"); return r ? Number(r.value) : ""; }
+function fbPayload(){
+  return {action:"feedback", clientId:getCid(), type:$("#fbType").value, message:$("#fbMsg").value.trim(), rating:fbRating(),
+          email:$("#fbMail").value.trim(), contactOk:$("#fbOk").checked, view:lastView, v:CONFIG.appVersion, hp:""};
+}
+function fbSaveDraft(){ store.set(K_FBDRAFT, {type:$("#fbType").value, message:$("#fbMsg").value, rating:fbRating()}); }
+function fbLoadDraft(){
+  const d = store.get(K_FBDRAFT); if(!d || typeof d !== "object") return;
+  if(FB_LABEL[d.type]) $("#fbType").value = d.type;
+  if(typeof d.message === "string") $("#fbMsg").value = d.message.slice(0, FB_MAX);
+  if([1,2,3,4,5].includes(d.rating)) $("#fbR" + d.rating).checked = true;
+}
+function fbRefresh(){
+  const n = $("#fbMsg").value.trim().length;
+  const el = $("#fbN"); el.textContent = `${$("#fbMsg").value.length} / ${FB_MAX}`; el.className = (n > 0 && n < FB_MIN) ? "bad" : "";
+  $("#fbUnrate").hidden = fbRating() === "";
+  const p = fbPayload(); $("#fbPrev").textContent = JSON.stringify(p, null, 2);
+  $("#fbStatus").innerHTML = endpointOK() ? "" :
+    `<div class="chip warn" style="margin-bottom:12px"><i>!</i><span>El envío todavía no está conectado a un servidor. Puedes escribir tu sugerencia y usar «Copiar texto» para mandarla por otro medio.</span></div>`;
+  $("#fbBtn").disabled = !endpointOK();
+  const sent = readFb(), last = sent[sent.length - 1];
+  $("#fbSentBox").innerHTML = last ? `<div class="chip ok" style="margin-top:14px"><i>✓</i><span>Has enviado ${sent.length} ${plural(sent.length,"sugerencia","sugerencias")} desde este navegador (última: ${fullDate(last.ts)}). Gracias.
+    <button class="btn ghost sm danger" data-action="withdraw" style="margin-top:8px">Retirar mis sugerencias y aportes</button></span></div>` : "";
+}
+function fbSay(t, cls){ const m = $("#fbOut"); m.textContent = t; m.className = cls || ""; }
+const FB_ERR = {
+  too_short:`Escribe al menos ${FB_MIN} caracteres para que podamos entender tu sugerencia.`,
+  bad_email:"El correo no parece válido. Revísalo o déjalo vacío.",
+  no_consent:"Para guardar tu correo necesitamos tu consentimiento. Márcalo o quita el correo.",
+  rate:"Alcanzaste el límite de 3 sugerencias por día. Gracias por tu interés; inténtalo mañana.",
+  full:"El buzón está lleno por ahora. Inténtalo más tarde.",
+  invalid:"El servidor no aceptó los datos. Revisa el formulario."
+};
+async function fbSubmit(){
+  if(!endpointOK()){ fbSay("El envío no está conectado todavía.", "msg-bad"); return; }
+  const p = fbPayload(); p.hp = $("#fbWebsite").value;
+  if(p.message.length < FB_MIN){ fbSay(FB_ERR.too_short, "msg-bad"); $("#fbMsg").focus(); return; }
+  if(p.email && !/^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]{2,}$/.test(p.email)){ fbSay(FB_ERR.bad_email, "msg-bad"); $("#fbMail").focus(); return; }
+  if(p.email && !p.contactOk){ fbSay(FB_ERR.no_consent, "msg-bad"); $("#fbOk").focus(); return; }
+  const btn = $("#fbBtn"); btn.disabled = true; fbSay("Enviando…");
+  try{
+    const res = await postJSON(p);
+    if(res && res.ok){
+      if(!res.dedup){ const s = readFb(); s.push({ts:Date.now()}); store.set(K_FB, s.slice(-50)); }
+      fbSay(res.dedup ? "Ya habías enviado esta misma sugerencia." : "¡Gracias! Recibimos tu sugerencia.", "msg-ok");
+      $("#fbMsg").value = ""; $("#fbMail").value = ""; $("#fbOk").checked = false;
+      document.querySelectorAll("#fbStars input").forEach(r => r.checked = false);
+      try{ localStorage.removeItem(K_FBDRAFT); }catch{}
+    } else fbSay(FB_ERR[res && res.error] || "El servidor no aceptó la sugerencia.", "msg-bad");
+  }catch{ fbSay("No se pudo confirmar el envío. Revisa tu conexión e inténtalo de nuevo.", "msg-bad"); }
+  btn.disabled = !endpointOK(); fbRefresh();
+}
+async function fbCopy(){
+  const p = fbPayload();
+  if(!p.message){ fbSay("Escribe primero tu sugerencia.", "msg-bad"); return; }
+  const text = `Sugerencia para la Calculadora RENACYT\nTipo: ${FB_LABEL[p.type]}${p.rating ? "\nUtilidad: " + p.rating + " de 5" : ""}\n\n${p.message}`;
+  try{ await navigator.clipboard.writeText(text); fbSay("Texto copiado.", "msg-ok"); }
+  catch{ fbSay("No se pudo copiar automáticamente. Selecciona el texto y cópialo.", "msg-bad"); }
+}
+function initFeedback(){
+  fbLoadDraft(); fbRefresh();
+  $("#fbForm").addEventListener("submit", e => { e.preventDefault(); fbSubmit(); });
+  $("#fbForm").addEventListener("input", () => { fbSaveDraft(); fbRefresh(); });
+  $("#fbForm").addEventListener("change", () => { fbSaveDraft(); fbRefresh(); });
+}
+
+/* ================= Inicio ================= */
+(function init(){
+  try{ const th = localStorage.getItem("renacyt_calc_v1_theme"); if(th) document.documentElement.dataset.theme = th; }catch{}
+  buildDegrees(); buildCats(); buildSim(); buildRef(); buildInst(); renderAuthor(); initFeedback();
+  S = sanitizeState(store.get(K_STATE));
+  const h = store.get(K_HIST); HIST = Array.isArray(h) ? h.filter(x => x && x.state && typeof x.ts==="number") : [];
+  syncProfile(); refresh();
+  const v = (location.hash||"").slice(1); if(VIEWS.includes(v)) showView(v);
+  window.addEventListener("hashchange", () => { const w = location.hash.slice(1); if(VIEWS.includes(w)) showView(w); });
+})();
+</script>
+</body>
+</html>
