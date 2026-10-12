@@ -80,6 +80,28 @@ Qué cambia en los datos:
 - El nombre de la institución admite hasta 100 caracteres (antes 80).
 - El panel de métricas pasa de «por gran área» a «procedencia de la institución» y «país de las instituciones extranjeras» (este último solo con 5 o más participantes).
 
+## Instituciones propuestas por la comunidad
+
+Si una persona no encuentra su institución en la lista, la escribe y puede pulsar **«Proponer para la lista»**. También se propone sola cuando alguien envía un aporte anónimo con una institución que no estaba en la lista. Cada propuesta queda en una pestaña nueva de tu hoja, **`Instituciones`** (se crea sola), y la lista crece para todos con tu control.
+
+**Cuándo se muestra a los demás:**
+
+- Automáticamente, cuando **2 personas distintas** (dos navegadores distintos) escriben la misma institución. Se detecta aunque la escriban con otras mayúsculas, sin tildes o sin las siglas entre paréntesis.
+- De inmediato, si tú escribes **`aprobada`** en la columna `estado`.
+- Nunca, si escribes **`rechazada`** (además esa propuesta no vuelve a aparecer aunque más personas la escriban, y quien la propone no se entera).
+
+**Cómo moderar (2 minutos cada cierto tiempo):**
+
+1. Abre la pestaña `Instituciones`. Columnas: `clave`, `nombre`, `origen` (nacional/extranjera), `pais`, `n_personas`, `clientes`, fechas y `estado`.
+2. Ordena por `n_personas` o por `ultima_fecha` para ver lo más reciente.
+3. Corrige faltas en la columna `nombre` si hace falta (es lo que verán las personas).
+4. Escribe `aprobada` o `rechazada` en `estado`. Vacío = se publica solo al llegar a 2 personas.
+5. Los cambios llegan a las personas usuarias en un máximo de 12 horas (la lista se guarda en el navegador de cada persona y el servidor la refresca cada 10 minutos).
+
+**Protecciones incorporadas:** no se aceptan nombres con enlaces, correos, fórmulas, de menos de 4 letras ni de más de 100 caracteres; las extranjeras exigen un país válido; máximo 5 propuestas nuevas por navegador al día; y al usar «Retirar mis aportes», la persona también retira su voto en las instituciones que propuso (si se queda sin votos, se elimina la fila). La lista pública solo contiene nombres y países, nada personal.
+
+**Importante:** esta función y la de procedencia/país vienen en el mismo `Code.gs` nuevo. Basta una sola actualización: pega el código y crea una **Nueva versión** de la implementación.
+
 ## Si cambias `Code.gs` más adelante
 
 Debes crear una **nueva versión**: *Implementar → Administrar implementaciones → editar (lápiz) → Versión: Nueva versión → Implementar*. La URL no cambia.

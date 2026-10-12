@@ -317,6 +317,8 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 .stars input:checked + label,.stars input:checked + label ~ label,.stars label:hover,.stars label:hover ~ label{color:var(--gold)}
 .stars input:focus-visible + label{outline:3px solid color-mix(in srgb,var(--brand) 55%,transparent)}
 [hidden]{display:none !important}
+.insthint{margin-top:10px}
+.insthint .chip{align-items:flex-start}
 /* Guía «¿Cómo funciona?» */
 .how details{border:0;padding:0;margin:0;background:none}
 .how summary{padding:0;min-height:0;list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer}
@@ -403,6 +405,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
               <div><label class="lbl" for="inst">Nombre de la institución</label><input type="text" id="inst" maxlength="100" list="instList" autocomplete="organization" placeholder="Escribe o elige de la lista"><datalist id="instList"></datalist></div>
               <div id="countryBox" hidden><label class="lbl" for="country">País de la institución</label><select id="country"></select></div>
             </div>
+            <div id="instHint" class="insthint" aria-live="polite"></div>
           </div>
           <label class="lbl" id="degLbl">Máximo grado académico o título</label>
           <div class="degrees" role="radiogroup" aria-labelledby="degLbl" id="degrees"></div>
@@ -678,7 +681,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <details><summary>¿Qué tesis cuentan?</summary><p>Solo tesis sustentadas y aprobadas. Una resolución que te designa asesor no sirve como sustento. Puedes informar el enlace de RENATI (SUNEDU) o del repositorio institucional.</p></details>
         <details><summary>Alcanzo 200 puntos pero mi índice h es menor que 10</summary><p>No accedes a Investigador Distinguido. Esta calculadora te muestra Nivel I y te avisa que te falta el índice h. Además, el art. 8.4.7 del reglamento prevé la incorporación excepcional de Investigadores Distinguidos por invitación del CONCYTEC; confirma el procedimiento vigente con el CONCYTEC.</p></details>
                 <details><summary>¿Cómo se usa mi ficha de CTI Vitae?</summary><p>Al pegar tu enlace, un servicio consulta tu ficha pública (el navegador no puede hacerlo directamente) y la devuelve a tu pantalla; no se guarda. La interpretación ocurre en tu navegador y tú revisas cada producto antes de aplicarlo. Si prefieres no usar el enlace, puedes subir tu ficha guardada como HTML y no sale de tu equipo.</p></details>
-        <details><summary>¿Qué pasa con mis datos?</summary><p>Todo lo que ingresas se guarda solo en tu navegador (almacenamiento local). Únicamente si marcas el consentimiento en la pestaña Comunidad y pulsas “Enviar”, se envía un resumen anónimo: nivel, puntaje por criterio, grado, índice h, cantidades por tipo de producto y, si lo indicas, tu institución (nacional o extranjera, con su país). No se envían nombres, correos ni títulos de tus productos. Puedes retirar tus aportes en cualquier momento desde esa pestaña. Si envías una sugerencia, se guarda el texto, la pestaña desde la que escribes y, solo si lo indicas y lo consientes, tu correo; puedes retirarla desde el mismo botón de “Retirar”. Se aplican los principios de la Ley N° 29733 de Protección de Datos Personales del Perú.</p></details>
+        <details><summary>¿Qué pasa con mis datos?</summary><p>Todo lo que ingresas se guarda solo en tu navegador (almacenamiento local). Únicamente si marcas el consentimiento en la pestaña Comunidad y pulsas “Enviar”, se envía un resumen anónimo: nivel, puntaje por criterio, grado, índice h, cantidades por tipo de producto y, si lo indicas, tu institución (nacional o extranjera, con su país). No se envían nombres, correos ni títulos de tus productos. Puedes retirar tus aportes en cualquier momento desde esa pestaña. Si propones una institución que no está en la lista, se envía únicamente su nombre, si es nacional o extranjera y el país; cuando otra persona la confirma o el administrador la aprueba, aparece en la lista para todos. Si envías una sugerencia, se guarda el texto, la pestaña desde la que escribes y, solo si lo indicas y lo consientes, tu correo; puedes retirarla desde el mismo botón de “Retirar”. Se aplican los principios de la Ley N° 29733 de Protección de Datos Personales del Perú.</p></details>
         <details><summary>¿Qué mide esta calculadora y qué no?</summary><p>Aplica las Tablas 1 y 3 del Anexo N° 1 sobre lo que tú declares. No verifica que tus revistas estén indizadas, que el cuartil sea el correcto para el año, ni que tus documentos de sustento sean aceptables. Esa verificación la hace el CONCYTEC.</p></details>
       </div>
     </div>
@@ -1309,6 +1312,7 @@ document.addEventListener("click", e => {
   } else if(act==="print"){ buildReport(); }
   else if(act==="fb-unrate"){ document.querySelectorAll("#fbStars input").forEach(r => r.checked = false); fbSaveDraft(); fbRefresh(); }
   else if(act==="fb-copy"){ fbCopy(); }
+  else if(act==="inst-propose"){ proposeInst(); }
   else if(act==="cti-fetch"){ ctiFetch(); }
   else if(act==="cti-apply"){ ctiApply(); }
   else if(act==="cti-clear"){ CTI = null; renderCtiReview(); ctiMsg("", "sub"); }
@@ -1338,18 +1342,19 @@ $("#name").addEventListener("input", e => { S.name = e.target.value.slice(0,80);
 $("#inst").addEventListener("input", e => {
   S.inst = e.target.value.slice(0,100);
   if(S.instOrigin === "extranjera"){                                   // al elegir una institución conocida se completa su país
-    const c = EXT_COUNTRY.get(S.inst);
+    const c = extCountry(S.inst);
     if(c){ S.country = c; $("#country").value = c; }                   // la lista conoce su país: prevalece sobre uno elegido antes
   }
-  persist(); renderShare();
+  persist(); renderShare(); scheduleInstHint();
 });
-$("#country").addEventListener("change", e => { S.country = e.target.value; persist(); renderShare(); });
+$("#inst").addEventListener("blur", renderInstHint);
+$("#country").addEventListener("change", e => { S.country = e.target.value; persist(); renderShare(); renderInstHint(); });
 $("#origin").addEventListener("change", e => {
   if(e.target.name !== "origin") return;
   S.instOrigin = e.target.value;
   if(!S.instOrigin){ S.inst = ""; S.country = ""; }
-  else if(S.instOrigin === "nacional"){ S.country = ""; if(EXT_COUNTRY.has(S.inst)) S.inst = ""; }
-  else if(INST_PE.includes(S.inst)) S.inst = "";                       // venía de la lista nacional
+  else if(S.instOrigin === "nacional"){ S.country = ""; if(extCountry(S.inst)) S.inst = ""; }
+  else if(peNames().includes(S.inst)) S.inst = "";                       // venía de la lista nacional
   $("#inst").value = S.inst; $("#country").value = S.country;
   renderInstUi(); persist(); renderShare();
 });
@@ -1569,6 +1574,98 @@ const INST_EXT = [
   ["University of Virginia","Estados Unidos"], ["University of Washington","Estados Unidos"]
 ];
 const EXT_COUNTRY = new Map(INST_EXT);
+
+/* ===== Instituciones propuestas por la comunidad =====
+   Las que llegan del servidor (cuando varias personas la escriben o el administrador la aprueba) se suman a las listas base. */
+const K_INSTX = "renacyt_calc_v1_instx", K_INSTP = "renacyt_calc_v1_instprop";
+let INST_X = {nacional:[], extranjera:[]};
+// misma institución escrita de otra forma: sin tildes, sin mayúsculas, sin paréntesis ni signos
+const instKey = s => String(s == null ? "" : s).replace(/\([^)]*\)/g, " ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z0-9]+/g, " ").trim();
+const peNames = () => INST_PE.concat(INST_X.nacional);
+const extNames = () => INST_EXT.map(x => x[0]).concat(INST_X.extranjera.map(x => x[0]));
+function extCountry(name){
+  const k = instKey(name); if(!k) return "";
+  const f = INST_EXT.concat(INST_X.extranjera).find(x => instKey(x[0]) === k);
+  return f ? f[1] : "";
+}
+function isKnownInst(name){
+  const k = instKey(name); if(!k) return true;
+  return (S.instOrigin === "extranjera" ? extNames() : peNames()).some(n => instKey(n) === k);
+}
+// Si la persona escribió todo en mayúsculas, se pasa a formato de título (conserva las siglas entre paréntesis)
+function tidyInstName(s){
+  s = String(s || "").replace(/\s+/g, " ").trim();
+  const letters = s.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g, ""), up = letters.replace(/[^A-ZÁÉÍÓÚÑ]/g, "");
+  if(letters.length > 6 && up.length / letters.length > 0.7){
+    const low = new Set(["de","del","la","las","los","y","e","el","en","para","a","al","of","the","and","for"]);
+    s = s.toLowerCase().split(" ").map((w, i) => (w.startsWith("(") || (i > 0 && low.has(w))) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  }
+  return s.slice(0, 100);
+}
+const readProposed = () => { const a = store.get(K_INSTP); return Array.isArray(a) ? a.filter(x => x && typeof x.name === "string" && ["nacional","extranjera"].includes(x.o)) : []; };
+function applyInstX(c){
+  c = c || {};
+  const seenP = new Set(INST_PE.map(instKey)), seenE = new Set(INST_EXT.map(x => instKey(x[0])));
+  const nac = [], ext = [];
+  const addP = n => { n = String(n).slice(0, 100); const k = instKey(n); if(k && !seenP.has(k)){ seenP.add(k); nac.push(n); } };
+  const addE = (n, ct) => { n = String(n).slice(0, 100); const k = instKey(n); if(k && !seenE.has(k)){ seenE.add(k); ext.push([n, COUNTRIES.includes(ct) ? ct : ""]); } };
+  (Array.isArray(c.nacional) ? c.nacional : []).forEach(addP);
+  (Array.isArray(c.extranjera) ? c.extranjera : []).forEach(x => addE(x && x[0], x && x[1]));
+  readProposed().forEach(p => p.o === "nacional" ? addP(p.name) : addE(p.name, p.country));     // las propias se ven de inmediato
+  INST_X = {nacional:nac, extranjera:ext};
+  renderInstUi();
+}
+async function loadCommunityInst(force){
+  applyInstX(store.get(K_INSTX));                                   // primero lo ya guardado y lo propio
+  if(!endpointOK()) return;
+  const c = store.get(K_INSTX);
+  if(!force && c && typeof c.t === "number" && Date.now() - c.t < 12 * 3600 * 1000) return;
+  try{
+    const r = await fetch(CONFIG.endpoint + "?action=institutions"); const d = await r.json();
+    if(d && d.ok && Array.isArray(d.nacional) && Array.isArray(d.extranjera)){
+      const nc = {t:Date.now(), nacional:d.nacional.slice(0, 500).map(String), extranjera:d.extranjera.slice(0, 500).map(x => [String(x[0]), String(x[1] || "")])};
+      store.set(K_INSTX, nc); applyInstX(nc);
+    }
+  }catch{}
+}
+let instHintTimer = null;
+const scheduleInstHint = () => { clearTimeout(instHintTimer); instHintTimer = setTimeout(renderInstHint, 700); };   // espera a que termine de escribir
+function renderInstHint(){
+  const box = $("#instHint"); if(!box) return;
+  const o = S.instOrigin, name = S.inst.trim();
+  if(!o){ box.innerHTML = ""; return; }
+  const tidy = tidyInstName(name), k = instKey(tidy);
+  if(name.length >= 4 && readProposed().some(p => p.o === o && instKey(p.name) === k)){      // ya propuesta por esta persona
+    box.innerHTML = `<div class="chip ok"><i>✓</i><span><b>${esc(tidy)}</b>: ya la propusiste. Aparecerá en la lista para todos cuando otra persona la confirme o el administrador la apruebe.</span></div>`; return;
+  }
+  // sin aviso si es conocida o si lo escrito es el comienzo de un nombre de la lista (la persona sigue escribiendo)
+  const names = o === "extranjera" ? extNames() : peNames();
+  const typing = k.length >= 3 && names.some(n => instKey(n).startsWith(k));
+  if(name.length < 4 || isKnownInst(name) || typing){
+    box.innerHTML = '<p class="sub" style="margin:2px 0 0">¿No encuentras tu institución? Escríbela completa: se usará tal cual y podrás proponerla para la lista.</p>'; return;
+  }
+  const needCountry = o === "extranjera" && !S.country, can = endpointOK() && !needCountry;
+  box.innerHTML = `<div class="chip warn"><i>!</i><span><b>“${esc(tidy)}”</b> no está en la lista; la usaremos tal como la escribiste. ¿Quieres proponerla para que aparezca a otras personas?${needCountry ? " Elige primero el país." : ""}
+    <br><button class="btn ghost sm" type="button" data-action="inst-propose" ${can ? "" : "disabled"} style="margin-top:8px">Proponer para la lista</button>
+    <small style="display:block;margin-top:6px;color:var(--muted)">Se envía solo el nombre, si es nacional o extranjera y el país; nada tuyo ni de tu puntaje.${endpointOK() ? "" : " (El envío aún no está conectado.)"}</small></span></div>`;
+}
+const INST_ERR = {bad_name:"El nombre no es válido (mínimo 4 letras, sin enlaces ni correos).", bad_country:"Elige un país válido de la lista.", bad_origin:"Indica si es nacional o extranjera.",
+  rate:"Alcanzaste el límite de propuestas por hoy.", full:"La lista está llena por ahora.", invalid:"No se pudo registrar la propuesta."};
+async function proposeInst(){
+  const o = S.instOrigin, name = tidyInstName(S.inst);
+  if(!o || name.length < 4 || isKnownInst(name)) return;
+  if(o === "extranjera" && !S.country){ toast("Elige primero el país de la institución"); return; }
+  const btn = document.querySelector('[data-action="inst-propose"]'); if(btn) btn.disabled = true;
+  try{
+    const res = await postJSON({action:"inst_add", clientId:getCid(), name, origin:o, country:o === "extranjera" ? S.country : ""});
+    if(res && res.ok){
+      const p = readProposed(); p.push({o, name, country:o === "extranjera" ? S.country : ""}); store.set(K_INSTP, p.slice(-50));
+      S.inst = name; $("#inst").value = name; persist();
+      loadCommunityInst(true); renderShare();
+      toast(res.known ? "Gracias, la tendremos en cuenta" : "¡Gracias! Institución propuesta");
+    } else { toast(INST_ERR[res && res.error] || "El servicio todavía no acepta propuestas. Inténtalo más tarde."); if(btn) btn.disabled = false; }
+  }catch{ toast("No se pudo enviar la propuesta. Revisa tu conexión."); if(btn) btn.disabled = false; }
+}
 const K_CID = "renacyt_calc_v1_cid", K_SENT = "renacyt_calc_v1_sent";
 
 function buildInst(){
@@ -1580,9 +1677,10 @@ function renderInstUi(){
   const o = S.instOrigin;
   $("#instFields").hidden = !o;
   $("#countryBox").hidden = o !== "extranjera";
-  const names = o === "extranjera" ? INST_EXT.map(x => x[0]) : (o === "nacional" ? INST_PE : []);
+  const names = o === "extranjera" ? extNames() : (o === "nacional" ? peNames() : []);
   $("#instList").innerHTML = names.map(n => `<option value="${esc(n)}"></option>`).join("");
   $("#inst").placeholder = o === "extranjera" ? "Nombre de la institución (puedes elegir de la lista)" : "Escribe o elige de la lista";
+  renderInstHint();
 }
 const originTxt = () => S.instOrigin === "nacional" ? "Nacional (Perú)" : S.instOrigin === "extranjera" ? "Extranjera" + (S.country ? " · " + S.country : "") : "No indicada";
 const instLabel = () => !S.inst ? "" : S.instOrigin === "extranjera" ? `${S.inst} (${S.country || "extranjera"})` : S.inst;
@@ -1612,7 +1710,8 @@ function buildPayload(){
   const c = compute(S);
   return {action:"submit", clientId:getCid(), level:levelName(c.level), total:c.total, formation:c.formation, production:c.production,
     advising:c.advising, degree:S.degree, h:c.h, student:S.student, active:c.active,
-    institution:S.instOrigin ? S.inst.trim() : "", instOrigin:S.instOrigin, country:S.instOrigin === "extranjera" ? S.country : "",
+    institution:S.instOrigin ? tidyInstName(S.inst) : "", instOrigin:S.instOrigin, country:S.instOrigin === "extranjera" ? S.country : "",
+    instNew:!!(S.instOrigin && S.inst.trim().length >= 4 && !isKnownInst(S.inst)),
     counts:c.counts, v:CONFIG.appVersion, hp:""};
 }
 function renderShare(){
@@ -1659,7 +1758,7 @@ async function withdrawContributions(){
   if(!confirm("Se eliminarán todos los aportes anónimos y las sugerencias enviados desde este navegador. ¿Continuar?")) return;
   try{
     const res = await postJSON({action:"delete", clientId:getCid()});
-    if(res && res.ok){ store.set(K_SENT, []); store.set(K_FB, []); sessionStorage.removeItem("renacyt_stats"); renderShare(); fbRefresh(); loadMetrics(true); toast(`Se retiraron ${res.removed} registros`); }
+    if(res && res.ok){ store.set(K_SENT, []); store.set(K_FB, []); store.set(K_INSTP, []); loadCommunityInst(true); sessionStorage.removeItem("renacyt_stats"); renderShare(); fbRefresh(); loadMetrics(true); toast(`Se retiraron ${res.removed} registros`); }
     else toast("No se pudo retirar. Inténtalo de nuevo.");
   }catch{ toast("No se pudo conectar para retirar tus aportes."); }
 }
@@ -2258,6 +2357,7 @@ function initFeedback(){
   S = sanitizeState(store.get(K_STATE));
   const h = store.get(K_HIST); HIST = Array.isArray(h) ? h.filter(x => x && x.state && typeof x.ts==="number") : [];
   syncProfile(); refresh();
+  loadCommunityInst();
   const v = (location.hash||"").slice(1); if(VIEWS.includes(v)) showView(v);
   window.addEventListener("hashchange", () => { const w = location.hash.slice(1); if(VIEWS.includes(w)) showView(w); });
 })();

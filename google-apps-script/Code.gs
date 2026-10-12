@@ -39,6 +39,7 @@ function doPost(e) {
     if (p.hp) return json_({ ok: true });                     // honeypot: bots
     if (p.action === 'delete') return json_(deleteByClient_(p.clientId));
     if (p.action === 'feedback') return json_(saveFeedback_(p));
+    if (p.action === 'inst_add') return json_(instAddAction_(p));
     if (p.action !== 'submit') return json_({ ok: false, error: 'bad_action' });
 
     const rec = cleanRecord_(p);
@@ -65,6 +66,9 @@ function doPost(e) {
                   rec.advising, rec.degree, rec.h, rec.student, rec.active, rec.area, rec.institution,
                   rec.counts, rec.version, rec.origin, rec.country]);
     CacheService.getScriptCache().remove('stats');
+    if (p.instNew === true && rec.origin) {            // el aporte nunca falla por esto
+      try { registerInstitution_(p.institution, rec.origin, rec.country, rec.clientId); } catch (err) { /* se ignora */ }
+    }
     return json_({ ok: true });
   } catch (err) {
     return json_({ ok: false, error: 'bad_request' });
@@ -76,6 +80,7 @@ function doPost(e) {
 function doGet(e) {
   const action = e && e.parameter ? e.parameter.action : '';
   if (action === 'cti') return ctiFetch_(e.parameter.id);
+  if (action === 'institutions') return instList_();
   if (action === 'stats') {
     const cache = CacheService.getScriptCache();
     const hit = cache.get('stats');
@@ -126,6 +131,122 @@ function ctiFetch_(id) {
   } catch (err) {
     return json_({ ok: false, error: 'fetch_failed' });
   }
+}
+
+/* ---------------- Instituciones propuestas por la comunidad ---------------- */
+// Si una persona no encuentra su institución en la lista, puede proponerla. Cada propuesta queda en la pestaña
+// «Instituciones» de tu hoja y se sugiere a todos cuando la escriben INST_MIN_VOTES personas distintas
+// o cuando tú pones «aprobada» en la columna «estado». Con «rechazada» nunca se muestra.
+
+const INST_SHEET = 'Instituciones';
+const INST_HEADERS = ['clave', 'nombre', 'origen', 'pais', 'n_personas', 'clientes', 'primera_fecha', 'ultima_fecha', 'estado'];
+const INST_MIN_VOTES = 2;        // personas distintas necesarias para sugerirla a todos
+const INST_MAX_PER_DAY = 5;      // propuestas por navegador al día
+const INST_MAX_ROWS = 3000;
+const INST_MAX_IDS = 30;
+const INST_LIST_MAX = 500;
+
+// Clave para detectar la misma institución escrita de varias formas: sin tildes, mayúsculas, sin paréntesis ni signos.
+function instKey_(s) {
+  return String(s == null ? '' : s).replace(/\([^)]*\)/g, ' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+           .toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+}
+
+// Devuelve el nombre limpio o '' si no es aceptable (muy corto, con enlaces/correos, fórmulas, sin letras).
+function cleanInstName_(raw) {
+  const s = String(raw == null ? '' : raw).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (s.length < 4 || s.length > INST_MAX) return '';
+  if (/^[=+\-@']/.test(s)) return '';
+  if (/https?:|www\.|@/i.test(s)) return '';
+  if ((s.match(/[A-Za-zÁÉÍÓÚÑáéíóúñ]/g) || []).length < 4) return '';
+  return s;
+}
+
+function registerInstitution_(rawName, origin, country, cid) {
+  const name = cleanInstName_(rawName);
+  if (!name) return { ok: false, error: 'bad_name' };
+  if (origin !== 'nacional' && origin !== 'extranjera') return { ok: false, error: 'bad_origin' };
+  let pais = '';
+  if (origin === 'extranjera') {
+    if (COUNTRIES.indexOf(country) < 0) return { ok: false, error: 'bad_country' };
+    pais = country;
+  }
+  const key = instKey_(name);
+  if (key.length < 3) return { ok: false, error: 'bad_name' };
+
+  const sh = getSheet_(INST_SHEET, INST_HEADERS);
+  const last = sh.getLastRow();
+  const rows = last >= 2 ? sh.getRange(2, 1, last - 1, INST_HEADERS.length).getValues() : [];
+  let idx = -1;
+  for (let i = 0; i < rows.length; i++) if (String(rows[i][0]) === key) { idx = i; break; }
+  const now = new Date().toISOString();
+  const cache = CacheService.getScriptCache();
+
+  if (idx >= 0) {
+    const r = rows[idx];
+    if (String(r[8]) === 'rechazada') return { ok: true, known: true };                   // no se revela que fue rechazada
+    const ids = String(r[5] || '').split(',').filter(Boolean);
+    const n0 = Number(r[4]) || ids.length;
+    if (ids.indexOf(cid) >= 0) return { ok: true, dup: true, votes: n0 };
+    ids.push(cid);
+    const n = n0 + 1;
+    sh.getRange(idx + 2, 5, 1, 4).setValues([[n, ids.slice(-INST_MAX_IDS).join(','), r[6], now]]);
+    cache.remove('instlist');
+    return { ok: true, votes: n, public: String(r[8]) === 'aprobada' || n >= INST_MIN_VOTES };
+  }
+
+  if (last - 1 >= INST_MAX_ROWS) return { ok: false, error: 'full' };
+  const rk = 'instrate_' + cid + '_' + now.slice(0, 10);                                   // tope diario por navegador
+  const used = Number(cache.get(rk) || 0);
+  if (used >= INST_MAX_PER_DAY) return { ok: false, error: 'rate' };
+  cache.put(rk, String(used + 1), 90000);
+
+  sh.appendRow([key, name, origin, pais, 1, cid, now, now, '']);
+  cache.remove('instlist');
+  return { ok: true, created: true, votes: 1, public: INST_MIN_VOTES <= 1 };
+}
+
+function instAddAction_(p) {
+  if (!/^[a-z0-9]{12,40}$/.test(String(p.clientId))) return { ok: false, error: 'invalid' };
+  return registerInstitution_(p.name, String(p.origin == null ? '' : p.origin), String(p.country == null ? '' : p.country), String(p.clientId));
+}
+
+// Lista pública: aprobadas por ti o escritas por al menos INST_MIN_VOTES personas. Solo nombres y países, nada personal.
+function instList_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('instlist');
+  if (hit) return ContentService.createTextOutput(hit).setMimeType(ContentService.MimeType.JSON);
+  const sh = getSheet_(INST_SHEET, INST_HEADERS);
+  const last = sh.getLastRow();
+  const rows = last >= 2 ? sh.getRange(2, 1, last - 1, INST_HEADERS.length).getValues() : [];
+  const pub = rows.filter(function (r) {
+    const estado = String(r[8] || '');
+    return estado !== 'rechazada' && (estado === 'aprobada' || Number(r[4]) >= INST_MIN_VOTES) && String(r[1]);
+  }).sort(function (a, b) { return Number(b[4]) - Number(a[4]); });
+  const out = JSON.stringify({
+    ok: true, minVotes: INST_MIN_VOTES, updated: new Date().toISOString(),
+    nacional: pub.filter(function (r) { return r[2] === 'nacional'; }).slice(0, INST_LIST_MAX).map(function (r) { return String(r[1]); }),
+    extranjera: pub.filter(function (r) { return r[2] === 'extranjera'; }).slice(0, INST_LIST_MAX).map(function (r) { return [String(r[1]), String(r[3] || '')]; })
+  });
+  cache.put('instlist', out, 600);
+  return ContentService.createTextOutput(out).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Al retirar sus aportes, la persona también retira su «voto» en las instituciones que propuso.
+function removeClientFromInstitutions_(cid) {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(INST_SHEET);
+  if (!sh) return;
+  const last = sh.getLastRow();
+  if (last < 2) return;
+  const rows = sh.getRange(2, 1, last - 1, INST_HEADERS.length).getValues();
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const ids = String(rows[i][5] || '').split(',').filter(Boolean);
+    if (ids.indexOf(cid) < 0) continue;
+    const n = (Number(rows[i][4]) || ids.length) - 1;
+    if (n <= 0) sh.deleteRow(i + 2);
+    else sh.getRange(i + 2, 5, 1, 2).setValues([[n, ids.filter(function (x) { return x !== cid; }).join(',')]]);
+  }
+  CacheService.getScriptCache().remove('instlist');
 }
 
 /* ---------------- Utilidades ---------------- */
@@ -261,6 +382,7 @@ function deleteByClient_(cid) {
   let removed = removeRowsByClient_(getSheet_(), cid);
   const fb = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FB_SHEET);   // también sus sugerencias (pueden incluir correo)
   if (fb) removed += removeRowsByClient_(fb, cid);
+  removeClientFromInstitutions_(cid);
   CacheService.getScriptCache().remove('stats');
   return { ok: true, removed: removed };
 }
