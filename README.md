@@ -28,11 +28,19 @@ Lo que ingresas se guarda solo en tu navegador. Solo se envía algo si marcas el
 | `vendor/` | jsPDF y jsPDF-AutoTable (MIT), usados solo para el PDF. |
 | `google-apps-script/` | Backend opcional en Google Apps Script (aportes, métricas, sugerencias y lectura de CTI Vitae) e instrucciones. |
 | `PUBLICAR.md` | Guía de publicación en GitHub Pages. |
+| `LICENSE` | Licencia MIT. |
 
 ## Autor
 
 **Rafael Segundo Vela-Paredes**: doctorando en Nutrición (UNALM, programa PROCIENCIA) · Facultad de Industrias Alimentarias, UNAP.
 [ORCID 0000-0001-7255-6209](https://orcid.org/0000-0001-7255-6209) · [Scopus 57200699171](https://www.scopus.com/authid/detail.uri?authorId=57200699171)
+
+## Licencia
+
+El código de este repositorio se publica bajo la [licencia MIT](LICENSE): puedes usarlo, copiarlo, modificarlo y redistribuirlo, incluso con fines comerciales, conservando el aviso de copyright.
+
+- Las librerías de `vendor/` (jsPDF y jsPDF-AutoTable) son de terceros y conservan su propia licencia MIT.
+- «RENACYT», «CTI Vitae» y el contenido del reglamento pertenecen al CONCYTEC; esta herramienta es independiente y no tiene vínculo oficial con esa institución.
 
 ## Sugerencias y errores
 
