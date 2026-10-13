@@ -547,7 +547,14 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 
   <!-- ============ CTI VITAE ============ -->
   <section class="view" id="view-cti">
-    <div class="modeline"><span>Modalidad: <b>Importar CTI Vitae</b></span><button class="linkbtn" type="button" data-action="change-mode">Cambiar modalidad</button><button class="linkbtn" type="button" data-action="clear">Borrar mis datos</button></div>
+    <div class="modeline"><span>Modalidad: <b>Importar CTI Vitae</b></span><button class="linkbtn" type="button" data-action="change-mode">Cambiar modalidad</button></div>
+    <div class="quickstart">
+      <p class="quickhint"><b>Empieza aquí:</b> mira cómo funciona con una ficha de ejemplo, o borra todo para comenzar con la tuya.</p>
+      <div class="formactions">
+        <button class="btn" type="button" data-action="cti-sample">Probar con datos de ejemplo</button>
+        <button class="btn danger-fill" type="button" data-action="clear">Borrar mis datos</button>
+      </div>
+    </div>
     <div class="layout">
       <div>
         <div class="card">
@@ -1657,6 +1664,12 @@ document.addEventListener("click", e => {
     const x = simCombos[Number(a.dataset.i)];
     if(x){ sim.counts = {...x.add}; renderSim(compute(S)); $("#simGrid").scrollIntoView({behavior:"smooth", block:"center"}); toast("Combinación cargada en el simulador"); }
   }
+  else if(act==="cti-sample"){
+    CTI = ctiSample();
+    ctiMsg("Ficha de ejemplo cargada (datos ficticios). Revísala abajo y pulsa «Aplicar y ver mi plan» para ver cómo funciona.", "msg-ok");
+    renderCtiReview();
+    $("#ctiReview").scrollIntoView({behavior:"smooth", block:"start"});
+  }
   else if(act==="change-mode"){ choosing = true; showView("start"); }
   else if(act==="mode-back"){ choosing = false; showView(modeView()); }
   else if(act==="sim-reset"){ sim = {counts:{}, degree:null, h:null}; renderSim(compute(S)); }
@@ -2449,13 +2462,43 @@ async function ctiFile(file){
   if(file.size > 8e6){ ctiMsg("El archivo es demasiado grande para ser una ficha de CTI Vitae.", "msg-bad"); return; }
   ctiLoadHtml(await file.text(), "");
 }
+/* Ficha de ejemplo (datos ficticios) para ver cómo funciona la importación sin usar una ficha real. */
+function ctiSample(){
+  const y = now.getFullYear(), pad = n => String(n).padStart(2, "0");
+  const art = (title, journal, year, choice, note = "") => ({origin:"cientifica", title, journal, year, typeRaw:"Artículo en revista científica", doi:"", choice, note, review:!!note});
+  return {
+    isSample:true, id:"",
+    meta:{name:"FICHA DE EJEMPLO (DATOS FICTICIOS)", updated:`${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${y}`, scopusId:"", orcid:""},
+    degrees:["master"], enrolled:false, degreeSel:"master",
+    prod:[
+      art("Efecto de la temperatura en la capacidad antioxidante de frutos amazónicos", "Food Chemistry", y - 1, "art_q1"),
+      art("Caracterización fisicoquímica de harinas de tubérculos andinos", "Journal of Food Science", y - 2, "art_q2"),
+      art("Aprovechamiento de residuos agroindustriales en la Amazonía peruana", "Agronomía Colombiana", y - 3, "art_q3"),
+      art("Estabilidad de pigmentos naturales durante el almacenamiento", "Revista de Investigación Agraria", y - 4, "art_q4"),
+      art("Percepción del consumidor sobre alimentos funcionales", "Revista Peruana de Nutrición", y - 1, "art_oth", "Sin cuartil en su año. Cuenta 1 pt solo si la revista está en Scopus, WoS o SciELO: verifícalo."),
+      {origin:"cientifica", title:"Guía de buenas prácticas de manipulación de alimentos", journal:"Editorial universitaria", year:y - 2, typeRaw:"Capítulo de libro", doi:"", choice:"none", note:"Capítulo: cuenta si es resultado de investigación con revisión por pares.", review:true},
+      {origin:"otras", title:"Póster: tendencias en la valorización de frutos nativos", journal:"Congreso nacional de ciencia de alimentos", year:y - 1, typeRaw:"Póster", doi:"", choice:"none", note:"Tipo de producción que el reglamento no puntúa.", review:false}
+    ],
+    ip:[
+      {title:"Procedimiento para obtener un extracto estable de antocianinas", typeRaw:"Patente de invención", status:"Otorgada", choice:"ip_hi", note:"", review:false},
+      {title:"Programa de cálculo de rendimientos agroindustriales", typeRaw:"Derecho de autor", status:"Registrado", choice:"ip_lo", note:"", review:false}
+    ],
+    thes:[
+      {institution:"Universidad (ejemplo)", level:"Tesis de maestría", date:`15-06-${y - 1}`, choice:"th_ms", note:"", review:false},
+      {institution:"Universidad (ejemplo)", level:"Tesis de pregrado", date:`20-03-${y - 2}`, choice:"th_ug", note:"Sin enlace al repositorio: necesitarás el acta de sustentación como sustento.", review:true}
+    ],
+    projects:[{title:"Proyecto de investigación (ejemplo)", start:`01-03-${y - 2}`, end:`31-12-${y}`, recent:true}],
+    projectSel:true
+  };
+}
 function ctiApply(){
   if(!CTI) return;
   if(!confirm("Se reemplazarán las cantidades de tu calculadora por las de esta selección. ¿Continuar?")) return;
   const st = ctiBuildState(CTI);
   S.degree = st.degree; S.counts = st.counts; S.recent = st.recent; S.project = st.project; S.last = st.last;
   if(CTI.id) S.cti = CTI.id;
-  S.ctiSig = stateSig(S); S.ctiName = CTI.meta.name || "";
+  S.ctiSig = stateSig(S); S.ctiName = CTI.isSample ? "Ficha de ejemplo" : (CTI.meta.name || "");
+  if(CTI.isSample) S.sampleSig = stateSig(S);          // el ejemplo nunca se registra como consulta
   S.mode = "cti"; choosing = false;
   syncProfile(); refresh(); showView("plan"); toast("Datos de CTI Vitae aplicados · Plan de ascenso habilitado");
 }
