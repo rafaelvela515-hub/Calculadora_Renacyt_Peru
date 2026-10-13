@@ -428,7 +428,6 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <div class="card">
           <h2><span class="step">1</span> Perfil y formación</h2>
           <p class="sub">Solo cuenta el máximo grado o título registrado en SUNEDU o MINEDU. No se acumula.</p>
-          <div class="ctibanner"><span><b>¿Tienes ficha en CTI Vitae?</b> Impórtala y la calculadora rellena tu formación, artículos con su cuartil, propiedad intelectual y asesorías.</span><button class="btn sm" data-go="cti">Importar CTI Vitae</button></div>
           <div class="grid2" style="margin-bottom:14px">
             <div><label class="lbl" for="name">Tu nombre (opcional, para el historial e informe)</label><input type="text" id="name" maxlength="80" autocomplete="name" placeholder="Nombre y apellidos"></div>
             <div><label class="lbl" for="hidx">Índice h en Scopus</label><input type="number" id="hidx" min="0" max="300" inputmode="numeric" placeholder="0"></div>
@@ -471,6 +470,8 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
           <p class="sub">No suman puntos, pero un proyecto aprobado por pares externos mantiene tu condición de activo aunque no publiques.</p>
           <div id="cats-proj"></div>
         </div>
+
+        <div class="ctibanner"><span><b>¿Tienes ficha en CTI Vitae?</b> En lugar de llenar los pasos a mano, impórtala y la calculadora rellena tu formación, artículos con su cuartil, propiedad intelectual y asesorías. Podrás revisar todo antes de aplicarlo, y reemplazará lo que hayas escrito aquí.</span><button class="btn sm" type="button" data-go="cti">Importar CTI Vitae</button></div>
       </div>
 
       <aside class="col-result card" id="resultado" aria-live="polite"></aside>
