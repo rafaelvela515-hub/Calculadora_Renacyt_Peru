@@ -342,7 +342,9 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 .visitbox{display:inline-flex;gap:6px;align-items:center;margin:6px 0 4px;padding:6px 12px;border-radius:99px;background:var(--surface-2);color:var(--ink);font-size:13.5px}
 .footlinks{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 /* «Probar con datos de ejemplo» (verde) y «Borrar mis datos» (rojo): mismo tamaño y forma que «Guardar en historial» */
-.formactions{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 8px}
+.quickstart{margin:0 0 16px}
+.quickhint{margin:0 0 8px;color:var(--muted);font-size:14.5px}
+.formactions{display:flex;gap:10px;flex-wrap:wrap;margin:0}
 .formactions .btn{flex:1 1 220px;white-space:normal}
 .btn.danger-fill{background:var(--bad);border-color:var(--bad);color:var(--on-bad)}
 @media (max-width:480px){.formactions .btn{flex-basis:100%}}
@@ -402,6 +404,13 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 
   <!-- ============ CALCULADORA ============ -->
   <section class="view on" id="view-calc">
+    <div class="quickstart">
+      <p class="quickhint"><b>Empieza aquí:</b> mira cómo funciona con datos de ejemplo, o borra todo para comenzar con los tuyos.</p>
+      <div class="formactions">
+        <button class="btn" type="button" data-action="sample">Probar con datos de ejemplo</button>
+        <button class="btn danger-fill" type="button" data-action="clear">Borrar mis datos</button>
+      </div>
+    </div>
     <section class="card how" aria-labelledby="howTitle">
       <details id="howto" open>
         <summary><h2 id="howTitle">¿Cómo funciona?</h2></summary>
@@ -461,11 +470,6 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
           <h2><span class="step">4</span> Proyectos de CTI <span class="badge-cap">sin puntaje</span></h2>
           <p class="sub">No suman puntos, pero un proyecto aprobado por pares externos mantiene tu condición de activo aunque no publiques.</p>
           <div id="cats-proj"></div>
-        </div>
-
-        <div class="formactions">
-          <button class="btn" type="button" data-action="sample">Probar con datos de ejemplo</button>
-          <button class="btn danger-fill" type="button" data-action="clear">Borrar mis datos</button>
         </div>
       </div>
 
