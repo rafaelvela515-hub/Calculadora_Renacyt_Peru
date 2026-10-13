@@ -574,9 +574,9 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
           </details>
           <div class="chip warn" style="margin-top:12px"><i>!</i><span>Usa solo <b>tu propia ficha</b> o una que tengas autorización para evaluar. Lo que se lee no se guarda ni se envía; solo se aplican a tu calculadora las cantidades que tú confirmes.</span></div>
         </div>
-        <div class="card" id="ctiProfileCard">
+        <div class="card" id="ctiProfileCard" hidden>
           <h2>Tu perfil <span class="badge-cap">opcional</span></h2>
-          <p class="sub">CTI Vitae no trae tu índice h ni tu institución actual. Complétalos si quieres: el índice h solo se exige para Investigador Distinguido.</p>
+          <p class="sub">Índice h, institución y casillas que completan tu estado. El índice h solo se exige para Investigador Distinguido.</p>
           <div id="ctiProfileSlot"></div>
           <div id="ctiFlagsSlot"></div>
         </div>
@@ -592,7 +592,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
           <li><b>Tesis:</b> solo sustentadas; sin enlace al repositorio necesitarás el acta.</li>
           <li><b>Formación:</b> solo la fuente SUNEDU.</li>
           <li>Lo que no se puede decidir con seguridad queda <b>sin contar</b> y marcado en ámbar para que elijas tú.</li>
-          <li>CTI Vitae <b>no muestra el índice h</b>: se toma de Scopus.</li>
+          <li><b>Índice h:</b> se toma de tu ficha si la trae; si no, consúltalo en Scopus e ingrésalo tú.</li>
         </ul>
       </aside>
     </div>
@@ -1559,11 +1559,19 @@ function clearAllData(){
 let choosing = false, planWasOK = null;
 const hasData = st => Object.keys(st.counts || {}).length > 0 || st.degree !== "none" || !!st.project;
 const modeView = () => (choosing || !S.mode) ? "start" : S.mode;
+/* En modalidad CTI el perfil (índice h, institución, casillas) aparece debajo de «Ficha leída»; si la persona vuelve con datos y
+   sin ficha abierta, en una tarjeta propia. En cualquier otro caso vive en la calculadora. */
+const moveProfile = (profSlot, flagSlot) => {
+  [["#profileBlock", profSlot], ["#flagsBlock", flagSlot]].forEach(([a, b]) => { const el = $(a), slot = $(b); if(slot && el.parentElement !== slot) slot.appendChild(el); });
+};
+function parkProfile(){ moveProfile("#calcProfileSlot", "#calcFlagsSlot"); }
 function placeProfile(){
-  const cti = S.mode === "cti";
-  [["#profileBlock", cti ? "#ctiProfileSlot" : "#calcProfileSlot"], ["#flagsBlock", cti ? "#ctiFlagsSlot" : "#calcFlagsSlot"]].forEach(([a, b]) => {
-    const el = $(a), slot = $(b); if(el.parentElement !== slot) slot.appendChild(el);
-  });
+  const cti = S.mode === "cti", rev = !!$("#ctiRevProfile");
+  const card = cti && !rev && hasData(S);
+  if(cti && rev) moveProfile("#ctiRevProfile", "#ctiRevFlags");
+  else if(card) moveProfile("#ctiProfileSlot", "#ctiFlagsSlot");
+  else parkProfile();
+  $("#ctiProfileCard").hidden = !card;
 }
 function updateNav(){
   const mv = modeView(), ok = hasData(S);
@@ -1667,6 +1675,7 @@ document.addEventListener("click", e => {
   }
   else if(act==="cti-sample"){
     CTI = ctiSample();
+    ctiPrefill(CTI);
     ctiMsg("Ficha de ejemplo cargada (datos ficticios). Revísala abajo y pulsa «Aplicar y ver mi plan» para ver cómo funciona.", "msg-ok");
     renderCtiReview();
     $("#ctiReview").scrollIntoView({behavior:"smooth", block:"start"});
@@ -2254,8 +2263,14 @@ function parseCtiHtml(html){
     name: cellTxt(doc.querySelector(".tituloNombreFicha2") || {textContent:""}),
     updated: (body.match(/Fecha de ultima actualizacion:\s*([\d-]+)/i) || body.match(/Fecha de última actualización:\s*([\d-]+)/i) || [])[1] || "",
     scopusId: (body.match(/Scopus Author Identifier:\s*(\d{6,14})/) || [])[1] || "",
-    orcid: (body.match(/\b(\d{4}-\d{4}-\d{4}-\d{3}[\dX])\b/) || [])[1] || ""
+    orcid: (body.match(/\b(\d{4}-\d{4}-\d{4}-\d{3}[\dX])\b/) || [])[1] || "",
+    h: null
   };
+  {                                                              // solo se busca en la cabecera, para no confundir con títulos de publicaciones
+    const t = body.replace(/\s+/g, " "), i = t.search(/Experiencia Laboral/i);
+    const m = (i > 0 ? t.slice(0, i) : t.slice(0, 3000)).match(/(?:[ií]ndice[\s-]*h|h[\s-]*index)\b[^\d]{0,30}?(\d{1,3})\b/i);
+    if(m && +m[1] <= 300) meta.h = +m[1];
+  }
 
   /* ---- Formación (solo fuente SUNEDU) ---- */
   const degrees = [];
@@ -2377,7 +2392,8 @@ function ctiSelect(group, idx, value){
 }
 function renderCtiReview(){
   const box = $("#ctiReview");
-  if(!CTI){ box.innerHTML = ""; return; }
+  parkProfile();                                    // los campos del perfil no se pierden al redibujar
+  if(!CTI){ box.innerHTML = ""; updateNav(); return; }
   const c = CTI, st = ctiBuildState(c), r = compute(st);
   const trunc = (s, n) => s.length > n ? s.slice(0, n-1) + "…" : s;
   const prodRow = (p, i) => `<tr class="${p.review?"rv":""}"><td>${isFinite(p.year)?p.year:"—"}</td><td><b>${esc(trunc(p.title, 95))}</b><small>${esc(trunc(p.journal, 60))}${p.journal&&p.typeRaw?" · ":""}${esc(p.typeRaw)}</small>${p.note?`<em>${esc(p.note)}</em>`:""}</td><td>${ctiSelect("prod", i, p.choice)}</td></tr>`;
@@ -2399,9 +2415,15 @@ function renderCtiReview(){
       <p class="sub" style="margin-bottom:8px">Última actualización de la ficha: <b>${esc(c.meta.updated || "no indicada")}</b>${stale?` <span class="msg-bad">· tiene más de 12 meses; actualízala en CTI Vitae antes de postular</span>`:""}.
         Revisa las filas marcadas en ámbar: son las que la calculadora no pudo decidir con seguridad.</p>
       <div class="chips" style="margin:0">
-        <div class="chip warn"><i>!</i><span>El <b>índice h</b> no aparece en CTI Vitae${c.meta.scopusId ? `. Consúltalo en tu <a href="https://www.scopus.com/authid/detail.uri?authorId=${esc(c.meta.scopusId)}" target="_blank" rel="noopener">perfil de Scopus</a>` : ""} e ingrésalo en la Calculadora.</span></div>
+        ${c.meta.h !== null && c.meta.h !== undefined
+          ? `<div class="chip ok"><i>✓</i><span><b>Índice h tomado de tu ficha: ${c.meta.h}.</b> Compruébalo en tu${c.meta.scopusId ? ` <a href="https://www.scopus.com/authid/detail.uri?authorId=${esc(c.meta.scopusId)}" target="_blank" rel="noopener">perfil de Scopus</a>` : " perfil de Scopus"}; puedes corregirlo más abajo.</span></div>`
+          : `<div class="chip warn"><i>!</i><span>El <b>índice h</b> no aparece en esta ficha${c.meta.scopusId ? `. Consúltalo en tu <a href="https://www.scopus.com/authid/detail.uri?authorId=${esc(c.meta.scopusId)}" target="_blank" rel="noopener">perfil de Scopus</a>` : ""} e ingrésalo más abajo.</span></div>`}
         <div class="chip warn"><i>!</i><span>Los datos de CTI Vitae son autodeclarados y el CONCYTEC los verificará con documentos. Esto es una <b>estimación</b>.</span></div>
       </div>
+      <h3 class="goalh">Completa tu perfil <span class="badge-cap">opcional</span></h3>
+      <p class="sub">Esto no viene en la ficha: el índice h solo se exige para Investigador Distinguido, y las casillas cambian el mínimo de producción y tu condición de activo.</p>
+      <div id="ctiRevProfile"></div>
+      <div id="ctiRevFlags"></div>
     </div>
     <div class="card">
       <h2>Formación y proyectos</h2>
@@ -2422,6 +2444,7 @@ function renderCtiReview(){
       <p class="sub" style="margin:0 0 12px">Al aplicar, se <b>reemplazan</b> las cantidades de artículos, propiedad intelectual, libros, tesis, grado y proyecto de tu calculadora. Tu nombre, institución, área, índice h y casillas no cambian.</p>
       <div class="row"><button class="btn" data-action="cti-apply">Aplicar y ver mi plan</button><button class="btn ghost" data-action="cti-clear">Descartar</button></div>
     </div>`;
+  updateNav();
 }
 
 /* ---- Lectura (enlace o archivo) ---- */
@@ -2432,6 +2455,11 @@ const CTI_ERR = {
   fetch_failed:"No se pudo conectar con CTI Vitae. Prueba subiendo tu ficha guardada.",
 };
 function ctiMsg(t, cls){ const m = $("#ctiMsg"); m.textContent = t; m.className = cls || "sub"; }
+function ctiPrefill(parsed){
+  if(parsed.meta.h !== null && parsed.meta.h !== undefined && !S.h) S.h = parsed.meta.h;                       // el h de la ficha, si la persona no puso otro
+  if(!parsed.isSample && !S.name && parsed.meta.name) S.name = parsed.meta.name.replace(/\s+/g, " ").trim().slice(0, 80);
+  syncProfile(); refresh();
+}
 function ctiLoadHtml(html, id){
   try{
     const parsed = parseCtiHtml(html);
@@ -2439,6 +2467,7 @@ function ctiLoadHtml(html, id){
     parsed.projectSel = parsed.projects.some(p => p.recent);
     parsed.id = id || "";
     CTI = parsed;
+    ctiPrefill(parsed);
     sendUsageKind("cti_lectura");
     ctiMsg(`Listo: ${parsed.prod.length} producciones, ${parsed.ip.length} registros de PI y ${parsed.thes.length} asesorías leídas. Revísalas abajo.`, "msg-ok");
     renderCtiReview();
@@ -2469,7 +2498,7 @@ function ctiSample(){
   const art = (title, journal, year, choice, note = "") => ({origin:"cientifica", title, journal, year, typeRaw:"Artículo en revista científica", doi:"", choice, note, review:!!note});
   return {
     isSample:true, id:"",
-    meta:{name:"FICHA DE EJEMPLO (DATOS FICTICIOS)", updated:`${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${y}`, scopusId:"", orcid:""},
+    meta:{name:"FICHA DE EJEMPLO (DATOS FICTICIOS)", updated:`${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${y}`, scopusId:"", orcid:"", h:7},
     degrees:["master"], enrolled:false, degreeSel:"master",
     prod:[
       art("Efecto de la temperatura en la capacidad antioxidante de frutos amazónicos", "Food Chemistry", y - 1, "art_q1"),
