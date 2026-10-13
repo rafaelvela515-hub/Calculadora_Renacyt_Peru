@@ -35,7 +35,7 @@
   --bg:#f4f6f3; --surface:#ffffff; --surface-2:#eef2ee; --ink:#15211d; --muted:#5a6a63; --line:#d9e0db;
   --brand:#0e5a4a; --brand-2:#0b4639; --hdr:#0b4639; --on-brand:#ffffff; --soft:#e3efe9;
   --gold:#b7791f; --gold-soft:#fbf1da;
-  --ok:#17794a; --ok-soft:#dff3e8; --warn:#9a5b06; --warn-soft:#fdf0d5; --bad:#b3261e; --bad-soft:#fbe4e1;
+  --ok:#17794a; --ok-soft:#dff3e8; --warn:#9a5b06; --warn-soft:#fdf0d5; --bad:#b3261e; --bad-soft:#fbe4e1; --on-bad:#ffffff;
   --shadow:0 1px 2px rgba(20,40,32,.06),0 6px 20px rgba(20,40,32,.06);
   --r:14px;
   color-scheme:light;
@@ -46,7 +46,7 @@
   --bg:#0e1513; --surface:#16211e; --surface-2:#1c2a26; --ink:#e7f0ec; --muted:#9bb1a8; --line:#2b3d37;
   --brand:#52c7a4; --brand-2:#7fdcc0; --on-brand:#06241b; --soft:#1d332c; --hdr:#0a2a22;
   --gold:#e6b04a; --gold-soft:#33290f;
-  --ok:#5fd495; --ok-soft:#14301f; --warn:#f0b455; --warn-soft:#33260c; --bad:#ff8f86; --bad-soft:#3a1714;
+  --ok:#5fd495; --ok-soft:#14301f; --warn:#f0b455; --warn-soft:#33260c; --bad:#ff8f86; --bad-soft:#3a1714; --on-bad:#2a0f0d;
   --shadow:0 1px 2px rgba(0,0,0,.4);
 }
 *{box-sizing:border-box}
@@ -341,9 +341,11 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 .sp-item:hover{border-color:var(--brand);background:var(--soft);color:var(--brand)}
 .visitbox{display:inline-flex;gap:6px;align-items:center;margin:6px 0 4px;padding:6px 12px;border-radius:99px;background:var(--surface-2);color:var(--ink);font-size:13.5px}
 .footlinks{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-/* «Cargar ejemplo» y «Borrar todo» se ven igual que «Guardar en historial» */
+/* «Probar con datos de ejemplo» (verde) y «Borrar mis datos» (rojo): mismo tamaño y forma que «Guardar en historial» */
 .formactions{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 8px}
-.formactions .btn{flex:1;min-width:150px;white-space:nowrap}
+.formactions .btn{flex:1 1 220px;white-space:normal}
+.btn.danger-fill{background:var(--bad);border-color:var(--bad);color:var(--on-bad)}
+@media (max-width:480px){.formactions .btn{flex-basis:100%}}
 .insthint{margin-top:10px}
 .insthint .chip{align-items:flex-start}
 /* Guía «¿Cómo funciona?» */
@@ -462,8 +464,8 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         </div>
 
         <div class="formactions">
-          <button class="btn" type="button" data-action="sample">Cargar ejemplo</button>
-          <button class="btn" type="button" data-action="clear">Borrar todo</button>
+          <button class="btn" type="button" data-action="sample">Probar con datos de ejemplo</button>
+          <button class="btn danger-fill" type="button" data-action="clear">Borrar mis datos</button>
         </div>
       </div>
 
@@ -1323,9 +1325,9 @@ document.addEventListener("click", e => {
     const y = now.getFullYear();
     S = sanitizeState({name:S.name, inst:S.inst, instOrigin:S.instOrigin, country:S.country, degree:"master", h:4, student:false, affil:true, project:true,
       counts:{art_q2:2, art_q3:1, art_oth:2, chapter:1, th_ms:2, th_ug:1}, recent:{art_q2:2, chapter:1}, last:{y:y-1, m:5}});
-    syncProfile(); refresh(); toast("Ejemplo cargado: reemplázalo con tus datos");
+    syncProfile(); refresh(); toast("Datos de ejemplo cargados: reemplázalos con los tuyos");
   } else if(act==="clear"){
-    if(confirm("¿Borrar todos los datos del perfil actual? Tu historial no se borra.")){ S = blankState(); syncProfile(); refresh(); toast("Perfil reiniciado"); }
+    if(confirm("¿Borrar todos tus datos de la calculadora (perfil, cantidades, institución y proyecto)? Tu historial guardado no se borra.")){ S = blankState(); syncProfile(); refresh(); toast("Tus datos fueron borrados"); }
   } else if(act==="open-save"){
     $("#snapLabel").value = `Captura ${now.toLocaleDateString("es-PE",{day:"numeric",month:"short",year:"numeric"})}`;
     $("#saveDlg").showModal(); $("#snapLabel").select();

@@ -58,7 +58,7 @@ Para **refrescar la vista previa** cuando cambies el texto o la imagen: WhatsApp
 
 ## Prueba de humo (5 minutos, ya publicada)
 
-1. **Calculadora:** pulsa *Cargar ejemplo*; debe dar 22.5 pts, Nivel VII.
+1. **Calculadora:** pulsa *Probar con datos de ejemplo*; debe dar 22.5 pts, Nivel VII.
 2. **CTI Vitae:** pega tu enlace (`…id_investigador=33295`) y pulsa *Leer mi ficha*. Debe leer 30 producciones, 3 registros de propiedad intelectual y 8 asesorías.
    Si falla, el servidor de Google no logró conectarse con CONCYTEC: usa la subida del archivo guardado y avísame.
 3. **Comunidad:** marca el consentimiento y envía un aporte. Debe aparecer una fila en la pestaña `Registros` de tu hoja.
