@@ -119,6 +119,7 @@ input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visi
 .btn:hover{filter:brightness(1.08)}
 .btn.ghost{background:transparent;color:var(--brand)}
 .btn.ghost:hover{background:var(--soft)}
+a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--on-brand)}
 .btn.sm{min-height:38px;padding:7px 12px;font-size:14px}
 .btn.danger{border-color:var(--bad);color:var(--bad);background:transparent}
 .btn[disabled]{opacity:.5;cursor:not-allowed}
@@ -2097,9 +2098,10 @@ function renderCtiReview(){
   const prodOther = c.prod.map((p, i) => noScore(p) ? prodRow(p, i) : "").join("");
   const nOther = c.prod.filter(noScore).length;
   const prodRows = prodMain;
+  const quartileHelp = c.prod.some(p => /^(Sin cuartil|Cuartil \d{4} \(provisional)/.test(p.note || "")) ? `<div class="ctibanner" style="margin-top:12px"><span><b>¿No conoces el cuartil de tu revista?</b> Búscala en <b>SCImago Journal &amp; Country Rank</b> y mira su cuartil en el <b>año en que publicaste</b> (puedes elegir el año en esa página). Luego cambia la fila en «Cómo contarlo».</span><a class="btn sm" href="https://www.scimagojr.com/" target="_blank" rel="noopener noreferrer">Consultar en SCImago ↗</a></div>` : "";
   const ipRows = c.ip.map((p, i) => `<tr class="${p.review?"rv":""}"><td>—</td><td><b>${esc(trunc(p.title, 95))}</b><small>${esc(p.typeRaw)} · ${esc(p.status)}</small>${p.note?`<em>${esc(p.note)}</em>`:""}</td><td>${ctiSelect("ip", i, p.choice)}</td></tr>`).join("");
   const thRows = c.thes.map((p, i) => `<tr class="${p.review?"rv":""}"><td>${esc(p.date)}</td><td><b>${esc(p.level)}</b><small>${esc(trunc(p.institution, 70))}</small>${p.note?`<em>${esc(p.note)}</em>`:""}</td><td>${ctiSelect("thes", i, p.choice)}</td></tr>`).join("");
-  const table = (title, rows, empty) => `<div class="card"><h2>${title}</h2>${rows ? `<table class="ctitbl"><tr><th>Año</th><th>Detalle</th><th>Cómo contarlo</th></tr>${rows}</table>` : `<p class="empty">${empty}</p>`}</div>`;
+  const table = (title, rows, empty, pre = "") => `<div class="card"><h2>${title}</h2>${pre}${rows ? `<table class="ctitbl"><tr><th>Año</th><th>Detalle</th><th>Cómo contarlo</th></tr>${rows}</table>` : `<p class="empty">${empty}</p>`}</div>`;
   const pRecent = c.projects.filter(p => p.recent).length;
   const stale = c.meta.updated && /^\d{2}-\d{2}-\d{4}$/.test(c.meta.updated) ? (() => { const [d,m,y] = c.meta.updated.split("-").map(Number); return (nowIdx - (y*12 + m-1)) > 12; })() : false;
   box.innerHTML = `
@@ -2121,7 +2123,7 @@ function renderCtiReview(){
         <div><label class="check" style="margin-top:22px"><input type="checkbox" id="ctiProj"${c.projectSel?" checked":""}><span><b>Contar proyecto de CTI para la condición de activo.</b> ${pRecent} de ${c.projects.length} proyecto(s) terminaron o siguen vigentes en los últimos 3 años. Deben haber sido evaluados por pares externos.</span></label></div>
       </div>
     </div>
-    ${table("Producción científica y otras producciones", prodRows, "No se encontró producción puntuable en la ficha.")}
+    ${table("Producción científica y otras producciones", prodRows, "No se encontró producción puntuable en la ficha.", quartileHelp)}
     ${nOther ? `<details style="margin-bottom:16px"><summary>${nOther} producciones que el reglamento no puntúa (carteles, tesis propias, etc.)</summary><table class="ctitbl"><tr><th>Año</th><th>Detalle</th><th>Cómo contarlo</th></tr>${prodOther}</table></details>` : ""}
     ${table("Propiedad intelectual", ipRows, "No se encontraron registros de propiedad intelectual.")}
     ${table("Asesorías de tesis", thRows, "No se encontraron asesorías de tesis.")}
