@@ -341,6 +341,9 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 .sp-item:hover{border-color:var(--brand);background:var(--soft);color:var(--brand)}
 .visitbox{display:inline-flex;gap:6px;align-items:center;margin:6px 0 4px;padding:6px 12px;border-radius:99px;background:var(--surface-2);color:var(--ink);font-size:13.5px}
 .footlinks{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+/* «Cargar ejemplo» y «Borrar todo» se ven igual que «Guardar en historial» */
+.formactions{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 8px}
+.formactions .btn{flex:1;min-width:150px;white-space:nowrap}
 .insthint{margin-top:10px}
 .insthint .chip{align-items:flex-start}
 /* Guía «¿Cómo funciona?» */
@@ -458,9 +461,9 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
           <div id="cats-proj"></div>
         </div>
 
-        <div class="row" style="margin-bottom:8px">
-          <button class="btn ghost sm" data-action="sample">Cargar ejemplo</button>
-          <button class="btn ghost sm danger" data-action="clear">Borrar todo</button>
+        <div class="formactions">
+          <button class="btn" type="button" data-action="sample">Cargar ejemplo</button>
+          <button class="btn" type="button" data-action="clear">Borrar todo</button>
         </div>
       </div>
 
@@ -1315,6 +1318,8 @@ document.addEventListener("click", e => {
   const a = e.target.closest("[data-action]"); if(!a) return;
   const act = a.dataset.action;
   if(act==="sample"){
+    // el ejemplo reemplaza lo que ya escribió la persona: se pide confirmación solo si hay datos
+    if((Object.keys(S.counts).length || S.degree !== "none" || S.project) && !confirm("El ejemplo reemplazará las cantidades, el grado y el proyecto que ya ingresaste. ¿Continuar?")) return;
     const y = now.getFullYear();
     S = sanitizeState({name:S.name, inst:S.inst, instOrigin:S.instOrigin, country:S.country, degree:"master", h:4, student:false, affil:true, project:true,
       counts:{art_q2:2, art_q3:1, art_oth:2, chapter:1, th_ms:2, th_ug:1}, recent:{art_q2:2, chapter:1}, last:{y:y-1, m:5}});
