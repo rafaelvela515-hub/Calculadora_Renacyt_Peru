@@ -183,6 +183,15 @@ table.bd tr.tot td{font-weight:800;border-bottom:0}
 .strat h4{margin:0;font-size:15px}
 .strat p{margin:0;font-size:13px;color:var(--muted)}
 .strat .gain{font-weight:800;color:var(--brand);font-size:14px}
+.standing{display:grid;grid-template-columns:auto 1fr;gap:4px 18px;align-items:center;background:var(--soft);border-radius:12px;padding:14px 16px;margin:10px 0 14px}
+.standing .big{font-size:42px;font-weight:800;color:var(--brand);line-height:1;font-variant-numeric:tabular-nums}
+.standing .big small{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
+.standing .lv{font-weight:800;font-size:18px}
+.standing .det{font-size:13px;color:var(--muted)}
+.standing .src{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin-top:4px}
+@media (max-width:480px){.standing{grid-template-columns:1fr}}
+.combo ul{margin:2px 0 4px;padding-left:18px;font-size:13.5px}
+.combo .btn{align-self:flex-start;margin-top:6px}
 .sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;margin:14px 0}
 .stepper{display:flex;align-items:center;gap:8px;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:6px 8px 6px 12px;background:var(--surface)}
 .stepper span{font-size:13.5px;flex:1}
@@ -528,6 +537,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
   <section class="view" id="view-plan">
     <div class="card">
       <h2>Tu meta</h2>
+      <div id="myStanding"></div>
       <p class="sub">Elige el nivel al que quieres llegar. Las rutas respetan los topes del reglamento, así que no te proponen puntos que no se contarían.</p>
       <div class="target-row">
         <div><label class="lbl" for="target">Nivel objetivo</label><select id="target"></select></div>
@@ -539,13 +549,21 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 
     <div class="card">
       <h2>Simulador “¿y si…?”</h2>
-      <p class="sub">Suma productos hipotéticos a tu perfil actual y mira cómo cambiaría tu nivel. No modifica tus datos.</p>
+      <p class="sub">Elige una meta y el simulador te propone <b>combinaciones de productos</b> para alcanzarla, calculadas sobre tu puntaje actual. También puedes armar la tuya con los botones. No modifica tus datos.</p>
+      <div class="target-row">
+        <div><label class="lbl" for="simTarget">Meta del simulador</label><select id="simTarget"></select></div>
+        <div class="gap-big" id="simGap"></div>
+      </div>
+      <div id="simCombosTitle"></div>
+      <div class="strat-grid" id="simCombos"></div>
+      <p class="lbl" style="margin:20px 0 8px">Arma tu propia combinación</p>
       <div class="grid2" style="margin-bottom:6px">
         <div><label class="lbl" for="simDeg">Grado alcanzado</label><select id="simDeg"></select></div>
         <div><label class="lbl" for="simH">Índice h hipotético</label><input type="number" id="simH" min="0" max="300" inputmode="numeric"></div>
       </div>
       <div class="sim-grid" id="simGrid"></div>
       <div class="simres" id="simRes"></div>
+      <div class="chips" id="simProg" style="margin:12px 0 0"></div>
       <div class="row" style="margin-top:12px"><button class="btn ghost sm" data-action="sim-reset">Reiniciar simulador</button></div>
     </div>
   </section>
@@ -1118,21 +1136,109 @@ function targetOptions(c){
   const cur = levelIdx(c.level);
   return LEVELS.filter((_,k) => k > cur || (c.hBlocked && LEVELS[k].id==="DIST"));
 }
+const STRAT_DEF = [
+  ["art_q1","artículo Q1","artículos Q1"],["art_q2","artículo Q2","artículos Q2"],["art_q3","artículo Q3","artículos Q3"],["art_q4","artículo Q4","artículos Q4"],
+  ["ip_hi","patente de invención / obtentor / paquete tecnológico","patentes de invención / obtentores / paquetes tecnológicos"],
+  ["ip_lo","modelo de utilidad o software registrado","modelos de utilidad o software registrados"],
+  ["art_oth","artículo sin cuartil, proceeding o SciELO","artículos sin cuartil, proceedings o SciELO"],
+  ["book","libro con revisión por pares","libros con revisión por pares"],["chapter","capítulo de libro","capítulos de libro"],
+  ["th_phd","tesis de doctorado asesorada","tesis de doctorado asesoradas"],["th_ms","tesis de maestría asesorada","tesis de maestría asesoradas"],["th_ug","tesis de pregrado asesorada","tesis de pregrado asesoradas"]
+];
+
+/* Vínculo con la calculadora: muestra el resultado actual (lo ingresado a mano o aplicado desde CTI Vitae). */
+function renderStanding(c){
+  let pend = "";
+  if(CTI){
+    const r = compute(ctiBuildState(CTI));
+    if(Math.abs(r.total - c.total) > 1e-9 || r.level !== c.level)
+      pend = `<div class="chip warn" style="margin-bottom:12px"><i>!</i><span>Leíste tu ficha de CTI Vitae pero aún no la aplicaste: daría <b>${fmt(r.total)} pts</b> (${esc(levelName(r.level))}). Para que el plan use esos datos, aplícala a tu calculadora. <button class="btn sm" type="button" data-action="cti-apply" style="margin-left:6px">Aplicar a mi calculadora</button></span></div>`;
+  }
+  $("#myStanding").innerHTML = `<div class="standing">
+      <div class="big">${fmt(c.total)}<small>pts</small></div>
+      <div><div class="lv">${esc(levelName(c.level))}${c.hBlocked?" · falta h ≥ 10":""}</div>
+        <div class="det">Formación ${fmt(c.formation)} · Producción ${fmt(c.production)} (mín. ${c.minProd}) · Asesoría ${fmt(c.advising)} · h ${c.h}</div></div>
+      <div class="src">Es tu resultado actual: lo que ingresaste en la Calculadora o aplicaste desde CTI Vitae. Si lo cambias allí, el plan y el simulador se actualizan solos.</div>
+    </div>${pend}`;
+}
+
+/* Combinaciones de productos que llevan al nivel elegido, respetando los topes del reglamento. */
+let simCombos = [];
+function buildCombos(c, tgt){
+  const gapPts = Math.max(0, tgt.min - c.total);
+  const reach = p => p.total >= tgt.min - 1e-9 && p.prodOK;
+  const roomBase = {minor:CAP-c.minor, book:CAP-c.book, adv:CAP-c.advising};
+  const TEMPLATES = [
+    {name:"Artículos de alto impacto", desc:"Solo artículos Q1: la vía con menos productos.", steps:[], fill:"art_q1"},
+    {name:"Ruta equilibrada", desc:"Artículos Q2 y Q3, una patente y apoyo de capítulos y asesorías.", steps:[["art_q3",.2,Infinity],["ip_hi",.15,3],["th_ms",.1,4],["chapter",.1,4]], fill:"art_q2"},
+    {name:"Ruta con propiedad intelectual", desc:"Patentes y registros junto con artículos Q2.", steps:[["ip_hi",.35,4],["ip_lo",.1,4]], fill:"art_q2"},
+    {name:"Aprovechar los topes", desc:"Primero lo que el reglamento deja contar (sin cuartil, libros, asesorías) y el resto con artículos Q3.", steps:[["art_oth","max",6],["book","max",2],["th_phd","max",2],["th_ms","max",3]], fill:"art_q3"}
+  ];
+  const out = [], seen = new Set();
+  for(const T of TEMPLATES){
+    const add = {}, room = {...roomBase};
+    const put = (k, n) => {
+      const t = TYPES[k]; let m = n;
+      if(room[t.grp] !== undefined) m = Math.min(m, Math.floor(room[t.grp]/t.pts + 1e-9));
+      if(m <= 0) return 0;
+      if(room[t.grp] !== undefined) room[t.grp] -= m*t.pts;
+      add[k] = (add[k]||0) + m; return m;
+    };
+    const eval_ = () => { const st = {...S, counts:{...S.counts}}; for(const [k,n] of Object.entries(add)) st.counts[k] = (st.counts[k]||0) + n; return compute(st); };
+    let remaining = gapPts;
+    for(const [k, share, maxN] of T.steps){
+      const t = TYPES[k];
+      const want = share === "max" ? Math.floor(remaining/t.pts + 1e-9) : Math.floor(gapPts*share/t.pts + 1e-9);
+      remaining = Math.max(0, remaining - put(k, Math.min(want, maxN))*t.pts);
+    }
+    let p = eval_(), guard = 0;
+    while(!reach(p) && guard++ < 400){ if(!put(T.fill, 1)) break; p = eval_(); }
+    if(!reach(p) || !Object.keys(add).length) continue;
+    const key = JSON.stringify(Object.entries(add).sort());
+    if(seen.has(key)) continue;
+    seen.add(key); out.push({name:T.name, desc:T.desc, add, p});
+  }
+  return out;
+}
+function renderCombos(c, tgt){
+  const title = $("#simCombosTitle"), box = $("#simCombos");
+  simCombos = [];
+  if(!tgt){ title.innerHTML = ""; box.innerHTML = ""; return; }
+  const alreadyThere = tgt.min <= c.total && c.prodOK;
+  if(alreadyThere){
+    title.innerHTML = `<div class="chip ok" style="margin-top:12px"><i>✓</i><span>Con tu puntaje actual ya alcanzas <b>${esc(tgt.name)}</b>${tgt.id==="DIST" && c.h < 10 ? ", pero te falta el índice h ≥ 10 (el h no se consigue con más productos, sino con citas)" : ""}.</span></div>`;
+    box.innerHTML = ""; return;
+  }
+  simCombos = buildCombos(c, tgt);
+  const names = Object.fromEntries(STRAT_DEF.map(([k, one, many]) => [k, [one, many]]));
+  title.innerHTML = `<p class="lbl" style="margin:16px 0 0">Combinaciones para llegar a ${esc(tgt.name)}</p>`;
+  box.innerHTML = simCombos.length ? simCombos.map((x, i) => {
+    const items = Object.entries(x.add).map(([k, n]) => `<li><b>${n}</b> ${plural(n, ...names[k])}</li>`).join("");
+    return `<div class="strat combo full"><h4>${esc(x.name)}</h4><p>${esc(x.desc)}</p><ul>${items}</ul>
+      <span class="gain">+${fmt(x.p.total - c.total)} pts → ${fmt(x.p.total)} pts</span>
+      <button class="btn sm" type="button" data-action="sim-load" data-i="${i}">Probar en el simulador</button></div>`;
+  }).join("") : `<p class="empty">Con los topes del reglamento no hay una combinación de estos productos que alcance esa meta; prueba con otro nivel.</p>`;
+}
+
 function renderPlan(c){
+  renderStanding(c);
   const sel = $("#target");
   const opts = targetOptions(c);
   const prev = sel.value;
-  sel.innerHTML = opts.length ? opts.map(L => `<option value="${L.id}">${L.name} (${L.min}${L.id==="DIST"?"+":""} pts)</option>`).join("")
+  const optHtml = opts.length ? opts.map(L => `<option value="${L.id}">${L.name} (${L.min}${L.id==="DIST"?"+":""} pts)</option>`).join("")
                               : `<option value="">Ya estás en el nivel máximo</option>`;
+  sel.innerHTML = optHtml; $("#simTarget").innerHTML = optHtml;
   if(opts.some(o => o.id===prev)) sel.value = prev;
+  $("#simTarget").value = sel.value;
   const tgt = opts.find(o => o.id===sel.value) || opts[0] || null;
+  renderCombos(c, tgt);
 
   const reqs = [], box = $("#strats");
   let gapTxt = "", gap = 0, onlyProd = false;
-  if(!tgt){ $("#gapBig").innerHTML = `<b>🏆</b> Estás en el nivel máximo.`; $("#reqs").innerHTML = ""; box.innerHTML = ""; return; }
+  if(!tgt){ $("#gapBig").innerHTML = `<b>🏆</b> Estás en el nivel máximo.`; $("#simGap").innerHTML = $("#gapBig").innerHTML; $("#reqs").innerHTML = ""; box.innerHTML = ""; return; }
   if(!c.prodOK){
     onlyProd = true; gap = c.minProd - c.production;
-    gapTxt = `<b>${fmt(gap)}</b> pts de producción para poder calificar`;
+    const gapTot = Math.max(0, tgt.min - c.total);
+    gapTxt = `<b>${fmt(gap)}</b> pts de producción${gapTot ? ` (y ${fmt(gapTot)} pts en total)` : ""} para ${esc(tgt.name)}`;
     reqs.push(`<div class="chip bad"><i>1</i><span><b>Primero:</b> cumple el mínimo obligatorio de producción (${c.minProd} pts). Después podrás ascender de nivel.</span></div>`);
   } else {
     gap = Math.max(0, tgt.min - c.total);
@@ -1141,22 +1247,14 @@ function renderPlan(c){
       ? `<div class="chip ok"><i>✓</i><span>Índice h ${c.h} ≥ 10.</span></div>`
       : `<div class="chip warn"><i>!</i><span>Además del puntaje, necesitas <b>índice h ≥ 10</b> en Scopus (hoy ${c.h}; faltan ${10-c.h}). El h crece con citas a tus artículos, no con más puntos.</span></div>`);
   }
-  $("#gapBig").innerHTML = `<div class="gap-big">${gapTxt}</div>`;
+  $("#gapBig").innerHTML = `<div class="gap-big">${gapTxt}</div>`; $("#simGap").innerHTML = $("#gapBig").innerHTML;
   $("#reqs").innerHTML = reqs.join("");
 
   // estrategias
   const room = {art:Infinity, ip:Infinity, minor:CAP-c.minor, book:CAP-c.book, adv:CAP-c.advising};
-  const S_DEF = [
-    ["art_q1","artículo Q1","artículos Q1"],["art_q2","artículo Q2","artículos Q2"],["art_q3","artículo Q3","artículos Q3"],["art_q4","artículo Q4","artículos Q4"],
-    ["ip_hi","patente de invención / obtentor / paquete tecnológico","patentes de invención / obtentores / paquetes tecnológicos"],
-    ["ip_lo","modelo de utilidad o software registrado","modelos de utilidad o software registrados"],
-    ["art_oth","artículo sin cuartil, proceeding o SciELO","artículos sin cuartil, proceedings o SciELO"],
-    ["book","libro con revisión por pares","libros con revisión por pares"],["chapter","capítulo de libro","capítulos de libro"],
-    ["th_phd","tesis de doctorado asesorada","tesis de doctorado asesoradas"],["th_ms","tesis de maestría asesorada","tesis de maestría asesoradas"],["th_ug","tesis de pregrado asesorada","tesis de pregrado asesoradas"]
-  ];
   const cards = [];
   if(gap > 0){
-    for(const [k, one, many] of S_DEF){
+    for(const [k, one, many] of STRAT_DEF){
       const t = TYPES[k];
       if(onlyProd && !["art","minor","ip","book"].includes(t.grp)) continue;
       const r = room[t.grp]; const maxN = r===Infinity ? Infinity : Math.floor(r / t.pts + 1e-9);
@@ -1203,6 +1301,22 @@ function renderSim(c){
     <div><small>Puntaje proyectado</small><b>${fmt(p.total)}</b> <span class="delta">${d?(d>0?"+":"")+fmt(d):"sin cambio"}</span></div>
     <div><small>Nivel proyectado</small><b style="font-size:20px">${esc(levelName(p.level))}</b>${p.hBlocked?`<br><span class="delta" style="color:var(--warn)">Falta h ≥ 10</span>`:""}</div>
     <div><small>Producción</small><b>${fmt(p.production)}</b> <span class="delta" style="color:${p.prodOK?"var(--ok)":"var(--bad)"}">${p.prodOK?"cumple":"falta "+fmt(p.minProd-p.production)}</span></div>`;
+  const tgt = LEVELS.find(L => L.id === $("#simTarget").value);
+  let prog = "";
+  if(tgt){
+    const okPts = p.total >= tgt.min - 1e-9;
+    if(okPts && p.prodOK){
+      prog = (tgt.id==="DIST" && p.h < 10)
+        ? `<div class="chip warn"><i>!</i><span>Con esta combinación llegas a ${fmt(p.total)} pts, el puntaje de <b>${esc(tgt.name)}</b>, pero falta el índice h ≥ 10.</span></div>`
+        : `<div class="chip ok"><i>✓</i><span>Con esta combinación <b>alcanzas ${esc(tgt.name)}</b> (${fmt(p.total)} pts).</span></div>`;
+    } else {
+      const parts = [];
+      if(!okPts) parts.push(`${fmt(tgt.min - p.total)} pts de puntaje`);
+      if(!p.prodOK) parts.push(`${fmt(p.minProd - p.production)} pts de producción`);
+      prog = `<div class="chip bad"><i>✕</i><span>Para ${esc(tgt.name)} aún te faltan ${parts.join(" y ")}.</span></div>`;
+    }
+  }
+  $("#simProg").innerHTML = prog;
 }
 
 /* ================= Historial ================= */
@@ -1322,6 +1436,7 @@ function showView(v){
   if(v !== "feed") lastView = v;
   $$(".view").forEach(s => s.classList.toggle("on", s.id==="view-"+v));
   $$(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.view===v));
+  if(v==="plan") renderPlan(compute(S));
   if(v==="hist") renderHistory();
   if(v==="comm") renderComm();
   if(v==="feed") fbRefresh();
@@ -1386,6 +1501,10 @@ document.addEventListener("click", e => {
   else if(act==="pdf"){ downloadPdf(); }
   else if(act==="share"){ sendContribution(); }
   else if(act==="withdraw"){ withdrawContributions(); }
+  else if(act==="sim-load"){
+    const x = simCombos[Number(a.dataset.i)];
+    if(x){ sim.counts = {...x.add}; renderSim(compute(S)); $("#simGrid").scrollIntoView({behavior:"smooth", block:"center"}); toast("Combinación cargada en el simulador"); }
+  }
   else if(act==="sim-reset"){ sim = {counts:{}, degree:null, h:null}; renderSim(compute(S)); }
 });
 
@@ -1429,7 +1548,8 @@ $("#hidx").addEventListener("input", e => { S.h = Math.max(0, Math.min(300, pars
 $("#student").addEventListener("change", e => { S.student = e.target.checked; refresh(); });
 $("#affil").addEventListener("change", e => { S.affil = e.target.checked; refresh(); });
 $("#degrees").addEventListener("change", e => { if(e.target.name==="degree"){ S.degree = e.target.value; refresh(); } });
-$("#target").addEventListener("change", () => renderPlan(compute(S)));
+$("#target").addEventListener("change", () => { const c = compute(S); renderPlan(c); renderSim(c); });
+$("#simTarget").addEventListener("change", () => { $("#target").value = $("#simTarget").value; const c = compute(S); renderPlan(c); renderSim(c); });
 $("#simDeg").addEventListener("change", e => { sim.dTouched = true; sim.degree = e.target.value; renderSim(compute(S)); });
 $("#simH").addEventListener("input", e => { sim.hTouched = true; sim.h = Math.max(0, parseInt(e.target.value,10)||0); renderSim(compute(S)); });
 
