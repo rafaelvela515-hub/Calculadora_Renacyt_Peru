@@ -479,9 +479,9 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
     <section class="card how" aria-labelledby="howTitle">
       <details id="howto" open>
         <summary><h2 id="howTitle">¿Cómo funciona?</h2></summary>
-        <p class="howtext">Completa tu información en los pasos de abajo, o importa tu ficha de CTI Vitae. El puntaje se calcula automáticamente con la <b>Tabla N.° 1 del Anexo N.° 1</b> del Reglamento RENACYT (RP N.° 090-2021-CONCYTEC-P) y tu nivel se asigna con la <b>Tabla N.° 3</b>. Además, la plataforma verifica tu <b>condición de investigador activo</b>, te propone <b>estrategias para subir de nivel</b> y guarda un <b>historial de tus avances</b> para que veas cómo evoluciona tu perfil.</p>
+        <p class="howtext">Completa tu información en los pasos de abajo. El puntaje se calcula automáticamente con la <b>Tabla N.° 1 del Anexo N.° 1</b> del Reglamento RENACYT (RP N.° 090-2021-CONCYTEC-P) y tu nivel se asigna con la <b>Tabla N.° 3</b>. Además, la plataforma verifica tu <b>condición de investigador activo</b>, te propone <b>estrategias para subir de nivel</b> y guarda un <b>historial de tus avances</b> para que veas cómo evoluciona tu perfil.</p>
         <div class="howsteps">
-          <div class="howstep"><span class="step">1</span><h3>Registra tu perfil</h3><p>Indica tu grado, tu producción y tus asesorías, o impórtalas desde tu ficha.</p></div>
+          <div class="howstep"><span class="step">1</span><h3>Registra tu perfil</h3><p>Indica tu grado, cuántos productos tienes de cada tipo y tus asesorías de tesis.</p></div>
           <div class="howstep"><span class="step">2</span><h3>Conoce tu nivel</h3><p>Mira tu puntaje, qué requisitos cumples y hasta cuándo conservas la condición de activo.</p></div>
           <div class="howstep"><span class="step">3</span><h3>Sigue el plan</h3><p>Elige un nivel meta, revisa qué te falta y prueba escenarios en el simulador.</p><button class="linkbtn" type="button" data-go="plan">Plan de ascenso →</button></div>
           <div class="howstep"><span class="step">4</span><h3>Guarda tu historial</h3><p>Registra capturas, compara tu avance en el tiempo y descarga tu informe en PDF.</p><button class="linkbtn" type="button" data-go="hist">Ver historial →</button></div>
@@ -555,6 +555,18 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <button class="btn danger-fill" type="button" data-action="clear">Borrar mis datos</button>
       </div>
     </div>
+    <section class="card how" aria-labelledby="howCtiTitle">
+      <details id="howtoCti" open>
+        <summary><h2 id="howCtiTitle">¿Cómo funciona?</h2></summary>
+        <p class="howtext">Pega el enlace público de tu ficha de CTI Vitae, o sube el archivo guardado. La plataforma lee tu formación, tus artículos con su cuartil, tu propiedad intelectual y tus asesorías, y propone cómo contarlos según la <b>Tabla N.° 1 del Anexo N.° 1</b> del Reglamento RENACYT (RP N.° 090-2021-CONCYTEC-P). Tú revisas todo antes de aplicarlo; luego se calcula tu nivel con la <b>Tabla N.° 3</b>, se verifica tu <b>condición de investigador activo</b> y se habilita tu <b>plan de ascenso</b>.</p>
+        <div class="howsteps">
+          <div class="howstep"><span class="step">1</span><h3>Lee tu ficha</h3><p>Busca tu ficha en CTI Vitae, copia su dirección y pulsa «Leer mi ficha». Si el enlace falla, sube tu ficha guardada como HTML.</p></div>
+          <div class="howstep"><span class="step">2</span><h3>Revisa lo leído</h3><p>Cambia cómo se cuenta cada producto; las filas en ámbar son las que no se pudieron decidir. Completa tu índice h y tu perfil.</p></div>
+          <div class="howstep"><span class="step">3</span><h3>Aplica y ve tu plan</h3><p>Pulsa «Aplicar y ver mi plan»: se calcula tu puntaje y nivel, y se habilita el plan con tu meta y un simulador de combinaciones.</p><button class="linkbtn" type="button" data-go="plan">Plan de ascenso →</button></div>
+          <div class="howstep"><span class="step">4</span><h3>Guarda tu historial</h3><p>Registra capturas, compara tu avance en el tiempo y descarga tu informe en PDF.</p><button class="linkbtn" type="button" data-go="hist">Ver historial →</button></div>
+        </div>
+      </details>
+    </section>
     <div class="layout">
       <div>
         <div class="card">
@@ -2864,9 +2876,10 @@ function sendUsageKind(kind){
   try{ const th = localStorage.getItem("renacyt_calc_v1_theme"); document.documentElement.dataset.theme = th === "dark" ? "dark" : "light"; }catch{ document.documentElement.dataset.theme = "light"; }
   applyThemeUi();
   // la guía «¿Cómo funciona?» se puede ocultar y se recuerda la elección
-  const howto = $("#howto");
-  try{ if(localStorage.getItem("renacyt_calc_v1_howto") === "closed") howto.open = false; }catch{}
-  howto.addEventListener("toggle", () => { try{ localStorage.setItem("renacyt_calc_v1_howto", howto.open ? "open" : "closed"); }catch{} });
+  [$("#howto"), $("#howtoCti")].forEach(howto => {
+    try{ if(localStorage.getItem("renacyt_calc_v1_howto") === "closed") howto.open = false; }catch{}
+    howto.addEventListener("toggle", () => { try{ localStorage.setItem("renacyt_calc_v1_howto", howto.open ? "open" : "closed"); }catch{} });
+  });
   buildDegrees(); buildCats(); buildSim(); buildRef(); buildInst(); renderAuthor(); initFeedback();
   S = sanitizeState(store.get(K_STATE));
   const h = store.get(K_HIST); HIST = Array.isArray(h) ? h.filter(x => x && x.state && typeof x.ts==="number") : [];
