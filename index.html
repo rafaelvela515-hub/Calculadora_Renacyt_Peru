@@ -109,6 +109,10 @@ input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visi
 .icon-btn{border:0;background:transparent;color:var(--muted);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:15px}
 .icon-btn:hover{background:var(--bad-soft);color:var(--bad)}
 .empty{color:var(--muted);font-size:13.5px;padding:6px 2px 10px}
+.nopts{font-weight:500;font-size:12px}
+.hnote{font-size:13px;color:var(--muted);line-height:1.45}
+.hnote .hstat{display:block;margin-top:6px;padding:7px 10px;border-radius:9px}
+.hnote .hstat.ok{background:var(--ok-soft);color:var(--ok)} .hnote .hstat.warn{background:var(--warn-soft);color:var(--warn)}
 .capnote{font-size:12.5px;color:var(--warn);background:var(--warn-soft);padding:6px 10px;border-radius:8px;margin:0 0 10px}
 
 .btn{appearance:none;border:1px solid var(--brand);background:var(--brand);color:var(--on-brand);padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;min-height:44px}
@@ -148,6 +152,8 @@ input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visi
 .chips{display:flex;flex-direction:column;gap:6px;margin:12px 0}
 .chip{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:9px;font-size:13.5px}
 .chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.info{background:var(--surface-2)}
+.hnote .hstat:not(.ok):not(.warn){background:var(--surface-2)}
 .chip i{font-style:normal;font-weight:800;flex:none}
 .chip span{color:var(--ink)}
 .res .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
@@ -430,8 +436,9 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
           <p class="sub">Solo cuenta el máximo grado o título registrado en SUNEDU o MINEDU. No se acumula.</p>
           <div class="grid2" style="margin-bottom:14px">
             <div><label class="lbl" for="name">Tu nombre (opcional, para el historial e informe)</label><input type="text" id="name" maxlength="80" autocomplete="name" placeholder="Nombre y apellidos"></div>
-            <div><label class="lbl" for="hidx">Índice h en Scopus</label><input type="number" id="hidx" min="0" max="300" inputmode="numeric" placeholder="0"></div>
+            <div><label class="lbl" for="hidx">Índice h en Scopus <span class="nopts">(no suma puntos)</span></label><input type="number" id="hidx" min="0" max="300" inputmode="numeric" placeholder="0" aria-describedby="hNote"></div>
           </div>
+          <div class="hnote" id="hNote" style="margin:-4px 0 14px"></div>
           <div style="margin-bottom:14px">
             <span class="lbl" id="originLbl">Institución donde laboras (opcional)</span>
             <div class="seg" role="radiogroup" aria-labelledby="originLbl" id="origin">
@@ -1052,6 +1059,7 @@ function renderResult(c){
     : `<div class="chip bad"><i>✕</i><span><b>No calificas todavía:</b> te faltan ${fmt(c.minProd - c.production)} pts de producción (artículos, propiedad intelectual o libros). Es obligatorio sin importar tu puntaje total.</span></div>`);
   if(c.hBlocked) chips.push(`<div class="chip warn"><i>!</i><span>Tienes ${fmt(c.total)} pts, suficiente para Investigador Distinguido, pero necesitas índice h ≥ 10 (tienes ${c.h}).</span></div>`);
   else if(L && L.id==="DIST") chips.push(`<div class="chip ok"><i>✓</i><span>Índice h ${c.h} ≥ 10. Distinguido es vitalicio y no exige estar activo.</span></div>`);
+  if(!c.hBlocked && !(L && L.id==="DIST")) chips.push(`<div class="chip info"><i>h</i><span>Índice h en Scopus: <b>${c.h}</b>. No suma puntos; solo se exige h ≥ 10 para Distinguido${c.h >= 10 ? " (ya lo cumples)" : ""}.</span></div>`);
   if(isDist) {}
   else if(c.active){
     const aff = S.affil ? " afiliado" : "";
@@ -1295,9 +1303,18 @@ function toast(msg, undo){
   $("#toast").classList.add("on");
   clearTimeout(toast.t); toast.t = setTimeout(() => $("#toast").classList.remove("on"), undo ? 6000 : 2600);
 }
+function renderH(c){
+  const need = Math.max(0, 10 - c.h);
+  let st;
+  if(c.h >= 10) st = `<span class="hstat ok">✓ Con h = ${c.h} cumples el requisito de Distinguido${c.total >= 200 ? "." : `; además necesitas 200 pts (tienes ${fmt(c.total)}).`}</span>`;
+  else if(c.hBlocked) st = `<span class="hstat warn">Tu puntaje (${fmt(c.total)}) alcanza para Distinguido, pero con h = ${c.h} te faltan ${need} para el requisito. Mientras tanto quedas en Nivel I.</span>`;
+  else if(c.h > 0) st = `<span class="hstat">Con h = ${c.h} te faltan ${need} para el requisito. Hoy no cambia tu nivel.</span>`;
+  else st = `<span class="hstat">Si no lo conoces, déjalo en 0: no afecta tu nivel salvo que llegues a 200 pts.</span>`;
+  $("#hNote").innerHTML = `<b>No suma puntos.</b> Es requisito obligatorio (h ≥ 10) solo para el nivel Investigador Distinguido. <a href="https://www.scopus.com/freelookup/form/author.uri" target="_blank" rel="noopener">Consulta tu h en Scopus</a>.${st}`;
+}
 function refresh(){
   const c = compute(S);
-  renderCounts(c); renderResult(c); renderPlan(c); renderSim(c); renderShare();
+  renderCounts(c); renderH(c); renderResult(c); renderPlan(c); renderSim(c); renderShare();
   persist();
 }
 function showView(v){
