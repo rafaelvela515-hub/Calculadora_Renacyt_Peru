@@ -189,6 +189,15 @@ table.bd tr.tot td{font-weight:800;border-bottom:0}
 .standing .lv{font-weight:800;font-size:18px}
 .standing .det{font-size:13px;color:var(--muted)}
 .standing .src{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin-top:4px}
+.goalh{margin:22px 0 4px;padding-top:16px;border-top:1px solid var(--line);font-size:17px}
+.stgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:0 0 14px}
+.stbox{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:var(--surface);font-size:13.5px}
+.stbox h4{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.stbox b.v{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stbox p{margin:3px 0 0;color:var(--muted);font-size:12.5px}
+.stbox .items{margin:6px 0 0;padding:0;list-style:none;font-size:13px}
+.stbox .items li{display:flex;justify-content:space-between;gap:8px;padding:2px 0;border-top:1px dashed var(--line)}
+.stbox .items li:first-child{border-top:0}
 @media (max-width:480px){.standing{grid-template-columns:1fr}}
 .combo ul{margin:2px 0 4px;padding-left:18px;font-size:13.5px}
 .combo .btn{align-self:flex-start;margin-top:6px}
@@ -536,8 +545,10 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
   <!-- ============ PLAN ============ -->
   <section class="view" id="view-plan">
     <div class="card">
-      <h2>Tu meta</h2>
+      <h2>Tu estado</h2>
+      <p class="sub">Resumen de tu situación actual, calculado con tu ficha de CTI Vitae (si la aplicaste) o con la producción que declaraste en la Calculadora. El plan y el simulador parten de aquí.</p>
       <div id="myStanding"></div>
+      <h3 class="goalh">Elige tu meta</h3>
       <p class="sub">Elige el nivel al que quieres llegar. Las rutas respetan los topes del reglamento, así que no te proponen puntos que no se contarían.</p>
       <div class="target-row">
         <div><label class="lbl" for="target">Nivel objetivo</label><select id="target"></select></div>
@@ -549,7 +560,8 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 
     <div class="card">
       <h2>Simulador “¿y si…?”</h2>
-      <p class="sub">Elige una meta y el simulador te propone <b>combinaciones de productos</b> para alcanzarla, calculadas sobre tu puntaje actual. También puedes armar la tuya con los botones. No modifica tus datos.</p>
+      <p class="sub">Parte de <b>tu estado</b>: elige una meta y el simulador te propone <b>combinaciones de productos</b> para alcanzarla. También puedes armar la tuya con los botones. No modifica tus datos.</p>
+      <div class="chips" id="simBase" style="margin:0 0 12px"></div>
       <div class="target-row">
         <div><label class="lbl" for="simTarget">Meta del simulador</label><select id="simTarget"></select></div>
         <div class="gap-big" id="simGap"></div>
@@ -861,7 +873,7 @@ const ymIdx = (y, m) => y*12 + (m ? m-1 : 0);   // sin mes: se asume enero (crit
 const fullDate = ts => new Date(ts).toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"});
 
 /* ================= Estado ================= */
-const blankState = () => ({name:"", inst:"", instOrigin:"", country:"", cti:"", degree:"none", student:false, affil:false, h:0, counts:{}, recent:{}, project:false, last:null});
+const blankState = () => ({name:"", inst:"", instOrigin:"", country:"", cti:"", ctiSig:"", ctiName:"", degree:"none", student:false, affil:false, h:0, counts:{}, recent:{}, project:false, last:null});
 let S = blankState();
 let HIST = [];
 let sim = {counts:{}, degree:null, h:null};
@@ -876,6 +888,8 @@ function sanitizeState(o){
   s.inst = s.instOrigin ? String(o.inst||"").replace(/\s+/g," ").trim().slice(0,100) : "";
   s.country = (s.instOrigin === "extranjera" && COUNTRIES.includes(o.country)) ? o.country : "";
   s.cti = /^\d{1,9}$/.test(String(o.cti || "")) ? String(o.cti) : "";
+  s.ctiSig = typeof o.ctiSig === "string" ? o.ctiSig.slice(0,3000) : "";
+  s.ctiName = String(o.ctiName || "").slice(0,80);
   s.degree = DEGREES[o.degree] ? o.degree : "none";
   s.student = !!o.student; s.affil = !!o.affil;
   s.h = Math.max(0, Math.min(300, parseInt(o.h,10) || 0));
@@ -1153,13 +1167,39 @@ function renderStanding(c){
     if(Math.abs(r.total - c.total) > 1e-9 || r.level !== c.level)
       pend = `<div class="chip warn" style="margin-bottom:12px"><i>!</i><span>Leíste tu ficha de CTI Vitae pero aún no la aplicaste: daría <b>${fmt(r.total)} pts</b> (${esc(levelName(r.level))}). Para que el plan use esos datos, aplícala a tu calculadora. <button class="btn sm" type="button" data-action="cti-apply" style="margin-left:6px">Aplicar a mi calculadora</button></span></div>`;
   }
-  $("#myStanding").innerHTML = `<div class="standing">
+  const sig = stateSig(S);
+  const src = S.ctiSig && sig === S.ctiSig ? `Fuente: tu ficha de CTI Vitae${S.ctiName ? ` (${esc(S.ctiName)})` : ""}, tal como la aplicaste.`
+    : S.ctiSig ? "Fuente: partió de tu ficha de CTI Vitae y luego la ajustaste a mano en la Calculadora."
+    : "Fuente: producción que declaraste a mano en la Calculadora.";
+  const empty = !c.total && !Object.keys(c.counts).length && !S.project;
+  const SHORT = {art_q1:"Artículos Q1", art_q2:"Artículos Q2", art_q3:"Artículos Q3", art_q4:"Artículos Q4", art_oth:"Sin cuartil / proceedings / SciELO",
+    ip_hi:"Patentes de invención / obtentores", ip_lo:"Modelos de utilidad / software", book:"Libros", chapter:"Capítulos de libro",
+    th_phd:"Tesis de doctorado", th_ms:"Tesis de maestría", th_ug:"Tesis de pregrado"};
+  const list = keys => keys.filter(k => c.counts[k]).map(k => `<li><span>${SHORT[k]}</span><b>${c.counts[k]}</b></li>`).join("");
+  const prodList = list(["art_q1","art_q2","art_q3","art_q4","art_oth","ip_hi","ip_lo","book","chapter"]);
+  const advList = list(["th_phd","th_ms","th_ug"]);
+  const nxt = nextLevel(c);
+  const nextTxt = !c.prodOK ? `Te faltan ${fmt(c.minProd - c.production)} pts de producción para calificar.`
+    : nxt ? `Siguiente: ${esc(nxt.name)} (${nxt.min} pts)${nxt.min > c.total ? ` · te faltan ${fmt(nxt.min - c.total)}` : ""}.` : "Nivel máximo.";
+  const actTxt = (c.level && c.level.id === "DIST") ? "Distinguido: vitalicio, no exige estar activo."
+    : c.active ? (c.activeForever ? "Activo mientras participes en tu proyecto de CTI." : c.activeUntil !== null ? `Activo hasta ${idxToText(c.activeUntil)}.` : "Activo (indica la fecha de tu producción más reciente para saber hasta cuándo).")
+    : "No activo: sin producción ni proyecto en los últimos 3 años.";
+  $("#myStanding").innerHTML = pend + (empty
+    ? (pend ? "" : `<div class="chip warn"><i>!</i><span>Aún no declaras producción ni grado. Llena la Calculadora o importa tu ficha de CTI Vitae para ver aquí tu estado.
+        <span style="display:inline-flex;gap:8px;flex-wrap:wrap;margin-left:6px"><button class="btn sm" type="button" data-go="calc">Ir a la Calculadora</button><button class="btn ghost sm" type="button" data-go="cti">Importar CTI Vitae</button></span></span></div>`)
+    : `<div class="standing">
       <div class="big">${fmt(c.total)}<small>pts</small></div>
-      <div><div class="lv">${esc(levelName(c.level))}${c.hBlocked?" · falta h ≥ 10":""}</div>
-        <div class="det">Formación ${fmt(c.formation)} · Producción ${fmt(c.production)} (mín. ${c.minProd}) · Asesoría ${fmt(c.advising)} · h ${c.h}</div></div>
-      <div class="src">Es tu resultado actual: lo que ingresaste en la Calculadora o aplicaste desde CTI Vitae. Si lo cambias allí, el plan y el simulador se actualizan solos.</div>
-    </div>${pend}`;
+      <div><div class="lv">${esc(levelName(c.level))}${c.hBlocked?" · falta h ≥ 10":""}</div><div class="det">${nextTxt}</div></div>
+      <div class="src">${src} Si la cambias allí, el plan y el simulador se actualizan solos.</div>
+    </div>
+    <div class="stgrid">
+      <div class="stbox"><h4>Formación</h4><b class="v">${fmt(c.formation)} pts</b><p>${esc(DEGREES[S.degree].label)}</p></div>
+      <div class="stbox"><h4>Producción</h4><b class="v">${fmt(c.production)} pts</b><p class="${c.prodOK ? "" : "msg-bad"}">${c.prodOK ? "Cumple" : "No cumple"} el mínimo de ${c.minProd} pts</p>${prodList ? `<ul class="items">${prodList}</ul>` : ""}</div>
+      <div class="stbox"><h4>Asesoría de tesis</h4><b class="v">${fmt(c.advising)} pts</b>${advList ? `<ul class="items">${advList}</ul>` : "<p>Sin tesis declaradas</p>"}</div>
+      <div class="stbox"><h4>Condición</h4><b class="v">${c.level && c.level.id === "DIST" ? "Vitalicio" : c.active ? "Activo" : "No activo"}</b><p>${actTxt}</p><p>Índice h Scopus: <b>${c.h}</b>${c.hBlocked ? " (falta ≥ 10 para Distinguido)" : ""}</p></div>
+    </div>`);
 }
+const stateSig = s => JSON.stringify([s.degree, Object.keys(s.counts || {}).sort().map(k => [k, s.counts[k]]), !!s.project]);
 
 /* Combinaciones de productos que llevan al nivel elegido, respetando los topes del reglamento. */
 let simCombos = [];
@@ -1231,6 +1271,7 @@ function renderPlan(c){
   $("#simTarget").value = sel.value;
   const tgt = opts.find(o => o.id===sel.value) || opts[0] || null;
   renderCombos(c, tgt);
+  $("#simBase").innerHTML = `<div class="chip info"><i>●</i><span><b>Tu estado:</b> ${fmt(c.total)} pts · ${esc(levelName(c.level))}${c.hBlocked ? " (falta h ≥ 10)" : ""} · producción ${fmt(c.production)} de ${c.minProd} mín. Las combinaciones se suman a esto.</span></div>`;
 
   const reqs = [], box = $("#strats");
   let gapTxt = "", gap = 0, onlyProd = false;
@@ -2299,6 +2340,7 @@ function ctiApply(){
   const st = ctiBuildState(CTI);
   S.degree = st.degree; S.counts = st.counts; S.recent = st.recent; S.project = st.project; S.last = st.last;
   if(CTI.id) S.cti = CTI.id;
+  S.ctiSig = stateSig(S); S.ctiName = CTI.meta.name || "";
   syncProfile(); refresh(); toast("Datos de CTI Vitae aplicados"); showView("calc");
 }
 
