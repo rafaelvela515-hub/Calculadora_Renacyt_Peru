@@ -45,12 +45,13 @@ También puedes pasarme la URL y la pongo yo.
 
 La página ya trae lo necesario para que **WhatsApp, X, Facebook, Telegram y LinkedIn** muestren una tarjeta con título, descripción e imagen (`og-image.png`), un botón **Compartir** en el encabezado, y datos para buscadores (etiqueta canónica, datos estructurados y `sitemap.xml`).
 
-Para que **Google** la encuentre antes (lo puedes hacer solo tú, con tu cuenta):
+**Google Search Console: ya está registrado (12-oct-2026).**
 
-1. Entra a <https://search.google.com/search-console> y agrega una propiedad de tipo **Prefijo de URL** con `https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/`.
-2. Verifica la propiedad con el método **Etiqueta HTML**: Google te da una etiqueta `<meta name="google-site-verification" content="…">`. Pásamela y la agrego a `index.html`.
-3. En *Sitemaps*, envía `sitemap.xml`.
-4. Opcional: repite en Bing Webmaster Tools (<https://www.bing.com/webmasters>).
+- Propiedad de tipo *Prefijo de URL* `https://rafaelvela515-hub.github.io/Calculadora_Renacyt_Peru/`, verificada con el archivo `google02a65f8ef255bd6e.html`.
+- **No elimines ese archivo** del repositorio: Google vuelve a comprobarlo y, si falta, pierdes la verificación. Como respaldo conviene añadir un segundo método en *Ajustes → Verificación de la propiedad* (por ejemplo la etiqueta HTML).
+- `sitemap.xml` enviado y página principal enviada a indexar (cola prioritaria). Un sitio nuevo puede tardar de unas horas a varios días en aparecer en los resultados, y el sitemap puede mostrar «No se ha podido obtener» hasta su primera lectura; no es un error del archivo.
+- Para ver el avance: *Indexación de páginas* y *Rendimiento* dentro de Search Console (los datos de búsqueda tardan unos días en llegar).
+- Opcional: repite en Bing Webmaster Tools (<https://www.bing.com/webmasters>).
 
 Para **refrescar la vista previa** cuando cambies el texto o la imagen: WhatsApp, X y Facebook guardan una copia por enlace. En Facebook usa el *Depurador de uso compartido* (<https://developers.facebook.com/tools/debug/>) y pulsa «Volver a extraer»; en WhatsApp basta con compartir el enlace añadiendo `?v=2` al final.
 
