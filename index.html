@@ -72,6 +72,19 @@ nav.tabs::-webkit-scrollbar{display:none}
 .tab[aria-selected="true"]{background:var(--bg);color:var(--brand)}
 
 .notice{margin:16px 0 0;padding:10px 14px;border-radius:10px;background:var(--gold-soft);color:var(--ink);font-size:14px;border:1px solid color-mix(in srgb,var(--gold) 35%,transparent)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+@media (max-width:640px){.modes{grid-template-columns:1fr}}
+.mode{appearance:none;text-align:left;font:inherit;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:16px;padding:20px 20px 18px;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-height:176px}
+.mode:hover,.mode:focus-visible{border-color:var(--brand);background:var(--soft)}
+.mode .num{width:30px;height:30px;border-radius:50%;background:var(--brand);color:var(--on-brand);display:inline-flex;align-items:center;justify-content:center;font-weight:800}
+.mode h3{margin:6px 0 0;font-size:19px}
+.mode p{margin:0;color:var(--muted);font-size:14.5px}
+.mode .tag{margin-top:auto;align-self:flex-start;font-size:12.5px;font-weight:700;color:var(--brand);background:var(--soft);padding:3px 10px;border-radius:999px}
+.mode.cur{border-color:var(--brand)}
+.mode.cur .tag{background:var(--brand);color:var(--on-brand)}
+.modeline{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;margin:0 0 12px;font-size:14px;color:var(--muted)}
+.tab.locked{opacity:.55;cursor:not-allowed}
+body.nobar .mobilebar{display:none!important}
 .view{display:none;padding:20px 0 90px}
 .view.on{display:block}
 
@@ -413,8 +426,9 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
     <button class="hdr-btn" id="spBtn" type="button" aria-haspopup="dialog" title="Compartir la plataforma">Compartir</button>
     <button class="theme-btn" id="themeBtn" type="button" aria-pressed="false" aria-label="Cambiar a tema oscuro" title="Cambiar a tema oscuro">☾</button>
     <nav class="tabs" role="tablist" aria-label="Secciones">
-      <button class="tab" role="tab" data-view="calc" aria-selected="true">Calculadora</button>
-      <button class="tab" role="tab" data-view="cti" aria-selected="false">Importar CTI Vitae</button>
+      <button class="tab" role="tab" data-view="start" aria-selected="true">Inicio</button>
+      <button class="tab" role="tab" data-view="calc" aria-selected="false" hidden>Calculadora</button>
+      <button class="tab" role="tab" data-view="cti" aria-selected="false" hidden>Importar CTI Vitae</button>
       <button class="tab" role="tab" data-view="plan" aria-selected="false">Plan de ascenso</button>
       <button class="tab" role="tab" data-view="hist" aria-selected="false">Historial</button>
       <button class="tab" role="tab" data-view="comm" aria-selected="false">Comunidad</button>
@@ -427,8 +441,34 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 <main class="wrap">
   <div class="notice"><strong>Herramienta referencial.</strong> La calificación oficial la realiza solo el CONCYTEC mediante la plataforma CTI Vitae, con verificación documentaria. Tus datos se guardan en este navegador. La plataforma registra de forma anónima cada consulta (nivel, puntaje y cantidades, sin tu nombre, institución ni identificadores) para medir su uso; aportar con tu institución en la pestaña Comunidad es voluntario.</div>
 
+  <!-- ============ INICIO: elegir modalidad ============ -->
+  <section class="view on" id="view-start">
+    <div class="card">
+      <h2>¿Cómo quieres calcular tu clasificación?</h2>
+      <p class="sub">Elige una modalidad. Puedes cambiarla cuando quieras y lo que ya ingresaste se conserva.</p>
+      <div class="modes">
+        <button class="mode" type="button" data-mode="cti">
+          <span class="num">1</span><h3>Importar mi CTI Vitae</h3>
+          <p>Pega el enlace de tu ficha (o sube el archivo) y se rellenan tu grado, artículos, patentes y asesorías. Tú revisas todo antes de aplicarlo.</p>
+          <span class="tag">Más rápido</span>
+        </button>
+        <button class="mode" type="button" data-mode="calc">
+          <span class="num">2</span><h3>Usar la calculadora</h3>
+          <p>Indica a mano tu grado y cuántos productos tienes de cada tipo. No necesitas tener ficha ni cuenta.</p>
+          <span class="tag">Paso a paso</span>
+        </button>
+      </div>
+      <p class="sub" style="margin:0">Al terminar de llenar tu información se habilita el <b>Plan de ascenso</b>, con tu estado, tu meta y un simulador de combinaciones.</p>
+      <div class="row" style="margin-top:14px;gap:16px;flex-wrap:wrap">
+        <button class="linkbtn" type="button" data-action="sample">Probar con datos de ejemplo →</button>
+        <button class="linkbtn" type="button" data-action="mode-back" id="startBack" hidden>← Volver a mi modalidad actual</button>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ CALCULADORA ============ -->
-  <section class="view on" id="view-calc">
+  <section class="view" id="view-calc">
+    <div class="modeline"><span>Modalidad: <b>Calculadora</b></span><button class="linkbtn" type="button" data-action="change-mode">Cambiar modalidad</button></div>
     <div class="quickstart">
       <p class="quickhint"><b>Empieza aquí:</b> mira cómo funciona con datos de ejemplo, o borra todo para comenzar con los tuyos.</p>
       <div class="formactions">
@@ -441,7 +481,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <summary><h2 id="howTitle">¿Cómo funciona?</h2></summary>
         <p class="howtext">Completa tu información en los pasos de abajo, o importa tu ficha de CTI Vitae. El puntaje se calcula automáticamente con la <b>Tabla N.° 1 del Anexo N.° 1</b> del Reglamento RENACYT (RP N.° 090-2021-CONCYTEC-P) y tu nivel se asigna con la <b>Tabla N.° 3</b>. Además, la plataforma verifica tu <b>condición de investigador activo</b>, te propone <b>estrategias para subir de nivel</b> y guarda un <b>historial de tus avances</b> para que veas cómo evoluciona tu perfil.</p>
         <div class="howsteps">
-          <div class="howstep"><span class="step">1</span><h3>Registra tu perfil</h3><p>Indica tu grado, tu producción y tus asesorías, o impórtalas desde tu ficha.</p><button class="linkbtn" type="button" data-go="cti">Importar CTI Vitae →</button></div>
+          <div class="howstep"><span class="step">1</span><h3>Registra tu perfil</h3><p>Indica tu grado, tu producción y tus asesorías, o impórtalas desde tu ficha.</p></div>
           <div class="howstep"><span class="step">2</span><h3>Conoce tu nivel</h3><p>Mira tu puntaje, qué requisitos cumples y hasta cuándo conservas la condición de activo.</p></div>
           <div class="howstep"><span class="step">3</span><h3>Sigue el plan</h3><p>Elige un nivel meta, revisa qué te falta y prueba escenarios en el simulador.</p><button class="linkbtn" type="button" data-go="plan">Plan de ascenso →</button></div>
           <div class="howstep"><span class="step">4</span><h3>Guarda tu historial</h3><p>Registra capturas, compara tu avance en el tiempo y descarga tu informe en PDF.</p><button class="linkbtn" type="button" data-go="hist">Ver historial →</button></div>
@@ -453,6 +493,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <div class="card">
           <h2><span class="step">1</span> Perfil y formación</h2>
           <p class="sub">Solo cuenta el máximo grado o título registrado en SUNEDU o MINEDU. No se acumula.</p>
+          <div id="calcProfileSlot"><div id="profileBlock">
           <div class="grid2" style="margin-bottom:14px">
             <div><label class="lbl" for="name">Tu nombre (opcional, para el historial e informe)</label><input type="text" id="name" maxlength="80" autocomplete="name" placeholder="Nombre y apellidos"></div>
             <div><label class="lbl" for="hidx">Índice h en Scopus <span class="nopts">(no suma puntos)</span></label><input type="number" id="hidx" min="0" max="300" inputmode="numeric" placeholder="0" aria-describedby="hNote"></div>
@@ -471,12 +512,13 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
             </div>
             <div id="instHint" class="insthint" aria-live="polite"></div>
           </div>
+          </div></div>
           <label class="lbl" id="degLbl">Máximo grado académico o título</label>
           <div class="degrees" role="radiogroup" aria-labelledby="degLbl" id="degrees"></div>
-          <div style="display:grid;gap:8px;margin-top:14px">
+          <div id="calcFlagsSlot"><div id="flagsBlock" style="display:grid;gap:8px;margin-top:14px">
             <label class="check"><input type="checkbox" id="student"><span><b>Soy estudiante de pregrado.</b> El mínimo de producción sube de 6 a 9 puntos.</span></label>
             <label class="check"><input type="checkbox" id="affil"><span><b>Mi producción está afiliada a mi institución principal.</b> Define si tu condición de activo es “afiliado”.</span></label>
-          </div>
+          </div></div>
         </div>
 
         <div class="card">
@@ -497,7 +539,6 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
           <div id="cats-proj"></div>
         </div>
 
-        <div class="ctibanner"><span><b>¿Tienes ficha en CTI Vitae?</b> En lugar de llenar los pasos a mano, impórtala y la calculadora rellena tu formación, artículos con su cuartil, propiedad intelectual y asesorías. Podrás revisar todo antes de aplicarlo, y reemplazará lo que hayas escrito aquí.</span><button class="btn sm" type="button" data-go="cti">Importar CTI Vitae</button></div>
       </div>
 
       <aside class="col-result card" id="resultado" aria-live="polite"></aside>
@@ -506,6 +547,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 
   <!-- ============ CTI VITAE ============ -->
   <section class="view" id="view-cti">
+    <div class="modeline"><span>Modalidad: <b>Importar CTI Vitae</b></span><button class="linkbtn" type="button" data-action="change-mode">Cambiar modalidad</button><button class="linkbtn" type="button" data-action="clear">Borrar mis datos</button></div>
     <div class="layout">
       <div>
         <div class="card">
@@ -523,6 +565,12 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
             <input type="file" id="ctiFile" accept=".html,.htm,text/html" style="margin-bottom:14px">
           </details>
           <div class="chip warn" style="margin-top:12px"><i>!</i><span>Usa solo <b>tu propia ficha</b> o una que tengas autorización para evaluar. Lo que se lee no se guarda ni se envía; solo se aplican a tu calculadora las cantidades que tú confirmes.</span></div>
+        </div>
+        <div class="card" id="ctiProfileCard">
+          <h2>Tu perfil <span class="badge-cap">opcional</span></h2>
+          <p class="sub">CTI Vitae no trae tu índice h ni tu institución actual. Complétalos si quieres: el índice h solo se exige para Investigador Distinguido.</p>
+          <div id="ctiProfileSlot"></div>
+          <div id="ctiFlagsSlot"></div>
         </div>
         <div id="ctiReview"></div>
       </div>
@@ -873,7 +921,7 @@ const ymIdx = (y, m) => y*12 + (m ? m-1 : 0);   // sin mes: se asume enero (crit
 const fullDate = ts => new Date(ts).toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"});
 
 /* ================= Estado ================= */
-const blankState = () => ({name:"", inst:"", instOrigin:"", country:"", cti:"", ctiSig:"", ctiName:"", sampleSig:"", degree:"none", student:false, affil:false, h:0, counts:{}, recent:{}, project:false, last:null});
+const blankState = () => ({name:"", inst:"", instOrigin:"", country:"", cti:"", ctiSig:"", ctiName:"", sampleSig:"", mode:"", degree:"none", student:false, affil:false, h:0, counts:{}, recent:{}, project:false, last:null});
 let S = blankState();
 let HIST = [];
 let sim = {counts:{}, degree:null, h:null};
@@ -890,6 +938,7 @@ function sanitizeState(o){
   s.cti = /^\d{1,9}$/.test(String(o.cti || "")) ? String(o.cti) : "";
   s.ctiSig = typeof o.ctiSig === "string" ? o.ctiSig.slice(0,3000) : "";
   s.ctiName = String(o.ctiName || "").slice(0,80);
+  s.mode = ["cti","calc"].includes(o.mode) ? o.mode : "";
   s.sampleSig = typeof o.sampleSig === "string" ? o.sampleSig.slice(0,3000) : "";
   s.degree = DEGREES[o.degree] ? o.degree : "none";
   s.student = !!o.student; s.affil = !!o.affil;
@@ -1470,15 +1519,23 @@ function renderH(c){
   $("#hNote").innerHTML = `<b>No suma puntos.</b> Es requisito obligatorio (h ≥ 10) solo para el nivel Investigador Distinguido. <a href="https://www.scopus.com/freelookup/form/author.uri" target="_blank" rel="noopener">Consulta tu h en Scopus</a>.${st}`;
 }
 function refresh(){
+  if(!S.mode && !choosing && hasData(S)) S.mode = S.ctiSig ? "cti" : "calc";   // datos de visitas anteriores: se deduce la modalidad
   const c = compute(S);
   renderCounts(c); renderH(c); renderResult(c); renderPlan(c); renderSim(c); renderShare();
   persist();
+  const ok = hasData(S);
+  if(planWasOK === false && ok && usageReady) toast("¡Plan de ascenso habilitado! Ya puedes elegir tu meta y usar el simulador.");
+  planWasOK = ok;
+  const cur = $(".view.on");
+  if(!ok && cur && cur.id === "view-plan") showView(modeView(), true);
+  else updateNav();
   if(usageReady) scheduleUsage();
 }
 /* «Borrar mis datos»: limpia lo que la persona escribió en todas las pestañas. Se conservan el historial de capturas
    (es su evolución), las preferencias (tema, ayuda) y los registros de envío ligados al servidor (identificador y contadores). */
 function clearAllData(){
-  S = blankState();
+  const keepMode = S.mode;
+  S = blankState(); S.mode = keepMode;
   sim = {counts:{}, degree:null, h:null};
   CTI = null;
   $("#ctiUrl").value = ""; $("#ctiFile").value = ""; ctiMsg("", "sub");
@@ -1490,7 +1547,40 @@ function clearAllData(){
   cmpSel = [];
   syncProfile(); renderCtiReview(); refresh(); fbRefresh(); renderHistory();
 }
-function showView(v){
+/* ---- Modalidad de uso: 1) Importar CTI Vitae · 2) Calculadora. El plan se habilita cuando hay información. ---- */
+let choosing = false, planWasOK = null;
+const hasData = st => Object.keys(st.counts || {}).length > 0 || st.degree !== "none" || !!st.project;
+const modeView = () => (choosing || !S.mode) ? "start" : S.mode;
+function placeProfile(){
+  const cti = S.mode === "cti";
+  [["#profileBlock", cti ? "#ctiProfileSlot" : "#calcProfileSlot"], ["#flagsBlock", cti ? "#ctiFlagsSlot" : "#calcFlagsSlot"]].forEach(([a, b]) => {
+    const el = $(a), slot = $(b); if(el.parentElement !== slot) slot.appendChild(el);
+  });
+}
+function updateNav(){
+  const mv = modeView(), ok = hasData(S);
+  $('.tab[data-view="start"]').hidden = mv !== "start";
+  $('.tab[data-view="calc"]').hidden = mv !== "calc";
+  $('.tab[data-view="cti"]').hidden = mv !== "cti";
+  const pt = $('.tab[data-view="plan"]');
+  pt.classList.toggle("locked", !ok); pt.setAttribute("aria-disabled", String(!ok));
+  pt.title = ok ? "" : "Se habilita cuando completes tu información";
+  placeProfile();
+  $$(".mode").forEach(b => b.classList.toggle("cur", choosing && b.dataset.mode === S.mode));
+  $("#startBack").hidden = !(choosing && S.mode);
+  const cur = $(".view.on");
+  document.body.classList.toggle("nobar", !ok || !cur || cur.id === "view-start");
+}
+function chooseMode(m){
+  if(!["cti","calc"].includes(m)) return;
+  S.mode = m; choosing = false; persist(); showView(m);
+}
+function showView(v, quiet){
+  if(v === "calc" || v === "cti" || v === "start") v = modeView();
+  if(v === "plan" && !hasData(S)){
+    if(!quiet) toast("Completa tu información para habilitar el plan de ascenso");
+    v = modeView();
+  }
   if(v !== "feed") lastView = v;
   $$(".view").forEach(s => s.classList.toggle("on", s.id==="view-"+v));
   $$(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.view===v));
@@ -1498,6 +1588,7 @@ function showView(v){
   if(v==="hist") renderHistory();
   if(v==="comm") renderComm();
   if(v==="feed") fbRefresh();
+  updateNav();
   window.scrollTo({top:0});
   try{ history.replaceState(null,"","#"+v); }catch{}
 }
@@ -1509,7 +1600,8 @@ function downloadFile(name, text, mime){
 function csvCell(v){ v = String(v ?? ""); return /[",\n;]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
 
 document.addEventListener("click", e => {
-  const go = e.target.closest("[data-go]"); if(go){ showView(go.dataset.go); return; }
+  const md = e.target.closest("[data-mode]"); if(md){ chooseMode(md.dataset.mode); return; }
+  const go = e.target.closest("[data-go]"); if(go){ if(go.dataset.go === "cti" || go.dataset.go === "calc") chooseMode(go.dataset.go); else showView(go.dataset.go); return; }
   const tab = e.target.closest(".tab"); if(tab){ showView(tab.dataset.view); return; }
   const sb = e.target.closest("[data-sim]");
   if(sb){ const k = sb.dataset.k; sim.counts[k] = Math.max(0, Math.min(50, (sim.counts[k]||0) + (sb.dataset.sim==="+"?1:-1))); renderSim(compute(S)); return; }
@@ -1522,7 +1614,8 @@ document.addEventListener("click", e => {
     S = sanitizeState({name:S.name, inst:S.inst, instOrigin:S.instOrigin, country:S.country, degree:"master", h:4, student:false, affil:true, project:true,
       counts:{art_q2:2, art_q3:1, art_oth:2, chapter:1, th_ms:2, th_ug:1}, recent:{art_q2:2, chapter:1}, last:{y:y-1, m:5}});
     S.sampleSig = stateSig(S);                       // los datos de ejemplo nunca se registran como consulta
-    syncProfile(); refresh(); toast("Datos de ejemplo cargados: reemplázalos con los tuyos");
+    S.mode = "calc"; choosing = false;
+    syncProfile(); refresh(); showView("calc"); toast("Datos de ejemplo cargados: reemplázalos con los tuyos");
   } else if(act==="clear"){
     if(confirm("¿Borrar tus datos de todas las pestañas?\n\n• Calculadora: perfil, institución, cantidades y proyecto.\n• Importar CTI Vitae: enlace y ficha leída.\n• Plan de ascenso y simulador.\n• Borradores de aporte y de sugerencia.\n\nTu historial de capturas se conserva para mantener tu evolución. Lo que ya enviaste a la comunidad se retira desde la pestaña Sugerencias («Retirar mis sugerencias y aportes»).")){ clearAllData(); toast("Tus datos fueron borrados; tu historial se conserva"); }
   } else if(act==="open-save"){
@@ -1564,6 +1657,8 @@ document.addEventListener("click", e => {
     const x = simCombos[Number(a.dataset.i)];
     if(x){ sim.counts = {...x.add}; renderSim(compute(S)); $("#simGrid").scrollIntoView({behavior:"smooth", block:"center"}); toast("Combinación cargada en el simulador"); }
   }
+  else if(act==="change-mode"){ choosing = true; showView("start"); }
+  else if(act==="mode-back"){ choosing = false; showView(modeView()); }
   else if(act==="sim-reset"){ sim = {counts:{}, degree:null, h:null}; renderSim(compute(S)); }
 });
 
@@ -1679,7 +1774,7 @@ const AUTHOR = {
   orcid: "0000-0001-7255-6209",   // formato 0000-0000-0000-0000; vacío = no se muestra
   scopus: "57200699171"           // solo dígitos; vacío = no se muestra
 };
-const VIEWS = ["calc","cti","plan","hist","comm","feed","ref"];
+const VIEWS = ["start","calc","cti","plan","hist","comm","feed","ref"];
 /* Países en español (sin Perú, que es la opción «Nacional»). */
 const COUNTRIES = [
   "Afganistán", "Albania", "Alemania", "Andorra", "Angola", "Antigua y Barbuda", "Arabia Saudita", "Argelia",
@@ -1969,7 +2064,7 @@ function renderShare(){
   $("#shareSum").innerHTML = `<div class="sharegrid">
       <div><small>Nivel</small><b>${esc(levelName(c.level))}</b></div><div><small>Puntaje</small><b>${fmt(c.total)}</b></div>
       <div><small>Institución</small><b>${esc(S.inst || "No indicada")}</b></div><div><small>Procedencia</small><b>${esc(originTxt())}</b></div></div>
-    <p class="sub" style="margin:8px 0 12px">Para cambiar tu institución o su procedencia, <a href="#calc">edítalas en la Calculadora</a>.</p>`;
+    <p class="sub" style="margin:8px 0 12px">Para cambiar tu institución o su procedencia, <a href="#calc">edítalas en tu perfil</a>.</p>`;
   $("#payloadPrev").textContent = JSON.stringify(buildPayload(), null, 2);
   const sent = readSent(), lastS = sent[sent.length-1];
   $("#sentBox").innerHTML = lastS ? `<div class="chip ok"><i>✓</i><span>Has aportado ${sent.length} ${plural(sent.length,"vez","veces")} desde este navegador (último: ${fullDate(lastS.ts)}, ${fmt(lastS.total)} pts). Aportar de nuevo cuando avances permite medir tu progreso. <button class="btn ghost sm danger" data-action="withdraw" style="margin-top:8px">Retirar mis aportes</button></span></div>` : "";
@@ -2311,7 +2406,7 @@ function renderCtiReview(){
       <h2>Resultado con esta selección</h2>
       <div class="simres" id="ctiSummary" style="margin:12px 0">${ctiSummaryHtml(r)}</div>
       <p class="sub" style="margin:0 0 12px">Al aplicar, se <b>reemplazan</b> las cantidades de artículos, propiedad intelectual, libros, tesis, grado y proyecto de tu calculadora. Tu nombre, institución, área, índice h y casillas no cambian.</p>
-      <div class="row"><button class="btn" data-action="cti-apply">Aplicar a mi calculadora</button><button class="btn ghost" data-action="cti-clear">Descartar</button></div>
+      <div class="row"><button class="btn" data-action="cti-apply">Aplicar y ver mi plan</button><button class="btn ghost" data-action="cti-clear">Descartar</button></div>
     </div>`;
 }
 
@@ -2361,7 +2456,8 @@ function ctiApply(){
   S.degree = st.degree; S.counts = st.counts; S.recent = st.recent; S.project = st.project; S.last = st.last;
   if(CTI.id) S.cti = CTI.id;
   S.ctiSig = stateSig(S); S.ctiName = CTI.meta.name || "";
-  syncProfile(); refresh(); toast("Datos de CTI Vitae aplicados"); showView("calc");
+  S.mode = "cti"; choosing = false;
+  syncProfile(); refresh(); showView("plan"); toast("Datos de CTI Vitae aplicados · Plan de ascenso habilitado");
 }
 
 /* ================= Descarga en PDF (evaluación + historial) ================= */
@@ -2705,7 +2801,8 @@ function sendUsageKind(kind){
   loadCommunityInst();
   buildShare(); trackVisit();
   usageReady = true;                      // desde aquí, solo los cambios hechos por la persona generan una consulta
-  const v = (location.hash||"").slice(1); if(VIEWS.includes(v)) showView(v);
+  const v = (location.hash||"").slice(1);
+  showView(VIEWS.includes(v) ? v : modeView(), true);          // sin modalidad elegida, todo enlace #calc o #cti cae en el inicio
   window.addEventListener("hashchange", () => { const w = location.hash.slice(1); if(VIEWS.includes(w)) showView(w); });
 })();
 </script>
