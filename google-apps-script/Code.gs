@@ -41,6 +41,7 @@ function doPost(e) {
     if (p.action === 'feedback') return json_(saveFeedback_(p));
     if (p.action === 'inst_add') return json_(instAddAction_(p));
     if (p.action === 'visit') return json_(visitPing_());
+    if (p.action === 'usage') return json_(usageSave_(p));
     if (p.action !== 'submit') return json_({ ok: false, error: 'bad_action' });
 
     const rec = cleanRecord_(p);
@@ -303,6 +304,64 @@ function visitsOut_() {
   const out = JSON.stringify(visitTotals_());
   cache.put('visits', out, 300);
   return ContentService.createTextOutput(out).setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ---------------- Consultas (métricas de uso, ANÓNIMAS y privadas) ---------------- */
+// Cada vez que alguien termina de calcular su estado, la página envía un resumen SIN identificador: fuente de los datos,
+// nivel, puntajes, grado, índice h y cantidades por tipo. No lleva nombre, institución, correo, enlace ni ID de CTI Vitae,
+// ni el identificador del navegador. Va a la pestaña «Consultas» de tu hoja y NINGUNA acción pública la devuelve:
+// solo la ves tú en la hoja. Sirve para medir cómo se usa la plataforma (niveles, grados, rutas, uso de CTI Vitae).
+
+const USAGE_SHEET = 'Consultas';
+const USAGE_HEADERS = ['fecha_iso', 'tipo', 'fuente', 'nivel', 'total', 'formacion', 'produccion', 'asesoria', 'grado',
+                       'indice_h', 'estudiante', 'activo', 'origen_institucion', 'pais_institucion', 'conteos_json', 'version'];
+const USAGE_MAX_ROWS = 60000;
+const USAGE_MAX_PER_MIN = 120;                 // tope global por minuto contra scripts que repiten el aviso
+const USAGE_SOURCES = ['manual', 'cti', 'mixto'];
+const USAGE_KINDS = ['calculo', 'cti_lectura'];
+
+function usageSave_(p) {
+  const kind = p.kind == null ? 'calculo' : String(p.kind);
+  if (USAGE_KINDS.indexOf(kind) < 0) return { ok: false, error: 'invalid' };
+
+  const cache = CacheService.getScriptCache();
+  const rk = 'usage_rate_' + Math.floor(Date.now() / 60000);
+  const used = Number(cache.get(rk) || 0);
+  if (used >= USAGE_MAX_PER_MIN) return { ok: false, error: 'rate' };
+  cache.put(rk, String(used + 1), 120);
+
+  const sh = getSheet_(USAGE_SHEET, USAGE_HEADERS);
+  if (sh.getLastRow() - 1 >= USAGE_MAX_ROWS) return { ok: false, error: 'full' };
+
+  if (kind === 'cti_lectura') {                  // solo se anota que alguien leyó una ficha; sin id ni contenido
+    sh.appendRow([new Date().toISOString(), kind, '', '', '', '', '', '', '', '', '', '', '', '', '', num_(p.v, 0, 1000) || 1]);
+    return { ok: true };
+  }
+
+  const source = String(p.source == null ? '' : p.source);
+  if (USAGE_SOURCES.indexOf(source) < 0) return { ok: false, error: 'invalid' };
+  if (LEVELS.indexOf(p.level) < 0 || DEGREES.indexOf(p.degree) < 0) return { ok: false, error: 'invalid' };
+  const origin = p.instOrigin == null ? '' : String(p.instOrigin);
+  if (ORIGINS.indexOf(origin) < 0) return { ok: false, error: 'invalid' };
+  let country = '';
+  if (origin === 'extranjera') { const c = String(p.country == null ? '' : p.country).trim(); country = COUNTRIES.indexOf(c) >= 0 ? c : ''; }
+
+  const total = num_(p.total, 0, 1000), formation = num_(p.formation, 0, 10),
+        production = num_(p.production, 0, 2000), advising = num_(p.advising, 0, 10), h = num_(p.h, 0, 300);
+  if ([total, formation, production, advising, h].some(function (x) { return x === null; })) return { ok: false, error: 'invalid' };
+  if (Math.abs(total - (formation + production + advising)) > 0.01) return { ok: false, error: 'invalid' };
+
+  const counts = {};
+  if (p.counts && typeof p.counts === 'object') {
+    Object.keys(p.counts).slice(0, 20).forEach(function (k) {
+      const v = num_(p.counts[k], 0, 500);
+      if (/^[a-z0-9_]{2,12}$/.test(k) && v !== null) counts[k] = v;
+    });
+  }
+  sh.appendRow([new Date().toISOString(), kind, source, p.level, total, formation, production, advising, p.degree,
+                Math.floor(h), p.student === true, p.active === true, origin, country,
+                JSON.stringify(counts).slice(0, 600), num_(p.v, 0, 1000) || 1]);
+  return { ok: true };
 }
 
 /* ---------------- Utilidades ---------------- */

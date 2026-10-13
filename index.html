@@ -425,7 +425,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 </header>
 
 <main class="wrap">
-  <div class="notice"><strong>Herramienta referencial.</strong> La calificación oficial la realiza solo el CONCYTEC mediante la plataforma CTI Vitae, con verificación documentaria. Tus datos se guardan en este navegador; solo se envía algo si tú decides aportar de forma anónima en la pestaña Comunidad.</div>
+  <div class="notice"><strong>Herramienta referencial.</strong> La calificación oficial la realiza solo el CONCYTEC mediante la plataforma CTI Vitae, con verificación documentaria. Tus datos se guardan en este navegador. La plataforma registra de forma anónima cada consulta (nivel, puntaje y cantidades, sin tu nombre, institución ni identificadores) para medir su uso; aportar con tu institución en la pestaña Comunidad es voluntario.</div>
 
   <!-- ============ CALCULADORA ============ -->
   <section class="view on" id="view-calc">
@@ -754,7 +754,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <details><summary>¿Qué tesis cuentan?</summary><p>Solo tesis sustentadas y aprobadas. Una resolución que te designa asesor no sirve como sustento. Puedes informar el enlace de RENATI (SUNEDU) o del repositorio institucional.</p></details>
         <details><summary>Alcanzo 200 puntos pero mi índice h es menor que 10</summary><p>No accedes a Investigador Distinguido. Esta calculadora te muestra Nivel I y te avisa que te falta el índice h. Además, el art. 8.4.7 del reglamento prevé la incorporación excepcional de Investigadores Distinguidos por invitación del CONCYTEC; confirma el procedimiento vigente con el CONCYTEC.</p></details>
                 <details><summary>¿Cómo se usa mi ficha de CTI Vitae?</summary><p>Al pegar tu enlace, un servicio consulta tu ficha pública (el navegador no puede hacerlo directamente) y la devuelve a tu pantalla; no se guarda. La interpretación ocurre en tu navegador y tú revisas cada producto antes de aplicarlo. Si prefieres no usar el enlace, puedes subir tu ficha guardada como HTML y no sale de tu equipo.</p></details>
-        <details><summary>¿Qué pasa con mis datos?</summary><p>Todo lo que ingresas se guarda solo en tu navegador (almacenamiento local). Únicamente si marcas el consentimiento en la pestaña Comunidad y pulsas “Enviar”, se envía un resumen anónimo: nivel, puntaje por criterio, grado, índice h, cantidades por tipo de producto y, si lo indicas, tu institución (nacional o extranjera, con su país). No se envían nombres, correos ni títulos de tus productos. Puedes retirar tus aportes en cualquier momento desde esa pestaña. Contador de accesos: una vez al día por navegador se envía un aviso sin ningún identificador (solo suma 1 al total) y se guarda en tu navegador la fecha del último aviso para no repetirlo. Si propones una institución que no está en la lista, se envía únicamente su nombre, si es nacional o extranjera y el país; cuando otra persona la confirma o el administrador la aprueba, aparece en la lista para todos. Si envías una sugerencia, se guarda el texto, la pestaña desde la que escribes y, solo si lo indicas y lo consientes, tu correo; puedes retirarla desde el mismo botón de “Retirar”. Se aplican los principios de la Ley N° 29733 de Protección de Datos Personales del Perú.</p></details>
+        <details><summary>¿Qué pasa con mis datos?</summary><p>Todo lo que ingresas se guarda solo en tu navegador (almacenamiento local). Únicamente si marcas el consentimiento en la pestaña Comunidad y pulsas “Enviar”, se envía un resumen anónimo: nivel, puntaje por criterio, grado, índice h, cantidades por tipo de producto y, si lo indicas, tu institución (nacional o extranjera, con su país). No se envían nombres, correos ni títulos de tus productos. Puedes retirar tus aportes en cualquier momento desde esa pestaña. Consultas anónimas: cuando terminas de calcular, se registra un resumen sin identificador (fuente de los datos —manual o CTI Vitae—, nivel, puntajes, grado, índice h, cantidades por tipo y, si la indicaste, si tu institución es nacional o extranjera y su país) únicamente para medir cómo se usa la plataforma; no incluye tu nombre, institución, correo, enlace ni ID de CTI Vitae, no se muestra en la página, no se registra con los datos de ejemplo ni si tu navegador pide no ser rastreado. Contador de accesos: una vez al día por navegador se envía un aviso sin ningún identificador (solo suma 1 al total) y se guarda en tu navegador la fecha del último aviso para no repetirlo. Si propones una institución que no está en la lista, se envía únicamente su nombre, si es nacional o extranjera y el país; cuando otra persona la confirma o el administrador la aprueba, aparece en la lista para todos. Si envías una sugerencia, se guarda el texto, la pestaña desde la que escribes y, solo si lo indicas y lo consientes, tu correo; puedes retirarla desde el mismo botón de “Retirar”. Se aplican los principios de la Ley N° 29733 de Protección de Datos Personales del Perú.</p></details>
         <details><summary>¿Qué mide esta calculadora y qué no?</summary><p>Aplica las Tablas 1 y 3 del Anexo N° 1 sobre lo que tú declares. No verifica que tus revistas estén indizadas, que el cuartil sea el correcto para el año, ni que tus documentos de sustento sean aceptables. Esa verificación la hace el CONCYTEC.</p></details>
       </div>
     </div>
@@ -873,7 +873,7 @@ const ymIdx = (y, m) => y*12 + (m ? m-1 : 0);   // sin mes: se asume enero (crit
 const fullDate = ts => new Date(ts).toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"});
 
 /* ================= Estado ================= */
-const blankState = () => ({name:"", inst:"", instOrigin:"", country:"", cti:"", ctiSig:"", ctiName:"", degree:"none", student:false, affil:false, h:0, counts:{}, recent:{}, project:false, last:null});
+const blankState = () => ({name:"", inst:"", instOrigin:"", country:"", cti:"", ctiSig:"", ctiName:"", sampleSig:"", degree:"none", student:false, affil:false, h:0, counts:{}, recent:{}, project:false, last:null});
 let S = blankState();
 let HIST = [];
 let sim = {counts:{}, degree:null, h:null};
@@ -890,6 +890,7 @@ function sanitizeState(o){
   s.cti = /^\d{1,9}$/.test(String(o.cti || "")) ? String(o.cti) : "";
   s.ctiSig = typeof o.ctiSig === "string" ? o.ctiSig.slice(0,3000) : "";
   s.ctiName = String(o.ctiName || "").slice(0,80);
+  s.sampleSig = typeof o.sampleSig === "string" ? o.sampleSig.slice(0,3000) : "";
   s.degree = DEGREES[o.degree] ? o.degree : "none";
   s.student = !!o.student; s.affil = !!o.affil;
   s.h = Math.max(0, Math.min(300, parseInt(o.h,10) || 0));
@@ -1472,6 +1473,7 @@ function refresh(){
   const c = compute(S);
   renderCounts(c); renderH(c); renderResult(c); renderPlan(c); renderSim(c); renderShare();
   persist();
+  if(usageReady) scheduleUsage();
 }
 /* «Borrar mis datos»: limpia lo que la persona escribió en todas las pestañas. Se conservan el historial de capturas
    (es su evolución), las preferencias (tema, ayuda) y los registros de envío ligados al servidor (identificador y contadores). */
@@ -1519,6 +1521,7 @@ document.addEventListener("click", e => {
     const y = now.getFullYear();
     S = sanitizeState({name:S.name, inst:S.inst, instOrigin:S.instOrigin, country:S.country, degree:"master", h:4, student:false, affil:true, project:true,
       counts:{art_q2:2, art_q3:1, art_oth:2, chapter:1, th_ms:2, th_ug:1}, recent:{art_q2:2, chapter:1}, last:{y:y-1, m:5}});
+    S.sampleSig = stateSig(S);                       // los datos de ejemplo nunca se registran como consulta
     syncProfile(); refresh(); toast("Datos de ejemplo cargados: reemplázalos con los tuyos");
   } else if(act==="clear"){
     if(confirm("¿Borrar tus datos de todas las pestañas?\n\n• Calculadora: perfil, institución, cantidades y proyecto.\n• Importar CTI Vitae: enlace y ficha leída.\n• Plan de ascenso y simulador.\n• Borradores de aporte y de sugerencia.\n\nTu historial de capturas se conserva para mantener tu evolución. Lo que ya enviaste a la comunidad se retira desde la pestaña Sugerencias («Retirar mis sugerencias y aportes»).")){ clearAllData(); toast("Tus datos fueron borrados; tu historial se conserva"); }
@@ -1665,7 +1668,8 @@ const CONFIG = {
   // Mientras esté vacía, el envío de aportes queda desactivado.
   endpoint: "https://script.google.com/macros/s/AKfycbyjnAcZgRLRVRLW-S6I4wMrbys7zSF9o7Ee3ZdS5v0AoEk8WEewGlSG8_fx7jF05a2V/exec",
   appVersion: 1,
-  visitCounter: true          // contador de accesos anónimo (se puede desactivar con false)
+  visitCounter: true,         // contador de accesos anónimo (se puede desactivar con false)
+  usageLog: true              // registro anónimo de cada consulta, solo para métricas de uso (privado en la hoja)
 };
 const AUTHOR = {
   name: "Rafael Segundo Vela-Paredes",
@@ -2326,6 +2330,7 @@ function ctiLoadHtml(html, id){
     parsed.projectSel = parsed.projects.some(p => p.recent);
     parsed.id = id || "";
     CTI = parsed;
+    sendUsageKind("cti_lectura");
     ctiMsg(`Listo: ${parsed.prod.length} producciones, ${parsed.ip.length} registros de PI y ${parsed.thes.length} asesorías leídas. Revísalas abajo.`, "msg-ok");
     renderCtiReview();
     $("#ctiReview").scrollIntoView({behavior:"smooth", block:"start"});
@@ -2649,6 +2654,42 @@ async function trackVisit(){
   }catch{}
 }
 
+/* Consultas anónimas (métricas de uso): cuando la persona termina de calcular, se avisa UNA vez por resultado distinto, sin
+   identificador alguno. Va solo a la hoja privada del administrador y no se muestra en la plataforma. No se envía nombre,
+   institución, correo, enlace ni ID de CTI Vitae, ni nada si el navegador pide no ser rastreado (DNT/GPC). */
+const K_USAGE = "renacyt_calc_v1_usage";
+const USAGE_DAILY_MAX = 15;
+let usageReady = false, usageTimer = null;
+const usageAllowed = () => CONFIG.usageLog && endpointOK() && navigator.doNotTrack !== "1" && !navigator.globalPrivacyControl;
+function scheduleUsage(){ clearTimeout(usageTimer); usageTimer = setTimeout(sendUsage, 8000); }
+function usagePayload(c){
+  const sig = stateSig(S);
+  const source = S.ctiSig ? (sig === S.ctiSig ? "cti" : "mixto") : "manual";
+  return {action:"usage", kind:"calculo", source, level:levelName(c.level), total:c.total, formation:c.formation, production:c.production,
+    advising:c.advising, degree:S.degree, h:c.h, student:S.student, active:c.active,
+    instOrigin:S.instOrigin, country:S.instOrigin === "extranjera" ? S.country : "", counts:c.counts, v:CONFIG.appVersion};
+}
+async function sendUsage(){
+  if(!usageAllowed()) return;
+  const c = compute(S);
+  if(!Object.keys(c.counts).length && S.degree === "none") return;            // todavía no declaró nada
+  const sig = stateSig(S) + "|" + S.h + "|" + S.student;
+  if(S.sampleSig && stateSig(S) === S.sampleSig) return;                       // datos de ejemplo
+  const today = new Date().toISOString().slice(0, 10);
+  const u = store.get(K_USAGE) || {};
+  if(u.sig === sig) return;                                                    // mismo resultado: no se repite
+  const n = u.day === today ? (u.n || 0) : 0;
+  if(n >= USAGE_DAILY_MAX) return;
+  try{
+    const r = await postJSON(usagePayload(c));
+    if(r && r.ok) store.set(K_USAGE, {sig, day:today, n:n + 1});
+  }catch{}
+}
+function sendUsageKind(kind){
+  if(!usageAllowed()) return;
+  postJSON({action:"usage", kind, v:CONFIG.appVersion}).catch(() => {});
+}
+
 /* ================= Inicio ================= */
 (function init(){
   try{ const th = localStorage.getItem("renacyt_calc_v1_theme"); document.documentElement.dataset.theme = th === "dark" ? "dark" : "light"; }catch{ document.documentElement.dataset.theme = "light"; }
@@ -2663,6 +2704,7 @@ async function trackVisit(){
   syncProfile(); refresh();
   loadCommunityInst();
   buildShare(); trackVisit();
+  usageReady = true;                      // desde aquí, solo los cambios hechos por la persona generan una consulta
   const v = (location.hash||"").slice(1); if(VIEWS.includes(v)) showView(v);
   window.addEventListener("hashchange", () => { const w = location.hash.slice(1); if(VIEWS.includes(w)) showView(w); });
 })();

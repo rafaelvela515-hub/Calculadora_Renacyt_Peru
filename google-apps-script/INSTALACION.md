@@ -132,6 +132,17 @@ Debes crear una **nueva versión**: *Implementar → Administrar implementacione
 | Cada persona cuenta una vez (su aporte más reciente) | Los aportes repetidos no inflan el total |
 | Retiro de aportes por identificador del navegador | Cumple el derecho de supresión |
 
+## Consultas anónimas (métricas de uso, solo para ti)
+
+Cada vez que alguien termina de calcular su estado, la página envía un resumen **sin identificador** a la pestaña **`Consultas`** de tu hoja (se crea sola). Es privada: ninguna acción del script la devuelve y la plataforma no la muestra.
+
+- **Columnas:** `fecha_iso`, `tipo` (`calculo` o `cti_lectura`), `fuente` (`manual`, `cti` o `mixto`), `nivel`, `total`, `formacion`, `produccion`, `asesoria`, `grado`, `indice_h`, `estudiante`, `activo`, `origen_institucion`, `pais_institucion`, `conteos_json`, `version`.
+- **No se guarda:** nombre, nombre de la institución, correo, enlace ni ID de CTI Vitae, ni el identificador del navegador. Por eso **no se puede borrar la consulta de una persona concreta** ni contar personas distintas; para eso están los aportes de *Comunidad* y el contador de accesos.
+- **Cuándo se registra:** unos 8 segundos después de que la persona deja de cambiar datos, una vez por resultado distinto, máximo 15 al día por navegador. No se registra el ejemplo, ni si el navegador envía «no rastrear» (DNT/GPC). Leer una ficha de CTI Vitae se anota como `cti_lectura` (sin contenido).
+- **Límites del servidor:** 120 consultas por minuto en total y 60 000 filas.
+- **Si cambias `Code.gs`** debes crear una *Nueva versión* de la implementación. Con un script anterior la página sigue funcionando; las consultas simplemente no se guardan.
+- Para analizarlas: en la hoja, *Insertar → Tabla dinámica* sobre `Consultas` (por ejemplo, `nivel` contra `fuente`).
+
 ## Límites que conviene conocer
 
 - Los datos son **autodeclarados**. Alguien puede mentir; las métricas son orientativas, no estadística oficial.

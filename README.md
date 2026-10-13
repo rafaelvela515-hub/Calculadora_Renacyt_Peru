@@ -18,7 +18,7 @@ Herramienta web gratuita para estimar la calificación y el nivel en el **RENACY
 
 ## Privacidad
 
-Lo que ingresas se guarda solo en tu navegador. Solo se envía algo si marcas el consentimiento en *Comunidad* o escribes una sugerencia. Detalle en la pestaña *Reglamento y ayuda*.
+Lo que ingresas se guarda en tu navegador. Además, cada consulta se registra de forma anónima (nivel, puntajes y cantidades; sin nombre, institución ni identificadores) en una hoja privada del administrador, solo para medir el uso; no se muestra en la página. Aportar con tu institución en *Comunidad* o escribir una sugerencia es voluntario. Detalle en la pestaña *Reglamento y ayuda*.
 
 ## Estructura
 
