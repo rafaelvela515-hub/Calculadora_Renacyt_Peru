@@ -61,7 +61,10 @@ a{color:var(--brand)}
 .top{background:var(--hdr);color:#fff}
 .top .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-top:14px;padding-bottom:0}
 .brand{display:flex;align-items:center;gap:12px;flex:1;min-width:240px;padding-bottom:12px}
-.mark{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:.5px}
+.mark{width:40px;height:40px;border-radius:11px;flex:none;display:block;line-height:0;transition:transform .15s,box-shadow .15s}
+.mark img{width:40px;height:40px;border-radius:11px;display:block}
+.mark:hover{transform:translateY(-1px);box-shadow:0 0 0 3px rgba(255,255,255,.35)}
+.mark:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .brand h1{font-size:20px;font-weight:700;color:#fff}
 .brand p{margin:0;font-size:13px;opacity:.82}
 .theme-btn{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:10px;width:40px;height:40px;cursor:pointer;margin-bottom:12px}
@@ -417,7 +420,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <div class="mark" aria-hidden="true">RN</div>
+      <a class="mark" href="#start" data-action="go-home" title="Volver al inicio" aria-label="Volver al inicio"><img src="logo.svg" alt="" width="40" height="40"></a>
       <div>
         <h1>Calculadora RENACYT</h1>
         <p>Calcula tu puntaje, descubre tu nivel y recibe <b>estrategias personalizadas</b> para subir de nivel. Guarda el <b>historial de tus avances</b>.</p>
@@ -1692,6 +1695,7 @@ document.addEventListener("click", e => {
     renderCtiReview();
     $("#ctiReview").scrollIntoView({behavior:"smooth", block:"start"});
   }
+  else if(act==="go-home"){ e.preventDefault(); choosing = true; showView("start"); }
   else if(act==="change-mode"){ choosing = true; showView("start"); }
   else if(act==="mode-back"){ choosing = false; showView(modeView()); }
   else if(act==="sim-reset"){ sim = {counts:{}, degree:null, h:null}; renderSim(compute(S)); }
@@ -2888,8 +2892,11 @@ function sendUsageKind(kind){
   buildShare(); trackVisit();
   usageReady = true;                      // desde aquí, solo los cambios hechos por la persona generan una consulta
   const v = (location.hash||"").slice(1);
-  showView(VIEWS.includes(v) ? v : modeView(), true);          // sin modalidad elegida, todo enlace #calc o #cti cae en el inicio
-  window.addEventListener("hashchange", () => { const w = location.hash.slice(1); if(VIEWS.includes(w)) showView(w); });
+  if(!S.mode && hasData(S)) S.mode = S.ctiSig ? "cti" : "calc";                // datos de visitas anteriores: se deduce la modalidad
+  const OTRAS = ["plan","hist","comm","feed","ref"];
+  choosing = !OTRAS.includes(v);                                                // la página siempre abre en el inicio; #calc y #cti también caen aquí
+  showView(OTRAS.includes(v) ? v : "start", true);
+  window.addEventListener("hashchange", () => { const w = location.hash.slice(1); if(w === "start") choosing = true; if(VIEWS.includes(w)) showView(w); });
 })();
 </script>
 </body>

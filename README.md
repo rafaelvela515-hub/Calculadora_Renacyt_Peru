@@ -29,6 +29,7 @@ Lo que ingresas se guarda en tu navegador. Además, cada consulta se registra de
 | `google-apps-script/` | Backend opcional en Google Apps Script (aportes, métricas, sugerencias y lectura de CTI Vitae) e instrucciones. |
 | `PUBLICAR.md` | Guía de publicación en GitHub Pages. |
 | `og-image.png` | Imagen de vista previa al compartir (1200×630). |
+| `logo.svg` | Logo del encabezado: lleva siempre a la pantalla de inicio. |
 | `sitemap.xml` | Mapa del sitio para buscadores. |
 | `LICENSE` | Licencia MIT. |
 
