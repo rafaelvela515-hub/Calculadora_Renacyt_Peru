@@ -589,17 +589,10 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
           </details>
           <div class="chip warn" style="margin-top:12px"><i>!</i><span>Usa solo <b>tu propia ficha</b> o una que tengas autorización para evaluar. Lo que se lee no se guarda ni se envía; solo se aplican a tu calculadora las cantidades que tú confirmes.</span></div>
         </div>
-        <div class="card" id="ctiProfileCard" hidden>
-          <h2>Tu perfil <span class="badge-cap">opcional</span></h2>
-          <p class="sub">Índice h, institución y casillas que completan tu estado. El índice h solo se exige para Investigador Distinguido.</p>
-          <div id="ctiProfileSlot"></div>
-          <div id="ctiFlagsSlot"></div>
-        </div>
-        <div id="ctiReview"></div>
-      </div>
-      <aside class="card">
-        <h2>Cómo se interpretan los datos</h2>
-        <ul style="margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.7">
+        <div class="card">
+          <details>
+            <summary><b>Cómo se interpretan los datos</b></summary>
+            <ul style="margin:12px 0 0;padding-left:20px;color:var(--muted);font-size:14.5px;line-height:1.7">
           <li><b>Cuartil:</b> el del año de publicación del artículo (pregunta 39 del RENACYT).</li>
           <li><b>Sin cuartil en su año:</b> 1 punto, dentro del tope de 10 junto con proceedings y SciELO.</li>
           <li><b>Duplicados</b> (mismo DOI o título, típico de lo importado de ORCID) se descartan.</li>
@@ -609,7 +602,17 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
           <li>Lo que no se puede decidir con seguridad queda <b>sin contar</b> y marcado en ámbar para que elijas tú.</li>
           <li><b>Índice h:</b> se toma de tu ficha si la trae; si no, consúltalo en Scopus e ingrésalo tú.</li>
         </ul>
-      </aside>
+          </details>
+        </div>
+        <div class="card" id="ctiProfileCard" hidden>
+          <h2>Tu perfil <span class="badge-cap">opcional</span></h2>
+          <p class="sub">Índice h, institución y casillas que completan tu estado. El índice h solo se exige para Investigador Distinguido.</p>
+          <div id="ctiProfileSlot"></div>
+          <div id="ctiFlagsSlot"></div>
+        </div>
+        <div id="ctiReview"></div>
+      </div>
+      <aside class="col-result card" id="resultadoCti" aria-live="polite"></aside>
     </div>
   </section>
 
@@ -1151,6 +1154,11 @@ function renderCounts(c){
 
 /* ================= Render: resultado ================= */
 function renderResult(c){
+  $("#resultado").innerHTML = resultHtml(c, S, false);
+  $("#mbScore").textContent = fmt(c.total);
+  $("#mbLevel").textContent = levelName(c.level) + (c.prodOK ? "" : " · falta producción");
+}
+function resultHtml(c, st, preview){
   const L = c.level, i = levelIdx(L), nxt = nextLevel(c);
   const isDist = L && L.id==="DIST";
   let barPct = 0, barL = "", barR = "";
@@ -1168,7 +1176,7 @@ function renderResult(c){
   if(!c.hBlocked && !(L && L.id==="DIST")) chips.push(`<div class="chip info"><i>h</i><span>Índice h en Scopus: <b>${c.h}</b>. No suma puntos; solo se exige h ≥ 10 para Distinguido${c.h >= 10 ? " (ya lo cumples)" : ""}.</span></div>`);
   if(isDist) {}
   else if(c.active){
-    const aff = S.affil ? " afiliado" : "";
+    const aff = st.affil ? " afiliado" : "";
     if(c.activeForever) chips.push(`<div class="chip ok"><i>✓</i><span>Condición de <b>activo${aff}</b> mientras participes en tu proyecto de CTI.</span></div>`);
     else if(c.dateConflict) chips.push(`<div class="chip warn"><i>!</i><span>Indicas producción reciente, pero la fecha de tu producción más reciente es anterior a 3 años. Corrige uno de los dos datos.</span></div>`);
     else if(c.activeUntil !== null){
@@ -1179,8 +1187,8 @@ function renderResult(c){
     chips.push(`<div class="chip warn"><i>!</i><span>Sin producción ni proyecto en los últimos 3 años: quedarías como <b>no activo</b>.</span></div>`);
   }
 
-  $("#resultado").innerHTML = `<div class="res">
-    <h2>Tu resultado</h2>
+  return `<div class="res">
+    <h2>Tu resultado${preview ? ' <span class="badge-cap">vista previa</span>' : ""}</h2>
     <div class="score"><span class="n">${fmt(c.total)}</span><span class="u">puntos</span></div>
     <div class="level ${L?(isDist?"dist":""):"none"}">${esc(levelName(L))}</div>
     <p class="lvl-sub">${L ? (c.hBlocked?"Nivel asignado mientras no alcances h ≥ 10.":(isDist?"Máxima clasificación.":`Rango de este nivel: ${L.min}–${L.max} pts.`)) : (c.prodOK?"Necesitas al menos 10 pts en total para el Nivel VII.":"Primero cumple la producción mínima.")}</p>
@@ -1195,7 +1203,7 @@ function renderResult(c){
     <div class="chips">${chips.join("")}</div>
     <table class="bd">
       <tr><th>Detalle</th><th>Pts</th></tr>
-      <tr><td>Formación (${esc(DEGREES[S.degree].label)})</td><td>${fmt(c.formation)}</td></tr>
+      <tr><td>Formación (${esc(DEGREES[st.degree].label)})</td><td>${fmt(c.formation)}</td></tr>
       <tr><td>Artículos Q1–Q4</td><td>${fmt(c.artQ)}</td></tr>
       <tr><td>Sin cuartil / proceedings / SciELO</td><td>${fmt(c.minor)}</td></tr>
       <tr><td>Propiedad intelectual</td><td>${fmt(c.ip)}</td></tr>
@@ -1203,15 +1211,28 @@ function renderResult(c){
       <tr><td>Asesoría de tesis</td><td>${fmt(c.advising)}</td></tr>
       <tr class="tot"><td>Total</td><td>${fmt(c.total)}</td></tr>
     </table>
-    <div class="actions">
+    ${preview ? `<p class="lvl-sub" style="margin:0 0 10px"><b>Vista previa:</b> así quedaría con tu selección. Aún no se aplicó a tu perfil.</p>
+    <div class="actions"><button class="btn" data-action="cti-apply">Aplicar y ver mi plan</button></div>` : `<div class="actions">
       <button class="btn" data-action="open-save">Guardar en historial</button>
       <button class="btn ghost" data-go="plan">Plan de ascenso →</button>
       <button class="btn ghost" data-action="pdf">Descargar PDF</button>
     </div>
-    <p class="lvl-sub" style="margin:12px 0 0"><a href="#comm">Aporta tu resultado de forma anónima a las métricas →</a></p>
+    <p class="lvl-sub" style="margin:12px 0 0"><a href="#comm">Aporta tu resultado de forma anónima a las métricas →</a></p>`}
   </div>`;
-  $("#mbScore").textContent = fmt(c.total);
-  $("#mbLevel").textContent = levelName(L) + (c.prodOK ? "" : " · falta producción");
+}
+/* Panel de resultado de la modalidad CTI Vitae: vista previa de la selección mientras no se aplique; después, el resultado real. */
+function renderCtiPanel(){
+  const host = $("#resultadoCti"); if(!host) return;
+  let c = compute(S), st = S, preview = false;
+  if(CTI){
+    const pst = ctiBuildState(CTI);
+    if(!(S.ctiSig && stateSig(S) === stateSig(pst))){ st = pst; c = compute(pst); preview = true; }
+  }
+  host.innerHTML = resultHtml(c, st, preview);
+  if(S.mode === "cti"){
+    $("#mbScore").textContent = fmt(c.total);
+    $("#mbLevel").textContent = levelName(c.level) + (c.prodOK ? "" : " · falta producción");
+  }
 }
 function miniBar(label, v, max, ok=true){
   const pct = max ? Math.min(100, v/max*100) : 0;
@@ -1544,7 +1565,7 @@ function renderH(c){
 function refresh(){
   if(!S.mode && !choosing && hasData(S)) S.mode = S.ctiSig ? "cti" : "calc";   // datos de visitas anteriores: se deduce la modalidad
   const c = compute(S);
-  renderCounts(c); renderH(c); renderResult(c); renderPlan(c); renderSim(c); renderShare();
+  renderCounts(c); renderH(c); renderResult(c); renderCtiPanel(); renderPlan(c); renderSim(c); renderShare();
   persist();
   const ok = hasData(S);
   if(planWasOK === false && ok && usageReady) toast("¡Plan de ascenso habilitado! Ya puedes elegir tu meta y usar el simulador.");
@@ -1601,6 +1622,7 @@ function updateNav(){
   $("#startBack").hidden = !(choosing && S.mode);
   const cur = $(".view.on");
   document.body.classList.toggle("nobar", !ok || !cur || cur.id === "view-start");
+  $("#mobilebar a").setAttribute("href", S.mode === "cti" ? "#resultadoCti" : "#resultado");
 }
 function chooseMode(m){
   if(!["cti","calc"].includes(m)) return;
@@ -2397,19 +2419,14 @@ function ctiBuildState(c){
 }
 
 /* ---- Pantalla de revisión ---- */
-function ctiSummaryHtml(r){
-  return `<div><small>Puntaje estimado</small><b>${fmt(r.total)}</b></div>
-    <div><small>Nivel</small><b style="font-size:20px">${esc(levelName(r.level))}</b>${r.hBlocked?`<br><span class="delta" style="color:var(--warn)">Falta h ≥ 10</span>`:""}</div>
-    <div><small>Producción</small><b>${fmt(r.production)}</b> <span class="delta" style="color:${r.prodOK?"var(--ok)":"var(--bad)"}">${r.prodOK?"cumple el mínimo":"falta "+fmt(r.minProd-r.production)}</span></div>`;
-}
-function ctiRefreshSummary(){ const el = $("#ctiSummary"); if(CTI && el) el.innerHTML = ctiSummaryHtml(compute(ctiBuildState(CTI))); }
+function ctiRefreshSummary(){ renderCtiPanel(); }
 function ctiSelect(group, idx, value){
   return `<select data-cti="${group}" data-i="${idx}" aria-label="Clasificación">${CTI_OPT[group].map(([k,l]) => `<option value="${k}"${k===value?" selected":""}>${esc(l)}</option>`).join("")}</select>`;
 }
 function renderCtiReview(){
   const box = $("#ctiReview");
   parkProfile();                                    // los campos del perfil no se pierden al redibujar
-  if(!CTI){ box.innerHTML = ""; updateNav(); return; }
+  if(!CTI){ box.innerHTML = ""; renderCtiPanel(); updateNav(); return; }
   const c = CTI, st = ctiBuildState(c), r = compute(st);
   const trunc = (s, n) => s.length > n ? s.slice(0, n-1) + "…" : s;
   const prodRow = (p, i) => `<tr class="${p.review?"rv":""}"><td>${isFinite(p.year)?p.year:"—"}</td><td><b>${esc(trunc(p.title, 95))}</b><small>${esc(trunc(p.journal, 60))}${p.journal&&p.typeRaw?" · ":""}${esc(p.typeRaw)}</small>${p.note?`<em>${esc(p.note)}</em>`:""}</td><td>${ctiSelect("prod", i, p.choice)}</td></tr>`;
@@ -2455,11 +2472,11 @@ function renderCtiReview(){
     ${table("Propiedad intelectual", ipRows, "No se encontraron registros de propiedad intelectual.")}
     ${table("Asesorías de tesis", thRows, "No se encontraron asesorías de tesis.")}
     <div class="card ctiapply">
-      <h2>Resultado con esta selección</h2>
-      <div class="simres" id="ctiSummary" style="margin:12px 0">${ctiSummaryHtml(r)}</div>
-      <p class="sub" style="margin:0 0 12px">Al aplicar, se <b>reemplazan</b> las cantidades de artículos, propiedad intelectual, libros, tesis, grado y proyecto de tu calculadora. Tu nombre, institución, área, índice h y casillas no cambian.</p>
+      <h2>Aplicar esta selección</h2>
+      <p class="sub" style="margin:8px 0 12px">Al aplicar, se <b>reemplazan</b> las cantidades de artículos, propiedad intelectual, libros, tesis, grado y proyecto de tu calculadora. Tu nombre, institución, área, índice h y casillas no cambian.</p>
       <div class="row"><button class="btn" data-action="cti-apply">Aplicar y ver mi plan</button><button class="btn ghost" data-action="cti-clear">Descartar</button></div>
     </div>`;
+  renderCtiPanel();
   updateNav();
 }
 
