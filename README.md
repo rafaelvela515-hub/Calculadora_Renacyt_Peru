@@ -39,10 +39,7 @@ Lo que ingresas se guarda en tu navegador. Además, cada consulta se registra de
 
 | Ajuste | Qué hace |
 |---|---|
-| `maxProductionAgeYears` | Antigüedad máxima, en años, de artículos, libros y capítulos para que sumen. `null` = sin límite (valor actual). Con `7`: al importar una ficha de CTI Vitae, las producciones con año anterior a (año actual − 7) quedan «sin contar» con un aviso, y se muestra un aviso en la calculadora. La persona puede reclasificarlas. |
 | `sjrFile` | Nombre del archivo de cuartiles de SCImago (`sjr-quartiles.json`). |
-
-**Sobre la antigüedad.** El Reglamento vigente (RP 090-2021-CONCYTEC-P, Anexo N.° 1) no fija una antigüedad máxima para la producción: cuenta «toda la trayectoria» (los artículos sin cuartil, SciELO y proceedings, y los libros y capítulos, tienen un tope de 10 puntos cada grupo). El límite de «últimos 7 años» (niveles II y III) pertenecía al reglamento anterior. Por eso queda apagado; actívalo solo si CONCYTEC lo incorpora o lo aclara en una norma.
 
 ## Cuartil de SCImago
 

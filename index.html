@@ -527,7 +527,6 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <div class="card">
           <h2><span class="step">2</span> Producción total <span class="badge-cap" id="prodBadge">mín. 6 pts</span></h2>
           <p class="sub">Obligatoria. Indica cuántos tienes de cada tipo. La columna “en los últimos 3 años” solo sirve para saber si estás activo; no cambia tu puntaje.</p>
-          <div class="chip warn" id="ageNote" hidden style="margin-bottom:12px"><i>!</i><span></span></div>
           <div id="cats-prod"></div>
         </div>
 
@@ -1566,8 +1565,6 @@ function refresh(){
   const c = compute(S);
   renderCounts(c); renderH(c); renderResult(c); renderCtiPanel(); renderPlan(c); renderSim(c); renderShare();
   persist();
-  { const n = CONFIG.maxProductionAgeYears, el = $("#ageNote");
-    el.hidden = !n; if(n) el.querySelector("span").innerHTML = `<b>Antigüedad:</b> los artículos, libros y capítulos con más de ${n} años ya no suman puntos. Declara solo los de los últimos ${n} años.`; }
   const ok = hasData(S);
   if(planWasOK === false && ok && usageReady) toast("¡Plan de ascenso habilitado! Ya puedes elegir tu meta y usar el simulador.");
   planWasOK = ok;
@@ -1828,10 +1825,6 @@ const CONFIG = {
   endpoint: "https://script.google.com/macros/s/AKfycbyjnAcZgRLRVRLW-S6I4wMrbys7zSF9o7Ee3ZdS5v0AoEk8WEewGlSG8_fx7jF05a2V/exec",
   appVersion: 1,
   visitCounter: true,         // contador de accesos anónimo (se puede desactivar con false)
-  // Antigüedad máxima, en años, de artículos, libros y capítulos para que sumen puntos. null = sin límite.
-  // El Reglamento vigente (RP 090-2021-CONCYTEC-P) no fija un límite: cuenta «toda la trayectoria». El de 7 años (niveles II y III)
-  // estaba en el reglamento anterior. Para activarlo: maxProductionAgeYears: 7
-  maxProductionAgeYears: null,
   // Archivo con el cuartil más reciente de SCImago por revista (se genera con scripts/build-sjr.js). Si no existe, se ignora.
   sjrFile: "sjr-quartiles.json",
   usageLog: true              // registro anónimo de cada consulta, solo para métricas de uso (privado en la hoja)
@@ -2287,7 +2280,7 @@ async function loadSjr(){
 }
 // Completa los cuartiles que la ficha no trae con el de la última calificación de SCImago; queda marcado en ámbar para revisarlo.
 async function applySjr(parsed){
-  const need = parsed.prod.filter(p => p.needsQ && !p.old && /^articulo en revista cientifica$|^journal-article$|^article$/.test(normTxt(p.typeRaw)));
+  const need = parsed.prod.filter(p => p.needsQ && /^articulo en revista cientifica$|^journal-article$|^article$/.test(normTxt(p.typeRaw)));
   if(!need.length) return 0;
   const d = await loadSjr(); if(!d) return 0;
   let n = 0;
@@ -2370,7 +2363,6 @@ function parseCtiHtml(html){
     const qmap = iQ >= 0 ? parseQuartiles(cl(cs,iQ)) : {};
     const row = {origin, title:cl(cs,iTi), journal:iJ >= 0 ? cl(cs,iJ) : "", year:y, typeRaw, doi, choice:"none", note:"", review:false};
     const validYear = y >= 1950 && y <= now.getFullYear() + 1;
-    const maxAge = CONFIG.maxProductionAgeYears;
     const isArticle = /^articulo en revista cientifica$/.test(type), isOrcidArt = /^(journal-article|article)$/.test(type);
     if(!validYear){ row.note = "Año no válido en la ficha."; prod.push(row); return; }
     if(doi && seenDoi.has(doi)){ row.note = "Duplicado: mismo DOI que otro producto."; prod.push(row); return; }
@@ -2378,9 +2370,6 @@ function parseCtiHtml(html){
     const tk = normTxt(row.title).replace(/[^a-z0-9]/g, "").slice(0, 80);
     if(tk && seenTitle.has(tk)){ row.note = "Duplicado: mismo título que otro producto."; prod.push(row); return; }
     if(tk) seenTitle.add(tk);
-    if(maxAge && y < now.getFullYear() - maxAge && (isArticle || isOrcidArt || /^book$|^libro$|capitulo|chapter/.test(type))){
-      row.note = `Tiene más de ${maxAge} años (${y}): ya no suma puntos. Si crees que sí cuenta, elige cómo contarlo.`; row.review = true; row.old = true; prod.push(row); return;
-    }
     if(isArticle || isOrcidArt){
       const pq = pickQuartile(y, qmap);
       if(pq.q){ row.choice = "art_" + pq.q.toLowerCase(); row.note = pq.note; row.review = !!pq.note; }
@@ -2494,7 +2483,6 @@ function renderCtiReview(){
           ? `<div class="chip ok"><i>✓</i><span><b>Índice h tomado de tu ficha: ${c.meta.h}.</b> Compruébalo en tu${c.meta.scopusId ? ` <a href="https://www.scopus.com/authid/detail.uri?authorId=${esc(c.meta.scopusId)}" target="_blank" rel="noopener">perfil de Scopus</a>` : " perfil de Scopus"}; puedes corregirlo más abajo.</span></div>`
           : `<div class="chip warn"><i>!</i><span>El <b>índice h</b> no aparece en esta ficha${c.meta.scopusId ? `. Consúltalo en tu <a href="https://www.scopus.com/authid/detail.uri?authorId=${esc(c.meta.scopusId)}" target="_blank" rel="noopener">perfil de Scopus</a>` : ""} e ingrésalo más abajo.</span></div>`}
         <div class="chip warn"><i>!</i><span>Los datos de CTI Vitae son autodeclarados y el CONCYTEC los verificará con documentos. Esto es una <b>estimación</b>.</span></div>
-        ${CONFIG.maxProductionAgeYears ? `<div class="chip warn"><i>!</i><span><b>Antigüedad:</b> los artículos, libros y capítulos con más de ${CONFIG.maxProductionAgeYears} años ya no suman puntos${c.prod.some(p => p.old) ? `; ${(n => n === 1 ? "1 producto de tu ficha quedó sin contar" : n + " productos de tu ficha quedaron sin contar")(c.prod.filter(p => p.old).length)} por eso` : ""}.</span></div>` : ""}
       </div>
       <h3 class="goalh">Completa tu perfil <span class="badge-cap">opcional</span></h3>
       <p class="sub">Esto no viene en la ficha: el índice h solo se exige para Investigador Distinguido, y las casillas cambian el mínimo de producción y tu condición de activo.</p>
