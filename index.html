@@ -2619,6 +2619,51 @@ function pdfChart(doc, pts, x0, y0, w, h, colors){
   });
 }
 
+// Texto seguro para las fuentes estándar del PDF (solo Latin-1): se normalizan comillas y rayas y lo demás pasa a «?».
+const pdfSafe = x => pdfTxt(x).replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/[\u2013\u2014]/g, "-").replace(/\u2026/g, "...").replace(/[^\u0020-\u00FF]/g, "?");
+/* Valores asignados por rubro. Con una ficha de CTI Vitae aplicada y abierta en esta sesión se detalla producto por producto;
+   en cualquier otro caso (calculadora o ficha ya cerrada) se detallan las cantidades por tipo. */
+function pdfSections(c){
+  const useCti = S.mode === "cti" && !!CTI && !ctiPending();
+  const lab = k => TYPES[k].label, pt = k => TYPES[k].pts;
+  const cut = (t, n) => { t = String(t || ""); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
+  const out = {detail:useCti};
+  const proj = useCti ? CTI.projects : [];
+  out.form = [
+    ["Máximo grado según SUNEDU", DEGREES[S.degree].label, fmt(c.formation)],
+    ["Proyecto de CTI evaluado por pares externos", S.project ? (useCti ? `Cuenta: ${proj.filter(p => p.recent).length} de ${proj.length} proyecto(s) vigentes o de los últimos 3 años` : "Cuenta para la condición de activo") : "No se cuenta", "sin puntaje"]
+  ];
+  const capTxt = (raw, shown) => raw > CAP ? ` (sumaban ${fmt(raw)}; solo cuentan ${CAP})` : "";
+  out.prodNote = `Artículos Q1-Q4: ${ptsTxt(c.artQ)} · Sin cuartil, proceedings y SciELO: ${ptsTxt(c.minor)}${capTxt(c.minorRaw)} · Libros y capítulos: ${ptsTxt(c.book)}${capTxt(c.bookRaw)}. Producción total: ${ptsTxt(c.production)} (mínimo ${c.minProd}).`;
+  out.ipNote = `Total de propiedad intelectual: ${ptsTxt(c.ip)} (sin tope).`;
+  out.thesNote = `Total de asesorías: ${ptsTxt(c.advising)}${capTxt(c.advRaw)} (tope ${CAP}).`;
+
+  if(useCti){
+    const none = {prod:CTI.prod.filter(p => p.choice === "none").length, ip:CTI.ip.filter(p => p.choice === "none").length, thes:CTI.thes.filter(p => p.choice === "none").length};
+    const sin = n => n ? ` ${n} registro(s) leído(s) de tu ficha no se cuentan (duplicados, sin verificar o que el reglamento no puntúa).` : "";
+    out.prod = CTI.prod.filter(p => p.choice !== "none").map(p => [isFinite(p.year) ? p.year : "-", pdfSafe(cut(p.title, 120) + (p.journal ? " - " + cut(p.journal, 50) : "")), pdfSafe(lab(p.choice)), fmt(pt(p.choice))]);
+    out.ip = CTI.ip.filter(p => p.choice !== "none").map(p => [pdfSafe(cut(p.title, 100)), pdfSafe(cut(p.status, 20)), pdfSafe(lab(p.choice)), fmt(pt(p.choice))]);
+    out.thes = CTI.thes.filter(p => p.choice !== "none").map(p => [pdfSafe(p.date), pdfSafe(cut(p.level, 40) + " - " + cut(p.institution, 60)), pdfSafe(lab(p.choice)), fmt(pt(p.choice))]);
+    if(!out.prod.length) out.prod = [[{content:"Sin producción científica contada.", colSpan:4}]];
+    if(!out.ip.length) out.ip = [[{content:"Sin propiedad intelectual contada.", colSpan:4}]];
+    if(!out.thes.length) out.thes = [[{content:"Sin asesorías contadas.", colSpan:4}]];
+    out.prodNote += sin(none.prod); out.ipNote += sin(none.ip); out.thesNote += sin(none.thes);
+    return out;
+  }
+  const rows = (keys, withRecent) => keys.filter(k => S.counts[k]).map(k => {
+    const t = TYPES[k], base = [pdfSafe(t.label), S.counts[k]];
+    if(withRecent) base.push(REC_GRP.includes(t.grp) ? (S.recent[k] || 0) : "-");
+    return [...base, fmt(t.pts), fmt(S.counts[k] * t.pts)];
+  });
+  out.prod = rows(["art_q1","art_q2","art_q3","art_q4","art_oth","book","chapter"], true);
+  out.ip = rows(["ip_hi","ip_lo"], true);
+  out.thes = rows(["th_phd","th_ms","th_ug"], false);
+  if(!out.prod.length) out.prod = [[{content:"Sin producción científica declarada.", colSpan:5}]];
+  if(!out.ip.length) out.ip = [[{content:"Sin propiedad intelectual declarada.", colSpan:5}]];
+  if(!out.thes.length) out.thes = [[{content:"Sin asesorías declaradas.", colSpan:4}]];
+  if(S.mode === "cti") out.prodNote += " El detalle producto por producto solo se incluye mientras la ficha de CTI Vitae sigue abierta en esta sesión (no se guarda en tu navegador).";
+  return out;
+}
 async function downloadPdf(){
   try{ await ensurePdfLibs(); }
   catch{ toast("No se pudo cargar el generador de PDF. Se abre la vista de impresión."); buildReport(); return; }
@@ -2680,18 +2725,40 @@ async function downloadPdf(){
   });
   y = doc.lastAutoTable.finalY + 8;
 
-  /* --- Producción declarada --- */
-  const rows = Object.entries(TYPES).filter(([k,t]) => t.grp !== "proj" && S.counts[k]).map(([k,t]) => [
-    pdfTxt(t.label), S.counts[k], REC_GRP.includes(t.grp) ? (S.recent[k] || 0) : "-", fmt(t.pts), fmt(S.counts[k] * t.pts)]);
-  doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(...col.ink);
-  doc.text("Producción declarada", M, y);
-  doc.autoTable({
-    startY: y + 3, margin:{left:M, right:M}, theme:"striped",
-    head:[["Tipo", "Cantidad", "Últimos 3 años", "Pts c/u", "Subtotal"]],
-    body:rows.length ? rows : [[{content:"Sin productos declarados.", colSpan:5}]],
-    styles:{fontSize:9, cellPadding:2.2, textColor:col.ink}, headStyles:{fillColor:col.br, textColor:255},
-    columnStyles:{1:{halign:"right"}, 2:{halign:"right"}, 3:{halign:"right"}, 4:{halign:"right"}}
-  });
+  /* --- Detalle por sección: valores asignados en cada rubro --- */
+  const D = pdfSections(c);
+  const heading = txt => { if(y > 255){ doc.addPage(); y = 20; } doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(...col.ink); doc.text(pdfSafe(txt), M, y); };
+  const tbl = (head, body, colStyles) => {
+    doc.autoTable({
+      startY: y + 3, margin:{left:M, right:M}, theme:"striped", head:[head], body,
+      styles:{fontSize:8.5, cellPadding:2, textColor:col.ink}, headStyles:{fillColor:col.br, textColor:255}, columnStyles:colStyles
+    });
+    y = doc.lastAutoTable.finalY + 3;
+  };
+  const note = txt => {
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...col.mu);
+    const t = doc.splitTextToSize(pdfSafe(txt), W - 2*M); doc.text(t, M, y + 2); y += t.length * 4 + 7;
+  };
+  const R = {halign:"right"};
+
+  heading("Formación y proyectos");
+  tbl(["Concepto", "Valor asignado", "Puntos"], D.form.map(r => r.map(pdfSafe)), {2:{...R, cellWidth:24}});
+  y += 4;
+
+  heading("Producción científica y otras producciones");
+  if(D.detail) tbl(["Año", "Producto", "Clasificación asignada", "Pts"], D.prod, {0:{cellWidth:14}, 2:{cellWidth:50}, 3:{...R, cellWidth:14}});
+  else tbl(["Tipo", "Cantidad", "Últimos 3 años", "Pts c/u", "Subtotal"], D.prod, {1:R, 2:R, 3:R, 4:R});
+  note(D.prodNote);
+
+  heading("Propiedad intelectual");
+  if(D.detail) tbl(["Registro", "Estado", "Clasificación asignada", "Pts"], D.ip, {1:{cellWidth:28}, 2:{cellWidth:50}, 3:{...R, cellWidth:14}});
+  else tbl(["Tipo", "Cantidad", "Últimos 3 años", "Pts c/u", "Subtotal"], D.ip, {1:R, 2:R, 3:R, 4:R});
+  note(D.ipNote);
+
+  heading("Asesorías de tesis");
+  if(D.detail) tbl(["Fecha", "Asesoría", "Clasificación asignada", "Pts"], D.thes, {0:{cellWidth:24}, 2:{cellWidth:50}, 3:{...R, cellWidth:14}});
+  else tbl(["Tipo", "Cantidad", "Pts c/u", "Subtotal"], D.thes, {1:R, 2:R, 3:R});
+  note(D.thesNote);
 
   /* --- Historial --- */
   const hist = HIST.slice().sort((a,b) => a.ts - b.ts);
