@@ -527,6 +527,7 @@ input[type=email]{width:100%;min-height:44px;padding:9px 12px;border:1px solid v
         <div class="card">
           <h2><span class="step">2</span> Producción total <span class="badge-cap" id="prodBadge">mín. 6 pts</span></h2>
           <p class="sub">Obligatoria. Indica cuántos tienes de cada tipo. La columna “en los últimos 3 años” solo sirve para saber si estás activo; no cambia tu puntaje.</p>
+          <div class="chip warn" id="ageNote" hidden style="margin-bottom:12px"><i>!</i><span></span></div>
           <div id="cats-prod"></div>
         </div>
 
@@ -1565,6 +1566,8 @@ function refresh(){
   const c = compute(S);
   renderCounts(c); renderH(c); renderResult(c); renderCtiPanel(); renderPlan(c); renderSim(c); renderShare();
   persist();
+  { const n = CONFIG.maxProductionAgeYears, el = $("#ageNote");
+    el.hidden = !n; if(n) el.querySelector("span").innerHTML = `<b>Antigüedad:</b> los artículos, libros y capítulos con más de ${n} años ya no suman puntos. Declara solo los de los últimos ${n} años.`; }
   const ok = hasData(S);
   if(planWasOK === false && ok && usageReady) toast("¡Plan de ascenso habilitado! Ya puedes elegir tu meta y usar el simulador.");
   planWasOK = ok;
@@ -1715,11 +1718,7 @@ document.addEventListener("click", e => {
     if(x){ sim.counts = {...x.add}; renderSim(compute(S)); $("#simGrid").scrollIntoView({behavior:"smooth", block:"center"}); toast("Combinación cargada en el simulador"); }
   }
   else if(act==="cti-sample"){
-    CTI = ctiSample();
-    ctiPrefill(CTI);
-    ctiMsg("Ficha de ejemplo cargada (datos ficticios). Revísala abajo y, cuando quieras, usa «Plan de ascenso» en «Tu resultado» para ver cómo funciona.", "msg-ok");
-    renderCtiReview();
-    $("#ctiReview").scrollIntoView({behavior:"smooth", block:"start"});
+    ctiSampleLoad();
   }
   else if(act==="go-home"){ e.preventDefault(); choosing = true; showView("start"); }
   else if(act==="change-mode"){ choosing = true; showView("start"); }
@@ -1829,6 +1828,12 @@ const CONFIG = {
   endpoint: "https://script.google.com/macros/s/AKfycbyjnAcZgRLRVRLW-S6I4wMrbys7zSF9o7Ee3ZdS5v0AoEk8WEewGlSG8_fx7jF05a2V/exec",
   appVersion: 1,
   visitCounter: true,         // contador de accesos anónimo (se puede desactivar con false)
+  // Antigüedad máxima, en años, de artículos, libros y capítulos para que sumen puntos. null = sin límite.
+  // El Reglamento vigente (RP 090-2021-CONCYTEC-P) no fija un límite: cuenta «toda la trayectoria». El de 7 años (niveles II y III)
+  // estaba en el reglamento anterior. Para activarlo: maxProductionAgeYears: 7
+  maxProductionAgeYears: null,
+  // Archivo con el cuartil más reciente de SCImago por revista (se genera con scripts/build-sjr.js). Si no existe, se ignora.
+  sjrFile: "sjr-quartiles.json",
   usageLog: true              // registro anónimo de cada consulta, solo para métricas de uso (privado en la hoja)
 };
 const AUTHOR = {
@@ -2267,6 +2272,35 @@ function parseEsDate(t){
   const y = t.match(/(\d{4})/);
   return y ? {y:+y[1], m:0} : null;
 }
+/* ---- Cuartil de la última calificación de SCImago (archivo anual) ---- */
+// Misma normalización que scripts/build-sjr.js: minúsculas, sin tildes ni signos, «&» = «and», sin «the» inicial.
+const normJournal = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim().replace(/^the /, "");
+let SJR;                                              // undefined = sin cargar · null = no disponible · objeto = {year, q}
+async function loadSjr(){
+  if(SJR !== undefined) return SJR;
+  try{
+    const r = await fetch(CONFIG.sjrFile, {cache:"no-cache"});
+    const d = r.ok ? await r.json() : null;
+    SJR = d && d.q && typeof d.q === "object" ? d : null;
+  }catch{ SJR = null; }
+  return SJR;
+}
+// Completa los cuartiles que la ficha no trae con el de la última calificación de SCImago; queda marcado en ámbar para revisarlo.
+async function applySjr(parsed){
+  const need = parsed.prod.filter(p => p.needsQ && !p.old && /^articulo en revista cientifica$|^journal-article$|^article$/.test(normTxt(p.typeRaw)));
+  if(!need.length) return 0;
+  const d = await loadSjr(); if(!d) return 0;
+  let n = 0;
+  for(const p of need){
+    const q = d.q[normJournal(p.journal)];
+    if(q >= 1 && q <= 4){
+      p.choice = "art_q" + q; p.sjr = d.year || true; p.review = true;
+      p.note = `Cuartil Q${q} tomado de la última calificación de SCImago (${d.year || "más reciente"}), no del año de publicación. Verifícalo en scimagojr.com.`;
+      n++;
+    }
+  }
+  return n;
+}
 function parseQuartiles(text){
   const map = {};
   for(const x of String(text).matchAll(/(\d{4})\s*:\s*(Q[1-4]|No disponible)/gi)) map[x[1]] = /^q/i.test(x[2]) ? x[2].toUpperCase() : null;
@@ -2336,6 +2370,7 @@ function parseCtiHtml(html){
     const qmap = iQ >= 0 ? parseQuartiles(cl(cs,iQ)) : {};
     const row = {origin, title:cl(cs,iTi), journal:iJ >= 0 ? cl(cs,iJ) : "", year:y, typeRaw, doi, choice:"none", note:"", review:false};
     const validYear = y >= 1950 && y <= now.getFullYear() + 1;
+    const maxAge = CONFIG.maxProductionAgeYears;
     const isArticle = /^articulo en revista cientifica$/.test(type), isOrcidArt = /^(journal-article|article)$/.test(type);
     if(!validYear){ row.note = "Año no válido en la ficha."; prod.push(row); return; }
     if(doi && seenDoi.has(doi)){ row.note = "Duplicado: mismo DOI que otro producto."; prod.push(row); return; }
@@ -2343,11 +2378,14 @@ function parseCtiHtml(html){
     const tk = normTxt(row.title).replace(/[^a-z0-9]/g, "").slice(0, 80);
     if(tk && seenTitle.has(tk)){ row.note = "Duplicado: mismo título que otro producto."; prod.push(row); return; }
     if(tk) seenTitle.add(tk);
+    if(maxAge && y < now.getFullYear() - maxAge && (isArticle || isOrcidArt || /^book$|^libro$|capitulo|chapter/.test(type))){
+      row.note = `Tiene más de ${maxAge} años (${y}): ya no suma puntos. Si crees que sí cuenta, elige cómo contarlo.`; row.review = true; row.old = true; prod.push(row); return;
+    }
     if(isArticle || isOrcidArt){
       const pq = pickQuartile(y, qmap);
       if(pq.q){ row.choice = "art_" + pq.q.toLowerCase(); row.note = pq.note; row.review = !!pq.note; }
-      else if(isArticle && origin === "cientifica"){ row.choice = "art_oth"; row.note = "Sin cuartil en su año. Cuenta 1 pt solo si la revista está en Scopus, WoS o SciELO: verifícalo."; row.review = true; }
-      else { row.note = "Sin cuartil ni verificación de indexación. Elige una opción si sabes que está en Scopus/WoS/SciELO."; row.review = true; }
+      else if(isArticle && origin === "cientifica"){ row.choice = "art_oth"; row.note = "Sin cuartil en su año. Cuenta 1 pt solo si la revista está en Scopus, WoS o SciELO: verifícalo."; row.review = true; row.needsQ = true; }
+      else { row.note = "Sin cuartil ni verificación de indexación. Elige una opción si sabes que está en Scopus/WoS/SciELO."; row.review = true; row.needsQ = true; }
     } else if(/^book$|^libro$/.test(type)){ row.note = "Libro: cuenta si es resultado de investigación con revisión por pares o ISBN verificable."; row.review = true; }
     else if(/capitulo|chapter/.test(type)){ row.note = "Capítulo: cuenta si es resultado de investigación con revisión por pares."; row.review = true; }
     else if(/articulo en congreso|proceeding|conference/.test(type)){ row.note = "Congreso: cuenta 1 pt solo si es proceeding indizado en Scopus o WoS."; row.review = true; }
@@ -2456,6 +2494,7 @@ function renderCtiReview(){
           ? `<div class="chip ok"><i>✓</i><span><b>Índice h tomado de tu ficha: ${c.meta.h}.</b> Compruébalo en tu${c.meta.scopusId ? ` <a href="https://www.scopus.com/authid/detail.uri?authorId=${esc(c.meta.scopusId)}" target="_blank" rel="noopener">perfil de Scopus</a>` : " perfil de Scopus"}; puedes corregirlo más abajo.</span></div>`
           : `<div class="chip warn"><i>!</i><span>El <b>índice h</b> no aparece en esta ficha${c.meta.scopusId ? `. Consúltalo en tu <a href="https://www.scopus.com/authid/detail.uri?authorId=${esc(c.meta.scopusId)}" target="_blank" rel="noopener">perfil de Scopus</a>` : ""} e ingrésalo más abajo.</span></div>`}
         <div class="chip warn"><i>!</i><span>Los datos de CTI Vitae son autodeclarados y el CONCYTEC los verificará con documentos. Esto es una <b>estimación</b>.</span></div>
+        ${CONFIG.maxProductionAgeYears ? `<div class="chip warn"><i>!</i><span><b>Antigüedad:</b> los artículos, libros y capítulos con más de ${CONFIG.maxProductionAgeYears} años ya no suman puntos${c.prod.some(p => p.old) ? `; ${(n => n === 1 ? "1 producto de tu ficha quedó sin contar" : n + " productos de tu ficha quedaron sin contar")(c.prod.filter(p => p.old).length)} por eso` : ""}.</span></div>` : ""}
       </div>
       <h3 class="goalh">Completa tu perfil <span class="badge-cap">opcional</span></h3>
       <p class="sub">Esto no viene en la ficha: el índice h solo se exige para Investigador Distinguido, y las casillas cambian el mínimo de producción y tu condición de activo.</p>
@@ -2492,16 +2531,17 @@ function ctiPrefill(parsed){
   if(!parsed.isSample && !S.name && parsed.meta.name) S.name = parsed.meta.name.replace(/\s+/g, " ").trim().slice(0, 80);
   syncProfile(); refresh();
 }
-function ctiLoadHtml(html, id){
+async function ctiLoadHtml(html, id){
   try{
     const parsed = parseCtiHtml(html);
+    const nSjr = await applySjr(parsed);
     parsed.degreeSel = ctiDegreeDefault(parsed);
     parsed.projectSel = parsed.projects.some(p => p.recent);
     parsed.id = id || "";
     CTI = parsed;
     ctiPrefill(parsed);
     sendUsageKind("cti_lectura");
-    ctiMsg(`Listo: ${parsed.prod.length} producciones, ${parsed.ip.length} registros de PI y ${parsed.thes.length} asesorías leídas. Revísalas abajo.`, "msg-ok");
+    ctiMsg(`Listo: ${parsed.prod.length} producciones, ${parsed.ip.length} registros de PI y ${parsed.thes.length} asesorías leídas.${nSjr ? ` ${nSjr} cuartil(es) se completaron con la última calificación de SCImago.` : ""} Revísalas abajo.`, "msg-ok");
     renderCtiReview();
     $("#ctiReview").scrollIntoView({behavior:"smooth", block:"start"});
   }catch(e){ CTI = null; renderCtiReview(); ctiMsg(CTI_ERR.not_profile, "msg-bad"); }
@@ -2537,7 +2577,7 @@ function ctiSample(){
       art("Caracterización fisicoquímica de harinas de tubérculos andinos", "Journal of Food Science", y - 2, "art_q2"),
       art("Aprovechamiento de residuos agroindustriales en la Amazonía peruana", "Agronomía Colombiana", y - 3, "art_q3"),
       art("Estabilidad de pigmentos naturales durante el almacenamiento", "Revista de Investigación Agraria", y - 4, "art_q4"),
-      art("Percepción del consumidor sobre alimentos funcionales", "Revista Peruana de Nutrición", y - 1, "art_oth", "Sin cuartil en su año. Cuenta 1 pt solo si la revista está en Scopus, WoS o SciELO: verifícalo."),
+      {...art("Percepción del consumidor sobre alimentos funcionales", "Revista Peruana de Nutrición", y - 1, "art_oth", "Sin cuartil en su año. Cuenta 1 pt solo si la revista está en Scopus, WoS o SciELO: verifícalo."), needsQ:true},
       {origin:"cientifica", title:"Guía de buenas prácticas de manipulación de alimentos", journal:"Editorial universitaria", year:y - 2, typeRaw:"Capítulo de libro", doi:"", choice:"none", note:"Capítulo: cuenta si es resultado de investigación con revisión por pares.", review:true},
       {origin:"otras", title:"Póster: tendencias en la valorización de frutos nativos", journal:"Congreso nacional de ciencia de alimentos", year:y - 1, typeRaw:"Póster", doi:"", choice:"none", note:"Tipo de producción que el reglamento no puntúa.", review:false}
     ],
@@ -2552,6 +2592,15 @@ function ctiSample(){
     projects:[{title:"Proyecto de investigación (ejemplo)", start:`01-03-${y - 2}`, end:`31-12-${y}`, recent:true}],
     projectSel:true
   };
+}
+/* Ficha de ejemplo: se completa con SCImago igual que una ficha real. */
+async function ctiSampleLoad(){
+  CTI = ctiSample();
+  await applySjr(CTI);
+  ctiPrefill(CTI);
+  ctiMsg("Ficha de ejemplo cargada (datos ficticios). Revísala abajo y, cuando quieras, usa «Plan de ascenso» en «Tu resultado» para ver cómo funciona.", "msg-ok");
+  renderCtiReview();
+  $("#ctiReview").scrollIntoView({behavior:"smooth", block:"start"});
 }
 function ctiApply(go = true){
   if(!CTI) return false;
@@ -2636,7 +2685,9 @@ function pdfSections(c){
   if(useCti){
     const none = {prod:CTI.prod.filter(p => p.choice === "none").length, ip:CTI.ip.filter(p => p.choice === "none").length, thes:CTI.thes.filter(p => p.choice === "none").length};
     const sin = n => n ? ` ${n} registro(s) leído(s) de tu ficha no se cuentan (duplicados, sin verificar o que el reglamento no puntúa).` : "";
-    out.prod = CTI.prod.filter(p => p.choice !== "none").map(p => [isFinite(p.year) ? p.year : "-", pdfSafe(cut(p.title, 120) + (p.journal ? " - " + cut(p.journal, 50) : "")), pdfSafe(lab(p.choice)), fmt(pt(p.choice))]);
+    out.prod = CTI.prod.filter(p => p.choice !== "none").map(p => [isFinite(p.year) ? p.year : "-", pdfSafe(cut(p.title, 120) + (p.journal ? " - " + cut(p.journal, 50) : "")), pdfSafe(lab(p.choice) + (p.sjr ? " *" : "")), fmt(pt(p.choice))]);
+    const sjrY = (CTI.prod.find(p => p.sjr && p.choice !== "none") || {}).sjr;
+    if(sjrY) out.prodNote += ` * Cuartil tomado de la última calificación de SCImago${sjrY === true ? "" : " (" + sjrY + ")"}, no del año de publicación.`;
     out.ip = CTI.ip.filter(p => p.choice !== "none").map(p => [pdfSafe(cut(p.title, 100)), pdfSafe(cut(p.status, 20)), pdfSafe(lab(p.choice)), fmt(pt(p.choice))]);
     out.thes = CTI.thes.filter(p => p.choice !== "none").map(p => [pdfSafe(p.date), pdfSafe(cut(p.level, 40) + " - " + cut(p.institution, 60)), pdfSafe(lab(p.choice)), fmt(pt(p.choice))]);
     if(!out.prod.length) out.prod = [[{content:"Sin producción científica contada.", colSpan:4}]];
