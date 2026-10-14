@@ -1211,23 +1211,21 @@ function resultHtml(c, st, preview){
       <tr><td>Asesoría de tesis</td><td>${fmt(c.advising)}</td></tr>
       <tr class="tot"><td>Total</td><td>${fmt(c.total)}</td></tr>
     </table>
-    ${preview ? `<p class="lvl-sub" style="margin:0 0 10px"><b>Vista previa:</b> así quedaría con tu selección. Aún no se aplicó a tu perfil.</p>
-    <div class="actions"><button class="btn" data-action="cti-apply">Aplicar y ver mi plan</button></div>` : `<div class="actions">
+    ${preview ? `<p class="lvl-sub" style="margin:0 0 10px"><b>Vista previa:</b> así quedaría con tu selección. Al guardar en el historial, descargar el PDF o abrir el plan, se aplica a tu perfil.</p>` : ""}
+    <div class="actions">
       <button class="btn" data-action="open-save">Guardar en historial</button>
       <button class="btn ghost" data-go="plan">Plan de ascenso →</button>
       <button class="btn ghost" data-action="pdf">Descargar PDF</button>
     </div>
-    <p class="lvl-sub" style="margin:12px 0 0"><a href="#comm">Aporta tu resultado de forma anónima a las métricas →</a></p>`}
+    <p class="lvl-sub" style="margin:12px 0 0"><a href="#comm">Aporta tu resultado de forma anónima a las métricas →</a></p>
   </div>`;
 }
 /* Panel de resultado de la modalidad CTI Vitae: vista previa de la selección mientras no se aplique; después, el resultado real. */
+const ctiPending = () => !!CTI && !(S.ctiSig && stateSig(S) === stateSig(ctiBuildState(CTI)));
 function renderCtiPanel(){
   const host = $("#resultadoCti"); if(!host) return;
   let c = compute(S), st = S, preview = false;
-  if(CTI){
-    const pst = ctiBuildState(CTI);
-    if(!(S.ctiSig && stateSig(S) === stateSig(pst))){ st = pst; c = compute(pst); preview = true; }
-  }
+  if(CTI && ctiPending()){ st = ctiBuildState(CTI); c = compute(st); preview = true; }
   host.innerHTML = resultHtml(c, st, preview);
   if(S.mode === "cti"){
     $("#mbScore").textContent = fmt(c.total);
@@ -1654,7 +1652,12 @@ function csvCell(v){ v = String(v ?? ""); return /[",\n;]/.test(v) ? '"'+v.repla
 
 document.addEventListener("click", e => {
   const md = e.target.closest("[data-mode]"); if(md){ chooseMode(md.dataset.mode); return; }
-  const go = e.target.closest("[data-go]"); if(go){ if(go.dataset.go === "cti" || go.dataset.go === "calc") chooseMode(go.dataset.go); else showView(go.dataset.go); return; }
+  const go = e.target.closest("[data-go]"); if(go){
+    if(go.dataset.go === "cti" || go.dataset.go === "calc") chooseMode(go.dataset.go);
+    else if(go.dataset.go === "plan" && S.mode === "cti" && ctiPending()){ if(ctiApply(true)) { /* ya navegó al plan */ } }
+    else showView(go.dataset.go);
+    return;
+  }
   const tab = e.target.closest(".tab"); if(tab){ showView(tab.dataset.view); return; }
   const sb = e.target.closest("[data-sim]");
   if(sb){ const k = sb.dataset.k; sim.counts[k] = Math.max(0, Math.min(50, (sim.counts[k]||0) + (sb.dataset.sim==="+"?1:-1))); renderSim(compute(S)); return; }
@@ -1672,6 +1675,7 @@ document.addEventListener("click", e => {
   } else if(act==="clear"){
     if(confirm("¿Borrar tus datos de todas las pestañas?\n\n• Calculadora: perfil, institución, cantidades y proyecto.\n• Importar CTI Vitae: enlace y ficha leída.\n• Plan de ascenso y simulador.\n• Borradores de aporte y de sugerencia.\n\nTu historial de capturas se conserva para mantener tu evolución. Lo que ya enviaste a la comunidad se retira desde la pestaña Sugerencias («Retirar mis sugerencias y aportes»).")){ clearAllData(); toast("Tus datos fueron borrados; tu historial se conserva"); }
   } else if(act==="open-save"){
+    if(!ctiGate()) return;
     $("#snapLabel").value = `Captura ${now.toLocaleDateString("es-PE",{day:"numeric",month:"short",year:"numeric"})}`;
     $("#saveDlg").showModal(); $("#snapLabel").select();
   } else if(act==="restore"){
@@ -1703,7 +1707,7 @@ document.addEventListener("click", e => {
   else if(act==="cti-fetch"){ ctiFetch(); }
   else if(act==="cti-apply"){ ctiApply(); }
   else if(act==="cti-clear"){ CTI = null; renderCtiReview(); ctiMsg("", "sub"); }
-  else if(act==="pdf"){ downloadPdf(); }
+  else if(act==="pdf"){ if(ctiGate()) downloadPdf(); }
   else if(act==="share"){ sendContribution(); }
   else if(act==="withdraw"){ withdrawContributions(); }
   else if(act==="sim-load"){
@@ -2554,17 +2558,22 @@ function ctiSample(){
     projectSel:true
   };
 }
-function ctiApply(){
-  if(!CTI) return;
-  if(!confirm("Se reemplazarán las cantidades de tu calculadora por las de esta selección. ¿Continuar?")) return;
+function ctiApply(go = true){
+  if(!CTI) return false;
+  if(!confirm("Se reemplazarán las cantidades de tu calculadora por las de esta selección. ¿Continuar?")) return false;
   const st = ctiBuildState(CTI);
   S.degree = st.degree; S.counts = st.counts; S.recent = st.recent; S.project = st.project; S.last = st.last;
   if(CTI.id) S.cti = CTI.id;
   S.ctiSig = stateSig(S); S.ctiName = CTI.isSample ? "Ficha de ejemplo" : (CTI.meta.name || "");
   if(CTI.isSample) S.sampleSig = stateSig(S);          // el ejemplo nunca se registra como consulta
   S.mode = "cti"; choosing = false;
-  syncProfile(); refresh(); showView("plan"); toast("Datos de CTI Vitae aplicados · Plan de ascenso habilitado");
+  syncProfile(); refresh();
+  if(go){ showView("plan"); toast("Datos de CTI Vitae aplicados · Plan de ascenso habilitado"); }
+  else toast("Datos de CTI Vitae aplicados a tu perfil");
+  return true;
 }
+/* Guardar, descargar o abrir el plan con una selección de CTI Vitae sin aplicar: primero se aplica (con confirmación). */
+const ctiGate = () => !(S.mode === "cti" && ctiPending()) || ctiApply(false);
 
 /* ================= Descarga en PDF (evaluación + historial) ================= */
 /* jsPDF y autotable (MIT) están incluidos en la carpeta vendor/ y solo se cargan al pulsar el botón. */
