@@ -41,7 +41,7 @@ const head = rows.shift().map(h => h.trim().toLowerCase());
 const iTitle = head.indexOf('title'), iQ = head.findIndex(h => h === 'sjr best quartile'), iType = head.indexOf('type');
 if (iTitle < 0 || iQ < 0) { console.error('No se encontraron las columnas «Title» y «SJR Best Quartile». Columnas leídas:', head.join(', ')); process.exit(1); }
 
-const q = {}; let total = 0, sinCuartil = 0;
+const q = {}, ambiguos = new Set(); let total = 0, sinCuartil = 0;
 for (const r of rows) {
   if (iType >= 0 && r[iType] && r[iType].trim().toLowerCase() !== 'journal') continue;     // solo revistas (no libros ni actas)
   total++;
@@ -49,10 +49,12 @@ for (const r of rows) {
   if (!m) { sinCuartil++; continue; }
   const key = normJournal(r[iTitle]); if (!key) continue;
   const n = Number(m[1]);
-  if (!q[key] || n < q[key]) q[key] = n;                                                  // si hay títulos repetidos, el mejor cuartil
+  if (q[key] && q[key] !== n) ambiguos.add(key);                                          // mismo nombre con cuartiles distintos: no se adivina
+  if (!q[key] || n < q[key]) q[key] = n;
 }
 
+ambiguos.forEach(k => delete q[k]);
 const out = outArg || path.join(__dirname, '..', 'sjr-quartiles.json');
 fs.writeFileSync(out, JSON.stringify({ year: Number(yearArg), source: 'SCImago Journal & Country Rank', q }));
-console.log(`Revistas leídas: ${total} · con cuartil: ${Object.keys(q).length} · sin cuartil: ${sinCuartil}`);
+console.log(`Revistas leídas: ${total} · con cuartil: ${Object.keys(q).length} · sin cuartil: ${sinCuartil} · nombres ambiguos excluidos: ${ambiguos.size}`);
 console.log(`Escrito ${out} (${(fs.statSync(out).size / 1024).toFixed(0)} KB)`);
